@@ -1,0 +1,36 @@
+<div id="kitchen-stale-overlay"
+     data-controller="heartbeat"
+     data-heartbeat-url-value="<%= heartbeat_path %>"
+     data-action="heartbeat:stale@window->kitchen-alarm#beep"
+     hidden>
+  <p>RECONNECTING&hellip; <span data-heartbeat-target="staleSeconds">0</span>s</p>
+</div>
+
+<h1>Kitchen</h1>
+
+<%= turbo_stream_from [ Current.shop, :kitchen ] %>
+
+<div id="kitchen_tickets" data-controller="kitchen-alarm">
+  <% @tickets.each do |ticket| %>
+    <div id="<%= dom_id(ticket) %>" data-kitchen-alarm-target="ticket">
+      <strong>Ticket #<%= ticket.number %></strong> — <%= ticket.table_session.dining_table.label %> — <%= ticket.status %>
+      <ul>
+        <% ticket.ticket_items.each do |item| %>
+          <li><%= item.quantity %> × <%= item.name_snapshot %><%= " (#{item.notes})" if item.notes.present? %></li>
+        <% end %>
+      </ul>
+      <%= form_with url: kitchen_ticket_path(ticket), method: :patch do %>
+        <% if ticket.status == "pending" %>
+          <%= hidden_field_tag :status, "preparing" %>
+          <%= submit_tag "Start preparing" %>
+        <% elsif ticket.status == "preparing" %>
+          <%= hidden_field_tag :status, "ready" %>
+          <%= submit_tag "Mark ready" %>
+        <% elsif ticket.status == "ready" %>
+          <%= hidden_field_tag :status, "served" %>
+          <%= submit_tag "Mark served" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

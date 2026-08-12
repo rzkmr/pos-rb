@@ -1,6 +1,9 @@
 <h1>Tables</h1>
 
-<p><%= link_to "Sign out", session_path, data: { turbo_method: :delete } %></p>
+<p>
+  <%= link_to "Kitchen", kitchen_tickets_path %>
+  · <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
+</p>
 
 <ul>
   <% @dining_tables.each do |dining_table| %>
