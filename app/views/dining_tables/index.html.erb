@@ -1,0 +1,19 @@
+<h1>Tables</h1>
+
+<p><%= link_to "Sign out", session_path, data: { turbo_method: :delete } %></p>
+
+<ul>
+  <% @dining_tables.each do |dining_table| %>
+    <% session = dining_table.open_session %>
+    <li>
+      <strong><%= dining_table.label %></strong>
+      (<%= dining_table.seats %> seats)
+      <% if session %>
+        — open
+        <%= link_to "Continue order", table_session_path(session) %>
+      <% else %>
+        <%= button_to "Open table", table_sessions_path(dining_table_id: dining_table.id) %>
+      <% end %>
+    </li>
+  <% end %>
+</ul>

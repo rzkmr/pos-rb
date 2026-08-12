@@ -1,0 +1,51 @@
+<h1><%= @dining_table.label %></h1>
+
+<p><%= link_to "All tables", dining_tables_path %></p>
+
+<div id="pending-banner" data-order-cart-target="pendingBanner" hidden>
+  Sending <span data-order-cart-target="pendingCount"></span> pending ticket(s)…
+</div>
+
+<section>
+  <h2>Previous tickets</h2>
+  <% @tickets.each do |ticket| %>
+    <div>
+      <strong>Ticket #<%= ticket.number %></strong> — <%= ticket.status %>
+      <ul>
+        <% ticket.ticket_items.each do |item| %>
+          <li><%= item.quantity %> × <%= item.name_snapshot %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</section>
+
+<section data-controller="order-cart"
+          data-order-cart-table-session-id-value="<%= @table_session.id %>"
+          data-order-cart-submit-url-value="<%= tickets_path %>">
+  <h2>Menu</h2>
+  <% @menu_items.group_by(&:category).each do |category, items| %>
+    <h3><%= category.titleize %></h3>
+    <ul>
+      <% items.each do |menu_item| %>
+        <li>
+          <%= menu_item.name %> — <%= money_to_inr(menu_item.price_paise) %>
+          <button type="button"
+                  data-action="order-cart#add"
+                  data-order-cart-menu-item-id-param="<%= menu_item.id %>"
+                  data-order-cart-menu-item-name-param="<%= menu_item.name %>"
+                  data-order-cart-menu-item-price-param="<%= menu_item.price_paise %>">
+            Add
+          </button>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <h2>Cart</h2>
+  <p data-order-cart-target="empty">No items yet.</p>
+  <ul data-order-cart-target="list"></ul>
+  <button type="button" data-action="order-cart#submit" data-order-cart-target="submit" disabled>
+    Send to kitchen
+  </button>
+</section>

@@ -16,6 +16,10 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :dining_tables, only: [ :index ]
+  resources :table_sessions, only: [ :create, :show ]
+  resources :tickets, only: [ :create ]
+
   # Defines the root path route ("/")
-  root "sessions#new"
+  root "dining_tables#index"
 end
