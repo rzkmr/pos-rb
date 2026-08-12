@@ -1,0 +1,98 @@
+<section class="bg-card rounded-tile border border-line p-4">
+  <h2 class="text-[19px] font-semibold text-ink-2 mb-2"><%= t("bills.show.items") %></h2>
+  <ul class="flex flex-col gap-2">
+    <% table_session.tickets.each do |ticket| %>
+      <% ticket.ticket_items.active.each do |item| %>
+        <li class="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-0 flex-wrap">
+          <span class="text-[22px] flex-1 min-w-[180px]">
+            <span class="font-mono text-ink-2"><%= item.quantity %> ×</span> <%= item.name_snapshot %>
+          </span>
+          <span class="w-[130px] text-right font-mono text-[20px]"><%= money_to_inr(item.quantity * item.unit_price_paise) %></span>
+          <% if table_session.status == "open" %>
+            <%= form_with url: void_ticket_item_path(item), method: :patch, class: "flex items-center gap-2 w-full sm:w-auto" do %>
+              <%= text_field_tag :reason, nil, placeholder: t("shared.reason"), required: true,
+                    class: "min-h-[48px] flex-1 sm:w-40 px-3 rounded-key border-2 border-line-2 text-[17px]" %>
+              <%= submit_tag t("bills.show.void"), class: "shrink-0 min-h-[48px] px-4 rounded-key text-[17px] font-bold border-[2px] border-stop text-stop active:bg-stop-50" %>
+            <% end %>
+          <% end %>
+        </li>
+      <% end %>
+    <% end %>
+  </ul>
+</section>
+
+<section class="bg-card rounded-tile border border-line p-5">
+  <div class="text-[24px] font-semibold"><%= t("bills.show.total_with_tax") %></div>
+  <div class="text-[38px] font-mono font-bold"><%= money_to_inr(billing.total_paise) %></div>
+
+  <div class="mt-3 flex flex-col gap-1.5 text-[19px] text-ink-3">
+    <div class="flex justify-between"><span><%= t("bills.show.subtotal") %></span><span class="font-mono"><%= money_to_inr(billing.taxable_paise) %></span></div>
+    <% if Current.shop.composition_scheme %>
+      <div class="text-[17px] italic"><%= t("bills.show.composition_declaration") %></div>
+    <% else %>
+      <div class="flex justify-between"><span><%= t("bills.show.cgst") %></span><span class="font-mono"><%= money_to_inr(billing.cgst_paise) %></span></div>
+      <div class="flex justify-between"><span><%= t("bills.show.sgst") %></span><span class="font-mono"><%= money_to_inr(billing.sgst_paise) %></span></div>
+    <% end %>
+    <div class="flex justify-between"><span><%= t("bills.show.round_off") %></span><span class="font-mono"><%= money_to_inr(billing.round_off_paise) %></span></div>
+    <% if table_session.discount_paise.to_i > 0 %>
+      <div class="flex justify-between text-go"><span><%= t("bills.show.discount_with_reason", reason: table_session.discount_reason) %></span><span class="font-mono">-<%= money_to_inr(table_session.discount_paise) %></span></div>
+    <% end %>
+  </div>
+</section>
+
+<% if table_session.status == "open" %>
+  <section class="bg-card rounded-tile border border-line p-4">
+    <h2 class="text-[19px] font-semibold text-ink-2 mb-2"><%= t("bills.show.discount") %></h2>
+    <%= form_with url: table_session_discount_path(table_session), method: :post, class: "flex flex-col gap-2.5" do %>
+      <%= text_field_tag :amount_paise, nil, placeholder: t("bills.show.amount_paise_placeholder"),
+            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px]" %>
+      <%= text_field_tag :reason, nil, placeholder: t("shared.reason"),
+            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[19px]" %>
+      <%= submit_tag t("bills.show.apply_discount"), class: "min-h-[56px] rounded-ctl text-[19px] font-bold bg-key text-ink active:bg-key-2" %>
+    <% end %>
+  </section>
+
+  <section class="rounded-tile border-2 border-go bg-go-50 p-4">
+    <div class="text-[24px] font-bold">
+      <% remaining = billing.total_paise - table_session.paid_paise %>
+      <% if remaining <= 0 %>
+        <%= t("bills.show.fully_paid") %>
+      <% else %>
+        <%= t("bills.show.remaining", amount: money_to_inr(remaining)) %>
+      <% end %>
+    </div>
+    <div class="text-[18px] text-ink-3"><%= t("bills.show.paid_so_far", amount: money_to_inr(table_session.paid_paise)) %></div>
+
+    <%= form_with url: table_session_payments_path(table_session), method: :post, class: "mt-3 flex flex-col gap-2.5" do %>
+      <%= select_tag "payment[method]", options_for_select(Payment::METHODS),
+            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[19px]" %>
+      <%= text_field_tag "payment[amount_paise]", nil, placeholder: t("bills.show.amount_paise_placeholder"),
+            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px]" %>
+      <%= text_field_tag "payment[reference]", nil, placeholder: t("bills.show.reference_placeholder"),
+            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[19px]" %>
+      <%= submit_tag t("bills.show.record_payment"), class: "min-h-[84px] rounded-tile text-[20px] font-bold border-[2.5px] border-ink bg-card active:bg-key" %>
+    <% end %>
+  </section>
+<% else %>
+  <div class="text-center text-[19px] text-ink-3"><%= t("bills.show.session_status", status: table_session.status) %></div>
+
+  <% if invoice %>
+    <section class="bg-card rounded-tile border border-line p-4">
+      <h2 class="text-[20px] font-bold mb-1"><%= t("bills.show.invoice_number", number: invoice.number) %></h2>
+      <% latest_print_job = invoice.print_jobs.order(:created_at).last %>
+      <% if latest_print_job %>
+        <p class="text-[18px] text-ink-3"><%= t("bills.show.print_status", status: latest_print_job.status) %></p>
+        <% if latest_print_job.status == "failed" %>
+          <p class="mt-1 px-3 py-2 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[18px] font-semibold">
+            <%= t("bills.show.print_failed", error: latest_print_job.last_error) %>
+          </p>
+        <% end %>
+      <% end %>
+      <% if invoice.print_count.to_i > 0 %>
+        <p class="text-[16px] text-ink-3 mt-1"><%= t("bills.show.reprinted_count", count: invoice.print_count) %></p>
+      <% end %>
+      <%= button_to t("bills.show.print_bill"), reprint_invoice_path(invoice), method: :post,
+            class: "mt-3 w-full min-h-[70px] rounded-tile text-[20px] font-bold bg-go text-surface active:bg-go-700" %>
+    </section>
+  <% end %>
+<% end %>

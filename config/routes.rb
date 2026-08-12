@@ -26,6 +26,7 @@ Rails.application.routes.draw do
     resource :discount, only: [ :create ], controller: "discounts"
   end
   resources :tickets, only: [ :create ]
+  resources :takeaway_checkouts, only: [ :create ]
   resources :invoices, only: [] do
     member { post :reprint }
   end

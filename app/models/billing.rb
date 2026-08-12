@@ -48,4 +48,27 @@ class Billing
     Printing.enqueue_invoice!(invoice)
     invoice
   end
+
+  # Records one payment and, if it brings the session to fully paid, issues
+  # the invoice and closes the session out — the shared settle path used by
+  # both the itemized payment form and the one-tap takeaway checkout.
+  def self.record_payment_and_settle!(table_session:, method:, amount_paise:, received_by:, reference: nil)
+    shop = table_session.shop
+
+    ActiveRecord::Base.transaction do
+      table_session.payments.create!(
+        shop: shop,
+        method: method,
+        amount_paise: amount_paise,
+        reference: reference,
+        received_by: received_by
+      )
+
+      result = compute(shop: shop, taxable_paise: table_session.subtotal_paise)
+      if table_session.paid_paise >= result.total_paise
+        issue_invoice!(table_session: table_session) if table_session.invoices.none?
+        table_session.update!(status: "paid", closed_at: Time.current)
+      end
+    end
+  end
 end
