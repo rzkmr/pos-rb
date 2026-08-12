@@ -1,9 +1,11 @@
-# One-time first-boot wizard. Creates the shop, its admin pairing PIN, and
-# the first admin user. Closed off permanently once a shop exists — see
+# One-time first-boot wizard. Creates the shop, its device pairing PIN,
+# and the first admin (web login, username + password). Closed off
+# permanently once a shop exists — see
 # Authentication#redirect_to_setup_if_needed, the only other place that
 # references this controller.
 class SetupController < ApplicationController
   skip_before_action :set_current_shop
+  skip_before_action :set_current_admin
   skip_before_action :set_current_device
   skip_before_action :set_current_user
   skip_before_action :require_device
@@ -15,9 +17,9 @@ class SetupController < ApplicationController
   end
 
   def create
-    unless valid_pin?(params[:admin_pin]) && valid_pin?(params[:admin_pin_login])
+    unless valid_pairing_pin?(params[:admin_pin])
       @shop = Shop.new(shop_params)
-      @shop.errors.add(:base, "Both PINs must be exactly 4 digits")
+      @shop.errors.add(:base, "Device pairing PIN must be exactly 4 digits")
       return render :new, status: :unprocessable_entity
     end
 
@@ -27,20 +29,12 @@ class SetupController < ApplicationController
     @shop.gst_rate_bp = 500 if @shop.gst_rate_bp.blank?
     @shop.admin_pin = params[:admin_pin]
 
-    device_token = nil
     ActiveRecord::Base.transaction do
       @shop.save!
-      @admin = @shop.users.create!(name: params[:admin_name], role: "admin", pin: params[:admin_pin_login])
-      _device, device_token = Device.pair!(shop: @shop, label: "First admin device", kind: "admin")
+      @admin_user = @shop.admin_users.create!(username: params[:admin_username], password: params[:admin_password])
     end
 
-    cookies.signed[Authentication::DEVICE_COOKIE] = {
-      value: device_token,
-      httponly: true,
-      same_site: :lax,
-      expires: 10.years
-    }
-    redirect_to new_session_path, notice: "Shop set up. Sign in as #{@admin.name} to continue."
+    redirect_to new_admin_session_path, notice: "Shop set up. Sign in as #{@admin_user.username} to continue."
   rescue ActiveRecord::RecordInvalid
     render :new, status: :unprocessable_entity
   end
@@ -55,7 +49,7 @@ class SetupController < ApplicationController
     params.permit(:name, :gstin, :address, :state_code, :fssai_licence, :invoice_prefix, :gst_rate_bp, :composition_scheme)
   end
 
-  def valid_pin?(pin)
+  def valid_pairing_pin?(pin)
     pin.to_s.match?(/\A\d{4}\z/)
   end
 end

@@ -34,6 +34,8 @@ Rails.application.routes.draw do
   get "heartbeat" => "heartbeats#show"
 
   namespace :admin do
+    resource :session, only: [ :new, :create, :destroy ]
+    root "root#show"
     resources :menu_items, except: [ :show ]
     resources :users, except: [ :show ]
     resources :dining_tables, except: [ :show ]

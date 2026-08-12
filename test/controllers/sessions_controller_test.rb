@@ -13,17 +13,17 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create signs in with correct pin and redirects" do
-    post session_url, params: { user_id: users(:alpha_admin).id, pin: "1234" }
+    post session_url, params: { user_id: users(:alpha_waiter).id, pin: "2222" }
     assert_redirected_to root_url
   end
 
   test "create rejects an incorrect pin" do
-    post session_url, params: { user_id: users(:alpha_admin).id, pin: "0000" }
+    post session_url, params: { user_id: users(:alpha_waiter).id, pin: "0000" }
     assert_response :unprocessable_entity
   end
 
   test "destroy signs out and redirects to login" do
-    post session_url, params: { user_id: users(:alpha_admin).id, pin: "1234" }
+    post session_url, params: { user_id: users(:alpha_waiter).id, pin: "2222" }
     delete session_url
     assert_redirected_to new_session_url
   end

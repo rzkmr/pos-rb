@@ -6,6 +6,7 @@ class Admin::SettingsController < Admin::BaseController
   def update
     @shop = Current.shop
     if @shop.update(shop_params)
+      AuditEvent.record!(action: "shop_settings_updated", subject: @shop, admin_user: Current.admin, payload: shop_params.to_h)
       redirect_to edit_admin_settings_path, notice: "Settings updated"
     else
       render :edit, status: :unprocessable_entity

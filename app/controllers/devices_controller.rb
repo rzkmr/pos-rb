@@ -1,9 +1,7 @@
 class DevicesController < ApplicationController
-  include RequireAdmin
-
   skip_before_action :require_device, only: [ :pair, :create ]
   skip_before_action :require_user, only: [ :pair, :create ]
-  skip_before_action :require_admin, only: [ :pair, :create ]
+  before_action :require_admin_web_login, only: [ :index, :destroy ]
 
   rate_limit to: 5, within: 1.minute, by: -> { request.remote_ip },
              with: -> { render plain: "Too many attempts, try again shortly", status: :too_many_requests },
@@ -36,8 +34,18 @@ class DevicesController < ApplicationController
 
   def destroy
     device = Current.shop.devices.find(params[:id])
-    AuditEvent.record!(action: "device_revoked", subject: device, user: Current.user, device: Current.device)
+    AuditEvent.record!(action: "device_revoked", subject: device, admin_user: Current.admin, device: device)
     device.destroy!
     redirect_to devices_path, notice: "Device revoked"
+  end
+
+  private
+
+  # index/destroy manage devices shop-wide — this is an admin (web login)
+  # action, independent of whether this particular browser has a device paired.
+  def require_admin_web_login
+    return if Current.admin
+
+    redirect_to new_admin_session_path
   end
 end

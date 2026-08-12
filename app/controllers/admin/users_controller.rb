@@ -12,6 +12,7 @@ class Admin::UsersController < Admin::BaseController
   def create
     @user = Current.shop.users.new(user_params)
     if @user.save
+      AuditEvent.record!(action: "user_created", subject: @user, admin_user: Current.admin, payload: { name: @user.name, role: @user.role })
       redirect_to admin_users_path, notice: "User added"
     else
       render :new, status: :unprocessable_entity
@@ -22,7 +23,12 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def update
+    pin_changed = user_update_params.key?(:pin)
     if @user.update(user_update_params)
+      AuditEvent.record!(
+        action: "user_updated", subject: @user, admin_user: Current.admin,
+        payload: { name: @user.name, role: @user.role, active: @user.active, pin_reset: pin_changed }
+      )
       redirect_to admin_users_path, notice: "User updated"
     else
       render :edit, status: :unprocessable_entity
@@ -31,6 +37,7 @@ class Admin::UsersController < Admin::BaseController
 
   def destroy
     @user.update!(active: false)
+    AuditEvent.record!(action: "user_deactivated", subject: @user, admin_user: Current.admin)
     redirect_to admin_users_path, notice: "User deactivated"
   end
 

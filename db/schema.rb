@@ -10,19 +10,32 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
+  create_table "admin_users", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "password_digest", null: false
+    t.bigint "shop_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "username", null: false
+    t.index ["shop_id", "username"], name: "index_admin_users_on_shop_id_and_username", unique: true
+    t.index ["shop_id"], name: "index_admin_users_on_shop_id"
+  end
+
   create_table "audit_events", force: :cascade do |t|
     t.string "action", null: false
+    t.bigint "admin_user_id"
     t.datetime "created_at", null: false
     t.integer "device_id"
     t.json "payload", default: {}, null: false
     t.integer "shop_id", null: false
     t.integer "subject_id", null: false
     t.string "subject_type", null: false
-    t.integer "user_id", null: false
+    t.integer "user_id"
+    t.index ["admin_user_id"], name: "index_audit_events_on_admin_user_id"
     t.index ["device_id"], name: "index_audit_events_on_device_id"
     t.index ["shop_id", "subject_type", "subject_id"], name: "index_audit_events_on_shop_id_and_subject_type_and_subject_id"
     t.index ["shop_id"], name: "index_audit_events_on_shop_id"
@@ -209,6 +222,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_100000) do
     t.index ["shop_id"], name: "index_users_on_shop_id"
   end
 
+  add_foreign_key "admin_users", "shops"
+  add_foreign_key "audit_events", "admin_users"
   add_foreign_key "audit_events", "devices"
   add_foreign_key "audit_events", "shops"
   add_foreign_key "audit_events", "users"

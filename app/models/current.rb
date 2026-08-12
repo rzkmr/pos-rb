@@ -1,3 +1,3 @@
 class Current < ActiveSupport::CurrentAttributes
-  attribute :shop, :device, :user
+  attribute :shop, :device, :user, :admin
 end

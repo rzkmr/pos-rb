@@ -61,22 +61,23 @@
       </div>
 
       <div class="flex flex-col gap-3 pt-2 border-t border-line">
-        <div class="text-[15px] font-bold text-ink-2">Your admin account</div>
+        <div class="text-[15px] font-bold text-ink-2">Your admin login</div>
         <div class="text-[14px] text-ink-3">
-          This is you. You will sign in with your name and this PIN from any paired device.
+          This is separate from staff PINs. You will sign in with a username and password from
+          any browser — no device pairing needed. Staff (waiter/cashier/kitchen) use PINs on
+          paired tablets and never see this login.
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <%= label_tag :admin_name, "Your name", class: "text-[15px] font-semibold" %>
-          <%= text_field_tag :admin_name, nil, required: true,
+          <%= label_tag :admin_username, "Username", class: "text-[15px] font-semibold" %>
+          <%= text_field_tag :admin_username, nil, required: true, autocomplete: "username",
                 class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <%= label_tag :admin_pin_login, "Your sign-in PIN (4 digits)", class: "text-[15px] font-semibold" %>
-          <%= password_field_tag :admin_pin_login, nil, required: true, maxlength: 4, inputmode: "numeric",
-                placeholder: "4 digits",
-                class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px] tracking-[0.4em]" %>
+          <%= label_tag :admin_password, "Password (min 8 characters)", class: "text-[15px] font-semibold" %>
+          <%= password_field_tag :admin_password, nil, required: true, minlength: 8, autocomplete: "new-password",
+                class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
         </div>
       </div>
 

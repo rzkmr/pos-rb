@@ -1,0 +1,41 @@
+<div class="min-h-screen bg-shell">
+  <header class="bg-ink text-surface px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+    <div class="text-[22px] font-bold">Admin</div>
+    <nav class="flex items-center gap-2 flex-wrap text-[16px] font-semibold">
+      <%= link_to "Sign out", admin_session_path, data: { turbo_method: :delete },
+            class: "px-3.5 py-2 rounded-key bg-stop text-surface active:bg-stop-50 active:text-stop" %>
+    </nav>
+  </header>
+
+  <div class="p-6 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-4">
+    <%= link_to admin_menu_items_path, class: "min-h-[100px] p-4 rounded-tile bg-card border-2 border-line flex flex-col justify-center gap-1 active:border-go active:bg-go-50" do %>
+      <span class="text-[19px] font-bold">Menu</span>
+      <span class="text-[14px] text-ink-3">Items, prices, categories</span>
+    <% end %>
+
+    <%= link_to admin_dining_tables_path, class: "min-h-[100px] p-4 rounded-tile bg-card border-2 border-line flex flex-col justify-center gap-1 active:border-go active:bg-go-50" do %>
+      <span class="text-[19px] font-bold">Tables</span>
+      <span class="text-[14px] text-ink-3">Dining tables / counters</span>
+    <% end %>
+
+    <%= link_to admin_users_path, class: "min-h-[100px] p-4 rounded-tile bg-card border-2 border-line flex flex-col justify-center gap-1 active:border-go active:bg-go-50" do %>
+      <span class="text-[19px] font-bold">Staff</span>
+      <span class="text-[14px] text-ink-3">Waiter, cashier, kitchen PINs</span>
+    <% end %>
+
+    <%= link_to admin_sales_path, class: "min-h-[100px] p-4 rounded-tile bg-card border-2 border-line flex flex-col justify-center gap-1 active:border-go active:bg-go-50" do %>
+      <span class="text-[19px] font-bold">Sales</span>
+      <span class="text-[14px] text-ink-3">Daily reconciliation</span>
+    <% end %>
+
+    <%= link_to devices_path, class: "min-h-[100px] p-4 rounded-tile bg-card border-2 border-line flex flex-col justify-center gap-1 active:border-go active:bg-go-50" do %>
+      <span class="text-[19px] font-bold">Devices</span>
+      <span class="text-[14px] text-ink-3">Paired tablets and phones</span>
+    <% end %>
+
+    <%= link_to edit_admin_settings_path, class: "min-h-[100px] p-4 rounded-tile bg-card border-2 border-line flex flex-col justify-center gap-1 active:border-go active:bg-go-50" do %>
+      <span class="text-[19px] font-bold">Settings</span>
+      <span class="text-[14px] text-ink-3">Shop details, printer</span>
+    <% end %>
+  </div>
+</div>

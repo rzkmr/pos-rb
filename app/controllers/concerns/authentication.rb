@@ -6,6 +6,7 @@ module Authentication
   included do
     before_action :redirect_to_setup_if_needed
     before_action :set_current_shop
+    before_action :set_current_admin
     before_action :set_current_device
     before_action :set_current_user
     before_action :require_device
@@ -43,6 +44,13 @@ module Authentication
     return unless user_id
 
     Current.user = Current.shop&.users&.active&.find_by(id: user_id)
+  end
+
+  def set_current_admin
+    admin_user_id = session[:admin_user_id]
+    return unless admin_user_id
+
+    Current.admin = Current.shop&.admin_users&.active&.find_by(id: admin_user_id)
   end
 
   def require_device

@@ -1,0 +1,11 @@
+alpha_admin:
+  shop: alpha
+  username: admin
+  password_digest: <%= BCrypt::Password.create("supersecret1") %>
+  active: true
+
+beta_admin:
+  shop: beta
+  username: admin
+  password_digest: <%= BCrypt::Password.create("supersecret1") %>
+  active: true

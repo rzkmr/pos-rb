@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   include ShopScoped
 
-  ROLES = %w[waiter cashier kitchen admin].freeze
+  ROLES = %w[waiter cashier kitchen].freeze
 
   has_secure_password :pin, validations: false
 

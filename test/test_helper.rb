@@ -21,6 +21,11 @@ module SignsInAsUser
     post session_url, params: { user_id: user.id, pin: pin }
     device
   end
+
+  # Admin login is username + password, independent of device pairing.
+  def admin_sign_in_as(admin_user, password:)
+    post admin_session_url, params: { username: admin_user.username, password: password }
+  end
 end
 
 ActionDispatch::IntegrationTest.include SignsInAsUser

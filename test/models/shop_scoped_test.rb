@@ -6,14 +6,14 @@ class ShopScopedTest < ActiveSupport::TestCase
   test "default scope hides other shops' records when Current.shop is set" do
     Current.shop = shops(:alpha)
 
-    assert_includes User.all, users(:alpha_admin)
-    assert_not_includes User.all, users(:beta_admin)
+    assert_includes User.all, users(:alpha_waiter)
+    assert_not_includes AdminUser.all, admin_users(:beta_admin)
   end
 
   test "without Current.shop all shops are visible" do
     Current.shop = nil
 
-    assert_includes User.all, users(:beta_admin)
+    assert_includes AdminUser.all, admin_users(:beta_admin)
   end
 
   test "new records default to Current.shop" do
