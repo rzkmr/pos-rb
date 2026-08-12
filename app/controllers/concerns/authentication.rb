@@ -4,6 +4,7 @@ module Authentication
   DEVICE_COOKIE = :device_token
 
   included do
+    before_action :redirect_to_setup_if_needed
     before_action :set_current_shop
     before_action :set_current_device
     before_action :set_current_user
@@ -12,6 +13,14 @@ module Authentication
   end
 
   private
+
+  # No shop exists yet on a fresh install — send every request to the
+  # one-time setup wizard instead of "Device not paired". See SetupController.
+  def redirect_to_setup_if_needed
+    return if Shop.exists?
+
+    redirect_to new_setup_path unless is_a?(SetupController)
+  end
 
   # Single shop in production; see CLAUDE.md — multi-tenancy is a later routing change.
   def set_current_shop

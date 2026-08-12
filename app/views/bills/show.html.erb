@@ -1,86 +1,107 @@
-<h1><%= @table_session.dining_table.label %> — Bill</h1>
+<div class="min-h-screen bg-shell flex flex-col">
+  <header class="bg-ink text-surface px-5 py-4 flex items-center justify-between">
+    <div class="text-[22px] font-bold"><%= @table_session.dining_table.label %> — बिल</div>
+    <%= link_to "← टेबलहरू", dining_tables_path, class: "text-[16px] underline opacity-85" %>
+  </header>
 
-<p><%= link_to "Back to tables", dining_tables_path %></p>
-
-<section>
-  <h2>Line items</h2>
-  <ul>
-    <% @table_session.tickets.each do |ticket| %>
-      <% ticket.ticket_items.active.each do |item| %>
-        <li>
-          <%= item.quantity %> × <%= item.name_snapshot %>
-          — <%= money_to_inr(item.quantity * item.unit_price_paise) %>
-          <%= form_with url: void_ticket_item_path(item), method: :patch do %>
-            <%= text_field_tag :reason, nil, placeholder: "Void reason", required: true %>
-            <%= submit_tag "Void" %>
+  <div class="p-4 flex flex-col gap-4 max-w-[640px] mx-auto w-full">
+    <section class="bg-card rounded-tile border border-line p-4">
+      <h2 class="text-[17px] font-semibold text-ink-2 mb-2">वस्तुहरू</h2>
+      <ul class="flex flex-col gap-2">
+        <% @table_session.tickets.each do |ticket| %>
+          <% ticket.ticket_items.active.each do |item| %>
+            <li class="flex items-center justify-between gap-3 py-2 border-b border-line last:border-0">
+              <span class="text-[21px] flex-1">
+                <span class="font-mono text-ink-2"><%= item.quantity %> ×</span> <%= item.name_snapshot %>
+              </span>
+              <span class="w-[130px] text-right font-mono text-[19px]"><%= money_to_inr(item.quantity * item.unit_price_paise) %></span>
+              <% if @table_session.status == "open" %>
+                <%= form_with url: void_ticket_item_path(item), method: :patch, class: "flex items-center gap-1.5" do %>
+                  <%= text_field_tag :reason, nil, placeholder: "कारण", required: true,
+                        class: "min-h-[44px] w-24 px-2 rounded-key border border-line-2 text-[15px]" %>
+                  <%= submit_tag "रद्द", class: "min-h-[44px] px-3 rounded-key text-[15px] font-bold border-[2px] border-stop text-stop active:bg-stop-50" %>
+                <% end %>
+              <% end %>
+            </li>
           <% end %>
-        </li>
-      <% end %>
-    <% end %>
-  </ul>
-</section>
-
-<section>
-  <h2>Totals</h2>
-  <p>Subtotal: <%= money_to_inr(@billing.taxable_paise) %></p>
-
-  <% if Current.shop.composition_scheme %>
-    <p>"Composition taxable person, not eligible to collect tax on supplies"</p>
-  <% else %>
-    <p>CGST: <%= money_to_inr(@billing.cgst_paise) %></p>
-    <p>SGST: <%= money_to_inr(@billing.sgst_paise) %></p>
-  <% end %>
-  <p>Round off: <%= money_to_inr(@billing.round_off_paise) %></p>
-  <p><strong>Total: <%= money_to_inr(@billing.total_paise) %></strong></p>
-
-  <% if @table_session.discount_paise.to_i > 0 %>
-    <p>Discount applied: <%= money_to_inr(@table_session.discount_paise) %> (<%= @table_session.discount_reason %>)</p>
-  <% end %>
-</section>
-
-<% if @table_session.status == "open" %>
-  <section>
-    <h2>Discount</h2>
-    <%= form_with url: table_session_discount_path(@table_session), method: :post do %>
-      <%= label_tag :amount_paise, "Amount (paise)" %>
-      <%= text_field_tag :amount_paise %>
-      <%= label_tag :reason, "Reason" %>
-      <%= text_field_tag :reason %>
-      <%= submit_tag "Apply discount" %>
-    <% end %>
-  </section>
-
-  <section>
-    <h2>Take payment</h2>
-    <p>Paid so far: <%= money_to_inr(@table_session.paid_paise) %></p>
-    <p>Remaining: <%= money_to_inr(@billing.total_paise - @table_session.paid_paise) %></p>
-    <%= form_with url: table_session_payments_path(@table_session), method: :post do %>
-      <%= label_tag "payment_method", "Method" %>
-      <%= select_tag "payment[method]", options_for_select(Payment::METHODS) %>
-      <%= label_tag "payment_amount_paise", "Amount (paise)" %>
-      <%= text_field_tag "payment[amount_paise]" %>
-      <%= label_tag "payment_reference", "Reference" %>
-      <%= text_field_tag "payment[reference]" %>
-      <%= submit_tag "Record payment" %>
-    <% end %>
-  </section>
-<% else %>
-  <p>Session <%= @table_session.status %>.</p>
-
-  <% if @invoice %>
-    <section>
-      <h2>Invoice <%= @invoice.number %></h2>
-      <% latest_print_job = @invoice.print_jobs.order(:created_at).last %>
-      <% if latest_print_job %>
-        <p>Print status: <%= latest_print_job.status %></p>
-        <% if latest_print_job.status == "failed" %>
-          <p class="error">Print failed: <%= latest_print_job.last_error %></p>
         <% end %>
-      <% end %>
-      <% if @invoice.print_count.to_i > 0 %>
-        <p>Reprinted <%= @invoice.print_count %> time(s).</p>
-      <% end %>
-      <%= button_to "Reprint", reprint_invoice_path(@invoice), method: :post %>
+      </ul>
     </section>
-  <% end %>
-<% end %>
+
+    <section class="bg-card rounded-tile border border-line p-5">
+      <div class="text-[24px] font-semibold">जम्मा (कर सहित)</div>
+      <div class="text-[38px] font-mono font-bold"><%= money_to_inr(@billing.total_paise) %></div>
+
+      <div class="mt-3 flex flex-col gap-1 text-[17px] text-ink-3">
+        <div class="flex justify-between"><span>मूल्य</span><span class="font-mono"><%= money_to_inr(@billing.taxable_paise) %></span></div>
+        <% if Current.shop.composition_scheme %>
+          <div class="text-[15px] italic">Composition taxable person, not eligible to collect tax on supplies</div>
+        <% else %>
+          <div class="flex justify-between"><span>मू.अ.कर (CGST)</span><span class="font-mono"><%= money_to_inr(@billing.cgst_paise) %></span></div>
+          <div class="flex justify-between"><span>मू.अ.कर (SGST)</span><span class="font-mono"><%= money_to_inr(@billing.sgst_paise) %></span></div>
+        <% end %>
+        <div class="flex justify-between"><span>राउन्ड अफ</span><span class="font-mono"><%= money_to_inr(@billing.round_off_paise) %></span></div>
+        <% if @table_session.discount_paise.to_i > 0 %>
+          <div class="flex justify-between text-go"><span>छुट (<%= @table_session.discount_reason %>)</span><span class="font-mono">-<%= money_to_inr(@table_session.discount_paise) %></span></div>
+        <% end %>
+      </div>
+    </section>
+
+    <% if @table_session.status == "open" %>
+      <section class="bg-card rounded-tile border border-line p-4">
+        <h2 class="text-[17px] font-semibold text-ink-2 mb-2">छुट</h2>
+        <%= form_with url: table_session_discount_path(@table_session), method: :post, class: "flex flex-col gap-2.5" do %>
+          <%= text_field_tag :amount_paise, nil, placeholder: "रकम (paise)",
+                class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px]" %>
+          <%= text_field_tag :reason, nil, placeholder: "कारण",
+                class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[19px]" %>
+          <%= submit_tag "छुट लागू गर्नुहोस्", class: "min-h-[56px] rounded-ctl text-[18px] font-bold bg-key text-ink active:bg-key-2" %>
+        <% end %>
+      </section>
+
+      <section class="rounded-tile border-2 border-go bg-go-50 p-4">
+        <div class="text-[22px] font-bold">
+          <% remaining = @billing.total_paise - @table_session.paid_paise %>
+          <% if remaining <= 0 %>
+            पूरा भुक्तानी भयो
+          <% else %>
+            बाँकी: <%= money_to_inr(remaining) %>
+          <% end %>
+        </div>
+        <div class="text-[16px] text-ink-3">भुक्तानी भइसकेको: <%= money_to_inr(@table_session.paid_paise) %></div>
+
+        <%= form_with url: table_session_payments_path(@table_session), method: :post, class: "mt-3 flex flex-col gap-2.5" do %>
+          <%= select_tag "payment[method]", options_for_select(Payment::METHODS),
+                class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[18px]" %>
+          <%= text_field_tag "payment[amount_paise]", nil, placeholder: "रकम (paise)",
+                class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px]" %>
+          <%= text_field_tag "payment[reference]", nil, placeholder: "सन्दर्भ नं. (वैकल्पिक)",
+                class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[19px]" %>
+          <%= submit_tag "भुक्तानी दर्ता गर्नुहोस्", class: "min-h-[84px] rounded-tile text-[20px] font-bold border-[2.5px] border-ink bg-card active:bg-key" %>
+        <% end %>
+      </section>
+    <% else %>
+      <div class="text-center text-[17px] text-ink-3">सत्र <%= @table_session.status %>।</div>
+
+      <% if @invoice %>
+        <section class="bg-card rounded-tile border border-line p-4">
+          <h2 class="text-[18px] font-bold mb-1">बीजक <%= @invoice.number %></h2>
+          <% latest_print_job = @invoice.print_jobs.order(:created_at).last %>
+          <% if latest_print_job %>
+            <p class="text-[16px] text-ink-3">प्रिन्ट स्थिति: <%= latest_print_job.status %></p>
+            <% if latest_print_job.status == "failed" %>
+              <p class="mt-1 px-3 py-2 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[16px] font-semibold">
+                प्रिन्ट असफल भयो: <%= latest_print_job.last_error %>
+              </p>
+            <% end %>
+          <% end %>
+          <% if @invoice.print_count.to_i > 0 %>
+            <p class="text-[15px] text-ink-3 mt-1"><%= @invoice.print_count %> पटक पुन: छापियो।</p>
+          <% end %>
+          <%= button_to "बिल छाप्नुहोस्", reprint_invoice_path(@invoice), method: :post,
+                class: "mt-3 w-full min-h-[70px] rounded-tile text-[20px] font-bold bg-go text-surface active:bg-go-700" %>
+        </section>
+      <% end %>
+    <% end %>
+  </div>
+</div>

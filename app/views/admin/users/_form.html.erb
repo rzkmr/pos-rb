@@ -1,23 +1,33 @@
-<%= form_with model: [ :admin, user ] do |f| %>
+<%= form_with model: [ :admin, user ], class: "flex flex-col gap-4 max-w-lg" do |f| %>
   <% if user.errors.any? %>
-    <ul>
-      <% user.errors.full_messages.each do |message| %>
-        <li><%= message %></li>
-      <% end %>
-    </ul>
+    <div class="px-4 py-3 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[15px]">
+      <ul class="list-disc pl-5">
+        <% user.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
   <% end %>
 
-  <%= f.label :name %>
-  <%= f.text_field :name %>
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :name, class: "text-[15px] font-semibold" %>
+    <%= f.text_field :name, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
+  </div>
 
-  <%= f.label :role %>
-  <%= f.select :role, User::ROLES %>
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :role, class: "text-[15px] font-semibold" %>
+    <%= f.select :role, User::ROLES, {}, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
+  </div>
 
-  <%= f.label :pin, "PIN (4 digits#{' — leave blank to keep current' if user.persisted?})" %>
-  <%= f.password_field :pin %>
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :pin, "PIN (4 digits#{' — leave blank to keep current' if user.persisted?})", class: "text-[15px] font-semibold" %>
+    <%= f.password_field :pin, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[18px] tracking-[0.4em]" %>
+  </div>
 
-  <%= f.label :active %>
-  <%= f.check_box :active %>
+  <div class="flex items-center gap-2">
+    <%= f.check_box :active, class: "w-5 h-5" %>
+    <%= f.label :active, class: "text-[15px] font-semibold" %>
+  </div>
 
-  <%= f.submit %>
+  <%= f.submit class: "min-h-[52px] rounded-ctl text-[17px] font-bold bg-go text-surface active:bg-go-700" %>
 <% end %>

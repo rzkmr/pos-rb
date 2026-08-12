@@ -45,15 +45,23 @@ export default class extends Controller {
 
   buildLineItem(item) {
     const li = document.createElement("li")
-    li.append(`${item.quantity} × ${item.name} `)
+    li.className = "flex items-center justify-between gap-2 px-3 py-2.5 rounded-ctl bg-card border border-line"
+
+    const label = document.createElement("span")
+    label.className = "text-[19px] flex items-center gap-2"
+    const qty = document.createElement("span")
+    qty.className = "font-mono font-bold text-go"
+    qty.textContent = `${item.quantity} ×`
+    label.append(qty, ` ${item.name}`)
 
     const removeButton = document.createElement("button")
     removeButton.type = "button"
-    removeButton.textContent = "Remove"
+    removeButton.textContent = "हटाउनुहोस्"
+    removeButton.className = "min-h-[44px] px-3 rounded-key text-[15px] font-bold border-[2px] border-stop text-stop active:bg-stop-50"
     removeButton.dataset.action = "order-cart#remove"
     removeButton.dataset.orderCartMenuItemIdParam = item.menuItemId
-    li.append(removeButton)
 
+    li.append(label, removeButton)
     return li
   }
 

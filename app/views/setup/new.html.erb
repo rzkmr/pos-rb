@@ -1,0 +1,87 @@
+<div class="min-h-screen flex items-center justify-center bg-shell p-5">
+  <div class="w-full max-w-[520px] bg-surface rounded-phone p-6 flex flex-col gap-6">
+    <div>
+      <div class="text-[22px] font-bold">Set up your restaurant</div>
+      <div class="text-[16px] text-ink-3">One-time setup. This screen disappears once your shop exists.</div>
+    </div>
+
+    <% if @shop&.errors&.any? %>
+      <div class="px-4 py-3 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[15px]">
+        <ul class="list-disc pl-5">
+          <% @shop.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <%= form_with url: setup_path, method: :post, class: "flex flex-col gap-5" do %>
+      <div class="flex flex-col gap-3">
+        <div class="text-[15px] font-bold text-ink-2">Shop</div>
+
+        <div class="flex flex-col gap-1.5">
+          <%= label_tag :name, "Shop name", class: "text-[15px] font-semibold" %>
+          <%= text_field_tag :name, @shop&.name, required: true,
+                class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <%= label_tag :state_code, "GST state code (2 digits)", class: "text-[15px] font-semibold" %>
+          <%= text_field_tag :state_code, @shop&.state_code, required: true, maxlength: 2,
+                class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[17px]" %>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <%= label_tag :address, "Address", class: "text-[15px] font-semibold" %>
+          <%= text_field_tag :address, @shop&.address,
+                class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <%= label_tag :gstin, "GSTIN (leave blank if under composition scheme)", class: "text-[15px] font-semibold" %>
+          <%= text_field_tag :gstin, @shop&.gstin,
+                class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[17px]" %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <%= check_box_tag :composition_scheme, "1", @shop&.composition_scheme, class: "w-5 h-5" %>
+          <%= label_tag :composition_scheme, "Composition scheme (cannot collect GST)", class: "text-[15px] font-semibold" %>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 pt-2 border-t border-line">
+        <div class="text-[15px] font-bold text-ink-2">Device pairing PIN</div>
+        <div class="text-[14px] text-ink-3">
+          Any tablet or phone will need this PIN once, to join this shop. Keep it to yourself —
+          it is not a login.
+        </div>
+        <%= password_field_tag :admin_pin, nil, required: true, maxlength: 4, inputmode: "numeric",
+              placeholder: "4 digits",
+              class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px] tracking-[0.4em]" %>
+      </div>
+
+      <div class="flex flex-col gap-3 pt-2 border-t border-line">
+        <div class="text-[15px] font-bold text-ink-2">Your admin account</div>
+        <div class="text-[14px] text-ink-3">
+          This is you. You will sign in with your name and this PIN from any paired device.
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <%= label_tag :admin_name, "Your name", class: "text-[15px] font-semibold" %>
+          <%= text_field_tag :admin_name, nil, required: true,
+                class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <%= label_tag :admin_pin_login, "Your sign-in PIN (4 digits)", class: "text-[15px] font-semibold" %>
+          <%= password_field_tag :admin_pin_login, nil, required: true, maxlength: 4, inputmode: "numeric",
+                placeholder: "4 digits",
+                class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px] tracking-[0.4em]" %>
+        </div>
+      </div>
+
+      <%= submit_tag "Create shop and sign in",
+            class: "min-h-[64px] px-4 py-2.5 rounded-tile text-[19px] font-bold bg-go text-surface active:bg-go-700" %>
+    <% end %>
+  </div>
+</div>

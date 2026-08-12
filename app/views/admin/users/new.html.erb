@@ -1,5 +1,7 @@
-<h1>Add user</h1>
-
-<%= render "form", user: @user %>
-
-<p><%= link_to "Back", admin_users_path %></p>
+<div class="min-h-screen bg-shell p-6">
+  <div class="max-w-lg mx-auto flex flex-col gap-4">
+    <h1 class="text-[26px] font-bold">Add user</h1>
+    <%= render "form", user: @user %>
+    <%= link_to "← Back", admin_users_path, class: "text-go font-semibold" %>
+  </div>
+</div>

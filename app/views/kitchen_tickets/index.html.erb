@@ -2,35 +2,71 @@
      data-controller="heartbeat"
      data-heartbeat-url-value="<%= heartbeat_path %>"
      data-action="heartbeat:stale@window->kitchen-alarm#beep"
+     class="fixed inset-0 z-50 bg-warn text-warn-900 flex items-center justify-center"
      hidden>
-  <p>RECONNECTING&hellip; <span data-heartbeat-target="staleSeconds">0</span>s</p>
+  <p class="text-[46px] font-bold">जोडिँदै... <span data-heartbeat-target="staleSeconds">0</span> सेकेन्ड</p>
 </div>
-
-<h1>Kitchen</h1>
 
 <%= turbo_stream_from [ Current.shop, :kitchen ] %>
 
-<div id="kitchen_tickets" data-controller="kitchen-alarm">
-  <% @tickets.each do |ticket| %>
-    <div id="<%= dom_id(ticket) %>" data-kitchen-alarm-target="ticket">
-      <strong>Ticket #<%= ticket.number %></strong> — <%= ticket.table_session.dining_table.label %> — <%= ticket.status %>
-      <ul>
-        <% ticket.ticket_items.each do |item| %>
-          <li><%= item.quantity %> × <%= item.name_snapshot %><%= " (#{item.notes})" if item.notes.present? %></li>
-        <% end %>
-      </ul>
-      <%= form_with url: kitchen_ticket_path(ticket), method: :patch do %>
-        <% if ticket.status == "pending" %>
-          <%= hidden_field_tag :status, "preparing" %>
-          <%= submit_tag "Start preparing" %>
-        <% elsif ticket.status == "preparing" %>
-          <%= hidden_field_tag :status, "ready" %>
-          <%= submit_tag "Mark ready" %>
-        <% elsif ticket.status == "ready" %>
-          <%= hidden_field_tag :status, "served" %>
-          <%= submit_tag "Mark served" %>
-        <% end %>
-      <% end %>
+<div class="min-h-screen bg-wall flex flex-col">
+  <header class="bg-wall-2 px-5 h-16 flex items-center justify-between text-white">
+    <div class="text-[30px] font-bold">भान्सा</div>
+    <div class="flex items-center gap-2.5">
+      <span class="w-[18px] h-[18px] rounded-full bg-live"></span>
+      <span class="text-[20px]">जोडिएको</span>
     </div>
-  <% end %>
+    <div class="text-[26px] font-mono"><%= Time.current.strftime("%H:%M") %></div>
+  </header>
+
+  <div id="kitchen_tickets" data-controller="kitchen-alarm"
+       class="p-4 grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));">
+    <% @tickets.each do |ticket| %>
+      <% age_minutes = ((Time.current - ticket.placed_at) / 60).to_i %>
+      <% state = age_minutes >= 15 ? :late : age_minutes >= 10 ? :aging : :fresh %>
+      <% card_classes, border_color, glyph = {
+           fresh: [ "bg-card", "border-slate", "■" ],
+           aging: [ "bg-warn-50", "border-warn-700", "●" ],
+           late:  [ "bg-stop-50", "border-stop", "▲" ]
+         }[state] %>
+      <div id="<%= dom_id(ticket) %>" data-kitchen-alarm-target="ticket"
+           class="relative min-h-[300px] rounded-tile border-[3px] <%= card_classes %> <%= border_color %> overflow-hidden flex flex-col">
+        <% if state == :late %>
+          <div class="pointer-events-none absolute inset-0
+                      bg-[repeating-linear-gradient(135deg,rgba(180,35,29,.22)_0_14px,rgba(180,35,29,0)_14px_30px)]"></div>
+        <% end %>
+        <div class="px-3.5 py-2.5 flex items-center justify-between text-white <%= { fresh: 'bg-slate', aging: 'bg-warn-700', late: 'bg-stop' }[state] %>">
+          <span class="text-[26px] font-bold"><%= ticket.table_session.dining_table.label %></span>
+          <span class="text-[20px] font-mono"><%= glyph %> <%= age_minutes %>मि</span>
+        </div>
+        <div class="p-3.5 flex-1 flex flex-col gap-2">
+          <div class="text-[16px] font-semibold text-ink-3">राउन्ड #<%= ticket.number %> — <%= ticket.status %></div>
+          <ul class="flex flex-col gap-1.5">
+            <% ticket.ticket_items.each do |item| %>
+              <li class="text-[28px] leading-[1.3]">
+                <span class="font-mono text-[26px] font-bold"><%= item.quantity %>×</span> <%= item.name_snapshot %>
+                <% if item.notes.present? %>
+                  <div class="mt-1 px-2.5 py-1.5 rounded-key bg-warn text-warn-900 text-[21px] font-bold border-l-[6px] border-[#7a5300]">
+                    <%= item.notes %>
+                  </div>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+        <%= form_with url: kitchen_ticket_path(ticket), method: :patch, class: "p-3.5 pt-0" do %>
+          <% if ticket.status == "pending" %>
+            <%= hidden_field_tag :status, "preparing" %>
+            <%= submit_tag "तयारी सुरु", class: "w-full min-h-[68px] rounded-ctl text-[19px] font-bold bg-key text-ink active:bg-key-2" %>
+          <% elsif ticket.status == "preparing" %>
+            <%= hidden_field_tag :status, "ready" %>
+            <%= submit_tag "✓ तयार", class: "w-full min-h-[68px] rounded-ctl text-[19px] font-bold bg-go text-surface active:bg-go-700" %>
+          <% elsif ticket.status == "ready" %>
+            <%= hidden_field_tag :status, "served" %>
+            <%= submit_tag "पस्किइयो", class: "w-full min-h-[68px] rounded-ctl text-[19px] font-bold bg-go text-surface active:bg-go-700" %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
 </div>

@@ -1,26 +1,38 @@
-<%= form_with model: [ :admin, menu_item ] do |f| %>
+<%= form_with model: [ :admin, menu_item ], class: "flex flex-col gap-4 max-w-lg" do |f| %>
   <% if menu_item.errors.any? %>
-    <ul>
-      <% menu_item.errors.full_messages.each do |message| %>
-        <li><%= message %></li>
-      <% end %>
-    </ul>
+    <div class="px-4 py-3 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[15px]">
+      <ul class="list-disc pl-5">
+        <% menu_item.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
   <% end %>
 
-  <%= f.label :name %>
-  <%= f.text_field :name %>
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :name, class: "text-[15px] font-semibold" %>
+    <%= f.text_field :name, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
+  </div>
 
-  <%= f.label :category %>
-  <%= f.select :category, MenuItem::CATEGORIES %>
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :category, class: "text-[15px] font-semibold" %>
+    <%= f.select :category, MenuItem::CATEGORIES, {}, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
+  </div>
 
-  <%= f.label :price_paise, "Price (paise)" %>
-  <%= f.number_field :price_paise %>
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :price_paise, "Price (paise)", class: "text-[15px] font-semibold" %>
+    <%= f.number_field :price_paise, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+  </div>
 
-  <%= f.label :hsn_sac, "HSN/SAC" %>
-  <%= f.text_field :hsn_sac %>
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :hsn_sac, "HSN/SAC", class: "text-[15px] font-semibold" %>
+    <%= f.text_field :hsn_sac, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+  </div>
 
-  <%= f.label :active %>
-  <%= f.check_box :active %>
+  <div class="flex items-center gap-2">
+    <%= f.check_box :active, class: "w-5 h-5" %>
+    <%= f.label :active, class: "text-[15px] font-semibold" %>
+  </div>
 
-  <%= f.submit %>
+  <%= f.submit class: "min-h-[52px] rounded-ctl text-[17px] font-bold bg-go text-surface active:bg-go-700" %>
 <% end %>

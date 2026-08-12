@@ -1,5 +1,7 @@
-<h1>Edit menu item</h1>
-
-<%= render "form", menu_item: @menu_item %>
-
-<p><%= link_to "Back", admin_menu_items_path %></p>
+<div class="min-h-screen bg-shell p-6">
+  <div class="max-w-lg mx-auto flex flex-col gap-4">
+    <h1 class="text-[26px] font-bold">Edit menu item</h1>
+    <%= render "form", menu_item: @menu_item %>
+    <%= link_to "← Back", admin_menu_items_path, class: "text-go font-semibold" %>
+  </div>
+</div>

@@ -1,58 +1,81 @@
-<h1>Daily sales — <%= @daily_sales.date.to_fs(:long) %></h1>
-
-<%= form_with url: admin_sales_path, method: :get do %>
-  <%= label_tag :date %>
-  <%= date_field_tag :date, @daily_sales.date %>
-  <%= submit_tag "View" %>
-<% end %>
-
-<section>
-  <h2>Totals</h2>
-  <p>Invoices issued: <%= @daily_sales.invoices.count %></p>
-  <p>Invoice total: <%= money_to_inr(@daily_sales.invoice_total_paise) %></p>
-  <p>Payments received: <%= money_to_inr(@daily_sales.payment_total_paise) %></p>
-  <p>Voided lines: <%= @daily_sales.void_count %></p>
-  <p>Reprints: <%= @daily_sales.reprint_count %></p>
-</section>
-
-<section>
-  <h2>Payment method reconciliation</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Method</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @daily_sales.by_payment_method.each do |row| %>
-        <tr>
-          <td><%= row.method %></td>
-          <td><%= money_to_inr(row.total_paise) %></td>
-        </tr>
+<div class="min-h-screen bg-shell p-6">
+  <div class="max-w-4xl mx-auto flex flex-col gap-5">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <h1 class="text-[26px] font-bold">Daily sales — <%= @daily_sales.date.to_fs(:long) %></h1>
+      <%= form_with url: admin_sales_path, method: :get, class: "flex items-center gap-2" do %>
+        <%= date_field_tag :date, @daily_sales.date, class: "min-h-[44px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
+        <%= submit_tag "View", class: "min-h-[44px] px-4 rounded-ctl bg-key text-ink text-[16px] font-bold" %>
       <% end %>
-    </tbody>
-  </table>
-</section>
+    </div>
 
-<section>
-  <h2>Invoices</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Number</th>
-        <th>Time</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @daily_sales.invoices.each do |invoice| %>
-        <tr>
-          <td><%= invoice.number %></td>
-          <td><%= invoice.issued_at.strftime("%H:%M") %></td>
-          <td><%= money_to_inr(invoice.total_paise) %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-</section>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+      <div class="bg-card rounded-tile border border-line p-4">
+        <div class="text-[14px] text-ink-3">Invoice total</div>
+        <div class="text-[26px] font-mono font-bold"><%= money_to_inr(@daily_sales.invoice_total_paise) %></div>
+      </div>
+      <div class="bg-card rounded-tile border border-line p-4">
+        <div class="text-[14px] text-ink-3">Invoices issued</div>
+        <div class="text-[26px] font-mono font-bold"><%= @daily_sales.invoices.count %></div>
+      </div>
+      <div class="bg-card rounded-tile border border-line p-4">
+        <div class="text-[14px] text-ink-3">Voided lines</div>
+        <div class="text-[26px] font-mono font-bold"><%= @daily_sales.void_count %></div>
+      </div>
+      <div class="bg-card rounded-tile border border-line p-4">
+        <div class="text-[14px] text-ink-3">Reprints</div>
+        <div class="text-[26px] font-mono font-bold"><%= @daily_sales.reprint_count %></div>
+      </div>
+    </div>
+
+    <div class="bg-card rounded-tile border border-line p-4">
+      <div class="text-[14px] text-ink-3">Payments received</div>
+      <div class="text-[26px] font-mono font-bold"><%= money_to_inr(@daily_sales.payment_total_paise) %></div>
+    </div>
+
+    <section>
+      <h2 class="text-[19px] font-bold mb-2">Payment method reconciliation</h2>
+      <div class="bg-card rounded-tile border border-line overflow-x-auto">
+        <table class="w-full text-[16px]">
+          <thead>
+            <tr class="bg-[#f2f1ec] text-left">
+              <th class="px-4 py-3 font-bold">Method</th>
+              <th class="px-4 py-3 font-bold">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @daily_sales.by_payment_method.each do |row| %>
+              <tr class="border-t border-line">
+                <td class="px-4 py-3"><%= row.method %></td>
+                <td class="px-4 py-3 font-mono"><%= money_to_inr(row.total_paise) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-[19px] font-bold mb-2">Invoices</h2>
+      <div class="bg-card rounded-tile border border-line overflow-x-auto">
+        <table class="w-full text-[16px]">
+          <thead>
+            <tr class="bg-[#f2f1ec] text-left">
+              <th class="px-4 py-3 font-bold">Number</th>
+              <th class="px-4 py-3 font-bold">Time</th>
+              <th class="px-4 py-3 font-bold">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @daily_sales.invoices.each do |invoice| %>
+              <tr class="border-t border-line">
+                <td class="px-4 py-3 font-mono"><%= invoice.number %></td>
+                <td class="px-4 py-3 font-mono"><%= invoice.issued_at.strftime("%H:%M") %></td>
+                <td class="px-4 py-3 font-mono"><%= money_to_inr(invoice.total_paise) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>

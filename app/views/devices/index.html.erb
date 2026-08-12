@@ -1,22 +1,31 @@
-<h1>Devices</h1>
+<div class="min-h-screen bg-shell p-6">
+  <div class="max-w-3xl mx-auto flex flex-col gap-4">
+    <h1 class="text-[26px] font-bold">Devices</h1>
 
-<table>
-  <thead>
-    <tr>
-      <th>Label</th>
-      <th>Kind</th>
-      <th>Last seen</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @devices.each do |device| %>
-      <tr>
-        <td><%= device.label %></td>
-        <td><%= device.kind %></td>
-        <td><%= device.last_seen_at&.to_fs(:short) || "never" %></td>
-        <td><%= button_to "Revoke", device_path(device), method: :delete %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+    <div class="bg-card rounded-tile border border-line overflow-x-auto">
+      <table class="w-full text-[16px]">
+        <thead>
+          <tr class="bg-[#f2f1ec] text-left">
+            <th class="px-4 py-3 font-bold">Label</th>
+            <th class="px-4 py-3 font-bold">Kind</th>
+            <th class="px-4 py-3 font-bold">Last seen</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @devices.each do |device| %>
+            <tr class="border-t border-line">
+              <td class="px-4 py-3"><%= device.label %></td>
+              <td class="px-4 py-3"><%= device.kind %></td>
+              <td class="px-4 py-3 font-mono"><%= device.last_seen_at&.to_fs(:short) || "never" %></td>
+              <td class="px-4 py-3 text-right">
+                <%= button_to "Revoke", device_path(device), method: :delete,
+                      class: "px-3 py-1.5 rounded-key border-2 border-stop text-stop text-[14px] font-bold" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -36,3 +36,5 @@
 .claude
 CLAUDE.md
 ARCHITECTURE.md
+/app/assets/builds/*
+!/app/assets/builds/.keep

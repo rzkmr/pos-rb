@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  /* neutrals — warm, low chroma */
+  --color-shell:   #edece7;  /* page background */
+  --color-surface: #f7f6f2;  /* panels, sheets */
+  --color-card:    #ffffff;  /* tiles, rows, tickets */
+  --color-line:    #dddbd3;  /* hairline border */
+  --color-line-2:  #d2d0c8;  /* input / control border */
+  --color-key:     #e4e2da;  /* keypad, inactive chips */
+  --color-key-2:   #cfccc2;  /* pressed / disabled */
+  --color-ink:     #16181c;  /* primary text, dark buttons */
+  --color-ink-2:   #4a4d54;  /* secondary text */
+  --color-ink-3:   #6a6d74;  /* tertiary */
+  --color-ink-4:   #7a7d84;  /* mono captions, disabled label */
+
+  /* semantic — state must never be colour alone */
+  --color-go:      #1d5c48;  /* primary action, "connected", match */
+  --color-go-700:  #12402f;  /* pressed */
+  --color-go-50:   #e8f2ee;  /* tint */
+  --color-warn:    #f0b429;  /* pending, aging ticket, stale overlay */
+  --color-warn-700:#a97400;  /* aging border */
+  --color-warn-900:#22190a;  /* text on warn */
+  --color-warn-50: #fdf3dc;  /* aging card fill */
+  --color-stop:    #b4231d;  /* void, late ticket, cash short */
+  --color-stop-50: #fdeceb;  /* late card fill */
+  --color-slate:   #3d4249;  /* fresh ticket border */
+
+  /* kitchen wall chrome (dark) */
+  --color-wall:    #14161a;
+  --color-wall-2:  #0e1013;
+  --color-wall-3:  #2a2e34;
+  --color-live:    #3ec07a;
+
+  --font-ne:   "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-mono: "Noto Sans Mono", ui-monospace, monospace;
+
+  --radius-tile:  1rem;     /* 16px  item tiles, sheets */
+  --radius-ctl:   0.875rem; /* 14px  primary buttons, modals rows */
+  --radius-key:   0.75rem;  /* 12px  keypad, chips-square */
+  --radius-phone: 2.25rem;  /* 36px  phone screen inner radius */
+}
+
+/* Self-host the font — the server runs on a LAN and must work with the internet unplugged.
+   Do NOT use the Google Fonts CDN in production. */
+@font-face {
+  font-family: "Noto Sans Devanagari";
+  src: url("/fonts/NotoSansDevanagari-Regular.woff2") format("woff2");
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "Noto Sans Devanagari";
+  src: url("/fonts/NotoSansDevanagari-Medium.woff2") format("woff2");
+  font-weight: 500; font-display: swap;
+}
+@font-face {
+  font-family: "Noto Sans Devanagari";
+  src: url("/fonts/NotoSansDevanagari-SemiBold.woff2") format("woff2");
+  font-weight: 600; font-display: swap;
+}
+@font-face {
+  font-family: "Noto Sans Devanagari";
+  src: url("/fonts/NotoSansDevanagari-Bold.woff2") format("woff2");
+  font-weight: 700; font-display: swap;
+}
+
+@layer base {
+  html { font-family: var(--font-ne); line-height: 1.6; } /* 1.6 min — 1.4 clips शिरोरेखा on Android */
+  body { @apply bg-shell text-ink; text-wrap: pretty; -webkit-tap-highlight-color: transparent; }
+  a { @apply text-go; }
+  a:hover { @apply text-go-700; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}

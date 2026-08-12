@@ -1,54 +1,79 @@
-<h1><%= @dining_table.label %></h1>
+<div class="min-h-screen bg-shell flex flex-col" data-controller="order-cart"
+     data-order-cart-table-session-id-value="<%= @table_session.id %>"
+     data-order-cart-submit-url-value="<%= tickets_path %>">
 
-<p>
-  <%= link_to "All tables", dining_tables_path %>
-  · <%= link_to "Bill", table_session_bill_path(@table_session) %>
-</p>
-
-<div id="pending-banner" data-order-cart-target="pendingBanner" hidden>
-  Sending <span data-order-cart-target="pendingCount"></span> pending ticket(s)…
-</div>
-
-<section>
-  <h2>Previous tickets</h2>
-  <% @tickets.each do |ticket| %>
-    <div>
-      <strong>Ticket #<%= ticket.number %></strong> — <%= ticket.status %>
-      <ul>
-        <% ticket.ticket_items.each do |item| %>
-          <li><%= item.quantity %> × <%= item.name_snapshot %></li>
-        <% end %>
-      </ul>
+  <header class="bg-go text-[#f2f7f4] px-4 py-3.5">
+    <div class="flex items-center justify-between">
+      <div class="text-[24px] font-bold"><%= @dining_table.label %></div>
+      <div class="text-[19px]"><%= @dining_table.seats %> जना</div>
     </div>
-  <% end %>
-</section>
+    <div class="text-[16px] opacity-85">
+      <%= link_to "← सबै टेबल", dining_tables_path, class: "underline" %>
+      · <%= link_to "बिल", table_session_bill_path(@table_session), class: "underline" %>
+    </div>
+  </header>
 
-<section data-controller="order-cart"
-          data-order-cart-table-session-id-value="<%= @table_session.id %>"
-          data-order-cart-submit-url-value="<%= tickets_path %>">
-  <h2>Menu</h2>
-  <% @menu_items.group_by(&:category).each do |category, items| %>
-    <h3><%= category.titleize %></h3>
-    <ul>
-      <% items.each do |menu_item| %>
-        <li>
-          <%= menu_item.name %> — <%= money_to_inr(menu_item.price_paise) %>
+  <div id="pending-banner" data-order-cart-target="pendingBanner"
+       class="flex items-center gap-2.5 px-4 py-3 bg-warn text-warn-900 border-b-[3px] border-warn-700" hidden>
+    <span class="w-3.5 h-3.5 rounded-full bg-[#7a5300] animate-pulse"></span>
+    <span class="text-[17px] font-bold">
+      <span data-order-cart-target="pendingCount"></span> अर्डर पठाइँदै... इन्टरनेट जोडिएन
+    </span>
+  </div>
+
+  <% if @tickets.any? %>
+    <section class="px-4 py-3.5 border-b border-line">
+      <h2 class="text-[17px] font-semibold text-ink-2 mb-2">अघिल्ला राउन्डहरू</h2>
+      <div class="flex flex-col gap-2">
+        <% @tickets.each do |ticket| %>
+          <div class="p-3 rounded-ctl bg-card border border-line">
+            <div class="text-[16px] font-bold text-ink-2">राउन्ड #<%= ticket.number %> — <%= ticket.status %></div>
+            <ul class="text-[16px] mt-1">
+              <% ticket.ticket_items.each do |item| %>
+                <li><span class="font-mono"><%= item.quantity %> ×</span> <%= item.name_snapshot %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <section class="flex-1 flex flex-col overflow-hidden">
+    <div class="px-3.5 pt-3.5">
+      <h2 class="text-[17px] font-semibold text-ink-2 mb-1">मेनु</h2>
+    </div>
+    <div class="grid grid-cols-2 gap-2.5 p-3.5 overflow-y-auto">
+      <% @menu_items.group_by(&:category).each do |category, items| %>
+        <div class="col-span-2 text-[18px] font-bold text-ink-2 mt-2 first:mt-0"><%= category.titleize %></div>
+        <% items.each do |menu_item| %>
           <button type="button"
                   data-action="order-cart#add"
                   data-order-cart-menu-item-id-param="<%= menu_item.id %>"
                   data-order-cart-menu-item-name-param="<%= menu_item.name %>"
-                  data-order-cart-menu-item-price-param="<%= menu_item.price_paise %>">
-            Add
+                  data-order-cart-menu-item-price-param="<%= menu_item.price_paise %>"
+                  class="min-h-[104px] p-3 rounded-tile bg-card border-2 border-line
+                         flex flex-col justify-between items-start text-left gap-1.5
+                         active:border-go active:bg-go-50">
+            <span class="text-[20px] font-semibold leading-[1.35]"><%= menu_item.name %></span>
+            <span class="w-full flex items-center justify-between">
+              <span class="text-[18px] font-mono text-ink-2"><%= money_to_inr(menu_item.price_paise) %></span>
+            </span>
           </button>
-        </li>
+        <% end %>
       <% end %>
-    </ul>
-  <% end %>
+    </div>
+  </section>
 
-  <h2>Cart</h2>
-  <p data-order-cart-target="empty">No items yet.</p>
-  <ul data-order-cart-target="list"></ul>
-  <button type="button" data-action="order-cart#submit" data-order-cart-target="submit" disabled>
-    Send to kitchen
-  </button>
-</section>
+  <section class="border-t border-line bg-surface px-3.5 py-3">
+    <h2 class="text-[17px] font-semibold text-ink-2 mb-2">कार्ट</h2>
+    <p data-order-cart-target="empty" class="text-[16px] text-ink-3">अहिलेसम्म कुनै वस्तु छैन।</p>
+    <ul data-order-cart-target="list" class="flex flex-col gap-1.5 mb-3"></ul>
+    <button type="button" data-action="order-cart#submit" data-order-cart-target="submit" disabled
+            class="w-full min-h-[70px] px-4 py-2.5 rounded-tile text-[21px] font-bold leading-[1.35]
+                   bg-go text-surface active:bg-go-700
+                   disabled:bg-key-2 disabled:text-ink-4">
+      भान्सामा पठाउनुहोस्
+    </button>
+  </section>
+</div>
