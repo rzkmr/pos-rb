@@ -1,0 +1,17 @@
+alpha:
+  name: Alpha Restaurant
+  state_code: "27"
+  invoice_prefix: INV
+  invoice_fy: "2025-26"
+  invoice_sequence: 0
+  gst_rate_bp: 500
+  admin_pin_digest: <%= BCrypt::Password.create("9999") %>
+
+beta:
+  name: Beta Restaurant
+  state_code: "07"
+  invoice_prefix: INV
+  invoice_fy: "2025-26"
+  invoice_sequence: 0
+  gst_rate_bp: 500
+  admin_pin_digest: <%= BCrypt::Password.create("8888") %>

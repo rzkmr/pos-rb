@@ -1,0 +1,8 @@
+alpha_dosa:
+  shop: alpha
+  name: Masala Dosa
+  category: main
+  price_paise: 12000
+  hsn_sac: "996331"
+  active: true
+  position: 0
