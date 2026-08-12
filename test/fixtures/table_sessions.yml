@@ -1,0 +1,6 @@
+alpha_t1_open:
+  shop: alpha
+  dining_table: alpha_t1
+  opened_by: alpha_waiter
+  opened_at: <%= Time.current %>
+  status: open
