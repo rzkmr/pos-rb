@@ -23,6 +23,9 @@ Rails.application.routes.draw do
     resource :discount, only: [ :create ], controller: "discounts"
   end
   resources :tickets, only: [ :create ]
+  resources :invoices, only: [] do
+    member { post :reprint }
+  end
   resources :ticket_items, only: [] do
     member { patch :void }
   end

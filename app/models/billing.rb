@@ -28,7 +28,7 @@ class Billing
     result = compute(shop: shop, taxable_paise: table_session.subtotal_paise)
     financial_year = Shop.financial_year_for(Date.current)
 
-    shop.with_lock do
+    invoice = shop.with_lock do
       sequence = shop.next_invoice_sequence!(financial_year)
       table_session.invoices.create!(
         shop: shop,
@@ -44,5 +44,8 @@ class Billing
         gstin_snapshot: shop.gstin
       )
     end
+
+    Printing.enqueue_invoice!(invoice)
+    invoice
   end
 end

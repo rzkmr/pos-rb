@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_090012) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -136,6 +136,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_090012) do
     t.integer "invoice_sequence", default: 0, null: false
     t.string "name", null: false
     t.boolean "prices_include_tax", default: false, null: false
+    t.string "printer_host"
+    t.integer "printer_port", default: 9100, null: false
     t.string "state_code", null: false
     t.datetime "updated_at", null: false
   end

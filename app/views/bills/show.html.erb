@@ -66,4 +66,21 @@
   </section>
 <% else %>
   <p>Session <%= @table_session.status %>.</p>
+
+  <% if @invoice %>
+    <section>
+      <h2>Invoice <%= @invoice.number %></h2>
+      <% latest_print_job = @invoice.print_jobs.order(:created_at).last %>
+      <% if latest_print_job %>
+        <p>Print status: <%= latest_print_job.status %></p>
+        <% if latest_print_job.status == "failed" %>
+          <p class="error">Print failed: <%= latest_print_job.last_error %></p>
+        <% end %>
+      <% end %>
+      <% if @invoice.print_count.to_i > 0 %>
+        <p>Reprinted <%= @invoice.print_count %> time(s).</p>
+      <% end %>
+      <%= button_to "Reprint", reprint_invoice_path(@invoice), method: :post %>
+    </section>
+  <% end %>
 <% end %>
