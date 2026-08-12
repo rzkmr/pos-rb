@@ -9,7 +9,7 @@ class Ticket < ApplicationRecord
   has_many :ticket_items, dependent: :restrict_with_error
   accepts_nested_attributes_for :ticket_items
 
-  validates :client_token, presence: true, uniqueness: true
+  validates :client_token, presence: true
   validates :number, presence: true
   validates :placed_at, presence: true
   validates :status, inclusion: { in: STATUSES }

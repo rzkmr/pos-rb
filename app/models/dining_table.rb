@@ -7,4 +7,8 @@ class DiningTable < ApplicationRecord
   validates :seats, numericality: { greater_than: 0 }
 
   scope :ordered, -> { order(:position) }
+
+  def open_session
+    table_sessions.open.order(opened_at: :desc).first
+  end
 end
