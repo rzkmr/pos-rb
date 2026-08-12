@@ -15,6 +15,7 @@ ne:
     "yes": "छ"
     "no": "छैन"
     composition_scheme: "Composition scheme (कर संकलन गर्न सकिँदैन)"
+    admin_dashboard: "एडमिन"
 
   dining_tables:
     index:

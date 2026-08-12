@@ -1,5 +1,6 @@
 <div class="min-h-screen bg-shell p-6">
   <div class="max-w-4xl mx-auto flex flex-col gap-4">
+    <%= render "admin/shared/breadcrumb", title: t(".title") %>
     <div class="flex items-center justify-between">
       <h1 class="text-[26px] font-bold"><%= t(".title") %></h1>
       <%= link_to t(".add_table"), new_admin_dining_table_path,

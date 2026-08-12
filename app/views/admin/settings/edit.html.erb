@@ -1,5 +1,6 @@
 <div class="min-h-screen bg-shell p-6">
   <div class="max-w-lg mx-auto flex flex-col gap-4">
+    <%= render "admin/shared/breadcrumb", title: t(".title") %>
     <h1 class="text-[26px] font-bold"><%= t(".title") %></h1>
 
     <%= form_with model: @shop, url: admin_settings_path, method: :patch, class: "flex flex-col gap-4" do |f| %>

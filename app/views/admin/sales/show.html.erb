@@ -1,5 +1,6 @@
 <div class="min-h-screen bg-shell p-6">
   <div class="max-w-4xl mx-auto flex flex-col gap-5">
+    <%= render "admin/shared/breadcrumb", title: t("admin.root.show.sales") %>
     <div class="flex items-center justify-between flex-wrap gap-3">
       <h1 class="text-[26px] font-bold"><%= t(".title", date: @daily_sales.date.to_fs(:long)) %></h1>
       <%= form_with url: admin_sales_path, method: :get, class: "flex items-center gap-2" do %>

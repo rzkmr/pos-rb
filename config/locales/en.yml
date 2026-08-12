@@ -44,6 +44,7 @@ en:
     "yes": "Yes"
     "no": "No"
     composition_scheme: "Composition scheme (cannot collect GST)"
+    admin_dashboard: "Admin"
 
   dining_tables:
     index:
