@@ -1,0 +1,69 @@
+<h1><%= @table_session.dining_table.label %> — Bill</h1>
+
+<p><%= link_to "Back to tables", dining_tables_path %></p>
+
+<section>
+  <h2>Line items</h2>
+  <ul>
+    <% @table_session.tickets.each do |ticket| %>
+      <% ticket.ticket_items.active.each do |item| %>
+        <li>
+          <%= item.quantity %> × <%= item.name_snapshot %>
+          — <%= money_to_inr(item.quantity * item.unit_price_paise) %>
+          <%= form_with url: void_ticket_item_path(item), method: :patch do %>
+            <%= text_field_tag :reason, nil, placeholder: "Void reason", required: true %>
+            <%= submit_tag "Void" %>
+          <% end %>
+        </li>
+      <% end %>
+    <% end %>
+  </ul>
+</section>
+
+<section>
+  <h2>Totals</h2>
+  <p>Subtotal: <%= money_to_inr(@billing.taxable_paise) %></p>
+
+  <% if Current.shop.composition_scheme %>
+    <p>"Composition taxable person, not eligible to collect tax on supplies"</p>
+  <% else %>
+    <p>CGST: <%= money_to_inr(@billing.cgst_paise) %></p>
+    <p>SGST: <%= money_to_inr(@billing.sgst_paise) %></p>
+  <% end %>
+  <p>Round off: <%= money_to_inr(@billing.round_off_paise) %></p>
+  <p><strong>Total: <%= money_to_inr(@billing.total_paise) %></strong></p>
+
+  <% if @table_session.discount_paise.to_i > 0 %>
+    <p>Discount applied: <%= money_to_inr(@table_session.discount_paise) %> (<%= @table_session.discount_reason %>)</p>
+  <% end %>
+</section>
+
+<% if @table_session.status == "open" %>
+  <section>
+    <h2>Discount</h2>
+    <%= form_with url: table_session_discount_path(@table_session), method: :post do %>
+      <%= label_tag :amount_paise, "Amount (paise)" %>
+      <%= text_field_tag :amount_paise %>
+      <%= label_tag :reason, "Reason" %>
+      <%= text_field_tag :reason %>
+      <%= submit_tag "Apply discount" %>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Take payment</h2>
+    <p>Paid so far: <%= money_to_inr(@table_session.paid_paise) %></p>
+    <p>Remaining: <%= money_to_inr(@billing.total_paise - @table_session.paid_paise) %></p>
+    <%= form_with url: table_session_payments_path(@table_session), method: :post do %>
+      <%= label_tag "payment_method", "Method" %>
+      <%= select_tag "payment[method]", options_for_select(Payment::METHODS) %>
+      <%= label_tag "payment_amount_paise", "Amount (paise)" %>
+      <%= text_field_tag "payment[amount_paise]" %>
+      <%= label_tag "payment_reference", "Reference" %>
+      <%= text_field_tag "payment[reference]" %>
+      <%= submit_tag "Record payment" %>
+    <% end %>
+  </section>
+<% else %>
+  <p>Session <%= @table_session.status %>.</p>
+<% end %>

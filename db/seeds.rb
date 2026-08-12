@@ -1,5 +1,5 @@
 # Single shop in production. Development/test bootstrap only — see CLAUDE.md.
-current_fy = Date.current.month >= 4 ? "#{Date.current.year}-#{(Date.current.year + 1) % 100}" : "#{Date.current.year - 1}-#{Date.current.year % 100}"
+current_fy = Shop.financial_year_for(Date.current)
 
 shop = Shop.find_or_create_by!(name: "Sample Restaurant") do |s|
   s.gstin = "27AAAAA0000A1Z5"

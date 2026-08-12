@@ -17,8 +17,15 @@ Rails.application.routes.draw do
   end
 
   resources :dining_tables, only: [ :index ]
-  resources :table_sessions, only: [ :create, :show ]
+  resources :table_sessions, only: [ :create, :show ] do
+    resource :bill, only: [ :show ], controller: "bills"
+    resources :payments, only: [ :create ]
+    resource :discount, only: [ :create ], controller: "discounts"
+  end
   resources :tickets, only: [ :create ]
+  resources :ticket_items, only: [] do
+    member { patch :void }
+  end
   resources :kitchen_tickets, only: [ :index, :update ]
   get "heartbeat" => "heartbeats#show"
 

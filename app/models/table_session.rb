@@ -17,4 +17,16 @@ class TableSession < ApplicationRecord
   validates :discount_reason, presence: true, if: -> { discount_paise.to_i > 0 }
 
   scope :open, -> { where(status: "open") }
+
+  def subtotal_paise
+    TicketItem.active.where(ticket: tickets).sum("quantity * unit_price_paise") - discount_paise.to_i
+  end
+
+  def paid_paise
+    payments.sum(:amount_paise)
+  end
+
+  def apply_discount!(amount_paise:, reason:, approved_by:)
+    update!(discount_paise: amount_paise, discount_reason: reason, discount_approved_by: approved_by)
+  end
 end

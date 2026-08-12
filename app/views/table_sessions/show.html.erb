@@ -1,6 +1,9 @@
 <h1><%= @dining_table.label %></h1>
 
-<p><%= link_to "All tables", dining_tables_path %></p>
+<p>
+  <%= link_to "All tables", dining_tables_path %>
+  · <%= link_to "Bill", table_session_bill_path(@table_session) %>
+</p>
 
 <div id="pending-banner" data-order-cart-target="pendingBanner" hidden>
   Sending <span data-order-cart-target="pendingCount"></span> pending ticket(s)…

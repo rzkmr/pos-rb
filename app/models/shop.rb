@@ -19,6 +19,11 @@ class Shop < ApplicationRecord
   validates :gst_rate_bp, numericality: { greater_than_or_equal_to: 0 }
   validates :invoice_sequence, numericality: { greater_than_or_equal_to: 0 }
 
+  # India's financial year runs 1 April to 31 March.
+  def self.financial_year_for(date)
+    date.month >= 4 ? "#{date.year}-#{(date.year + 1) % 100}" : "#{date.year - 1}-#{date.year % 100}"
+  end
+
   # Row-locks the shop and increments the gapless per-FY invoice counter.
   # Must be called inside the invoice-creating transaction.
   def next_invoice_sequence!(financial_year)
