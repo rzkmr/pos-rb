@@ -10,7 +10,7 @@
   <% end %>
 
   <div class="flex flex-col gap-1.5">
-    <%= f.label :label, "Label (e.g. T1, Bar 2)", class: "text-[15px] font-semibold" %>
+    <%= f.label :label, t(".label_hint"), class: "text-[15px] font-semibold" %>
     <%= f.text_field :label, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
   </div>
 
@@ -20,7 +20,7 @@
   </div>
 
   <div class="flex flex-col gap-1.5">
-    <%= f.label :position, "Display order", class: "text-[15px] font-semibold" %>
+    <%= f.label :position, t(".display_order"), class: "text-[15px] font-semibold" %>
     <%= f.number_field :position, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
   </div>
 

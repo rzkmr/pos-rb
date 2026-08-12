@@ -20,7 +20,7 @@
   </div>
 
   <div class="flex flex-col gap-1.5">
-    <%= f.label :pin, "PIN (4 digits#{' — leave blank to keep current' if user.persisted?})", class: "text-[15px] font-semibold" %>
+    <%= f.label :pin, (user.persisted? ? t(".pin_hint_edit") : t(".pin_hint_new")), class: "text-[15px] font-semibold" %>
     <%= f.password_field :pin, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[18px] tracking-[0.4em]" %>
   </div>
 

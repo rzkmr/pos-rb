@@ -28,4 +28,216 @@
 #       enabled: "ON"
 
 en:
-  hello: "Hello world"
+  shared:
+    sign_out: "Sign out"
+    reason: "Reason"
+    edit: "Edit"
+    back: "Back"
+    name: "Name"
+    active: "Active"
+    label: "Label"
+    method: "Method"
+    total: "Total"
+    number: "Number"
+    time: "Time"
+    view: "View"
+    "yes": "Yes"
+    "no": "No"
+    composition_scheme: "Composition scheme (cannot collect GST)"
+
+  dining_tables:
+    index:
+      title: "Tables"
+      kitchen: "Kitchen"
+      no_tables: "No tables have been added yet. Contact the admin."
+      seats:
+        one: "%{count} seat"
+        other: "%{count} seats"
+      continue_order: "Continue order"
+      open_table: "Open table"
+
+  kitchen_tickets:
+    index:
+      title: "Kitchen"
+      reconnecting: "Reconnecting..."
+      seconds: "seconds"
+      connected: "Connected"
+      minutes_ago:
+        one: "%{count} min"
+        other: "%{count} min"
+      round_label: "Round #%{number}"
+      start_preparing: "Start preparing"
+      ready: "Ready"
+      served: "Served"
+
+  table_sessions:
+    show:
+      seats:
+        one: "%{count} guest"
+        other: "%{count} guests"
+      all_tables: "All tables"
+      bill: "Bill"
+      sending_orders: "Sending order... no internet connection"
+      previous_rounds: "Previous rounds"
+      round_label: "Round #%{number}"
+      menu: "Menu"
+      cart: "Cart"
+      cart_empty: "No items yet."
+      send_to_kitchen: "Send to kitchen"
+
+  bills:
+    show:
+      bill: "Bill"
+      all_tables: "All tables"
+      items: "Items"
+      void: "Void"
+      total_with_tax: "Total (incl. tax)"
+      subtotal: "Subtotal"
+      composition_declaration: "Composition taxable person, not eligible to collect tax on supplies"
+      cgst: "CGST"
+      sgst: "SGST"
+      round_off: "Round off"
+      discount_with_reason: "Discount (%{reason})"
+      discount: "Discount"
+      amount_paise_placeholder: "Amount (paise)"
+      apply_discount: "Apply discount"
+      fully_paid: "Fully paid"
+      remaining: "Remaining: %{amount}"
+      paid_so_far: "Paid so far: %{amount}"
+      reference_placeholder: "Reference no. (optional)"
+      record_payment: "Record payment"
+      session_status: "Session %{status}."
+      invoice_number: "Invoice %{number}"
+      print_status: "Print status: %{status}"
+      print_failed: "Print failed: %{error}"
+      reprinted_count:
+        one: "Reprinted %{count} time."
+        other: "Reprinted %{count} times."
+      print_bill: "Print bill"
+
+  sessions:
+    new:
+      title: "Sign in"
+      subtitle: "Choose your name and PIN"
+      user: "User"
+      sign_in: "Sign in"
+
+  admin:
+    root:
+      show:
+        title: "Admin"
+        menu: "Menu"
+        menu_desc: "Items, prices, categories"
+        tables: "Tables"
+        tables_desc: "Dining tables / counters"
+        staff: "Staff"
+        staff_desc: "Waiter, cashier, kitchen PINs"
+        sales: "Sales"
+        sales_desc: "Daily reconciliation"
+        devices: "Devices"
+        devices_desc: "Paired tablets and phones"
+        settings: "Settings"
+        settings_desc: "Shop details, printer"
+    sessions:
+      new:
+        title: "Admin sign in"
+        subtitle: "Username and password"
+        sign_in: "Sign in"
+    sales:
+      show:
+        title: "Daily sales — %{date}"
+        invoice_total: "Invoice total"
+        invoices_issued: "Invoices issued"
+        voided_lines: "Voided lines"
+        reprints: "Reprints"
+        payments_received: "Payments received"
+        payment_method_reconciliation: "Payment method reconciliation"
+        invoices: "Invoices"
+    settings:
+      edit:
+        title: "Settings"
+        shop_details: "Shop details"
+        gst_state_code: "GST state code"
+        fssai_licence: "FSSAI licence"
+        printer_section: "Kitchen/bill printer"
+        printer_help: "The IP address of your thermal printer on this network. Ask whoever set up the printer, or check its network settings page."
+        printer_ip: "Printer IP address"
+        save_settings: "Save settings"
+    dining_tables:
+      form:
+        label_hint: "Label (e.g. T1, Bar 2)"
+        display_order: "Display order"
+      edit:
+        title: "Edit table"
+      new:
+        title: "Add table"
+      index:
+        title: "Tables"
+        add_table: "Add table"
+        seats: "Seats"
+        position: "Position"
+        remove: "Remove"
+        remove_confirm: "Remove this table?"
+    menu_items:
+      form:
+        price_paise: "Price (paise)"
+      edit:
+        title: "Edit menu item"
+      new:
+        title: "Add menu item"
+      index:
+        title: "Menu"
+        add_item: "Add item"
+        category: "Category"
+        price: "Price"
+        deactivate: "Deactivate"
+    users:
+      form:
+        pin_hint_edit: "PIN (4 digits — leave blank to keep current)"
+        pin_hint_new: "PIN (4 digits)"
+      edit:
+        title: "Edit user"
+      new:
+        title: "Add user"
+      index:
+        title: "Users"
+        add_user: "Add user"
+        role: "Role"
+        deactivate: "Deactivate"
+
+  devices:
+    index:
+      title: "Devices"
+      kind: "Kind"
+      last_seen: "Last seen"
+      never: "never"
+      revoke: "Revoke"
+    not_paired:
+      title: "This device is not paired"
+      description: "This tablet or phone is not yet paired with this shop. Get the pairing PIN from the admin and pair it below."
+      pair_device: "Pair device"
+    pair:
+      title: "Pair this device"
+      device_label: "Device label"
+      device_label_placeholder: "Kitchen display"
+      device_kind: "Device kind"
+      admin_pairing_pin: "Admin pairing PIN"
+      pair_device: "Pair device"
+
+  setup:
+    new:
+      title: "Set up your restaurant"
+      subtitle: "One-time setup. This screen disappears once your shop exists."
+      shop: "Shop"
+      shop_name: "Shop name"
+      gst_state_code: "GST state code (2 digits)"
+      address: "Address"
+      gstin_hint: "GSTIN (leave blank if under composition scheme)"
+      device_pairing_pin: "Device pairing PIN"
+      device_pairing_pin_help: "Any tablet or phone will need this PIN once, to join this shop. Keep it to yourself — it is not a login."
+      four_digits: "4 digits"
+      admin_login: "Your admin login"
+      admin_login_help: "This is separate from staff PINs. You will sign in with a username and password from any browser — no device pairing needed. Staff (waiter/cashier/kitchen) use PINs on paired tablets and never see this login."
+      username: "Username"
+      password_hint: "Password (min 8 characters)"
+      create_shop: "Create shop and sign in"

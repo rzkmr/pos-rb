@@ -1,0 +1,206 @@
+ne:
+  shared:
+    sign_out: "साइन आउट"
+    reason: "कारण"
+    edit: "सम्पादन"
+    back: "फिर्ता"
+    name: "नाम"
+    active: "सक्रिय"
+    label: "लेबल"
+    method: "विधि"
+    total: "जम्मा"
+    number: "नम्बर"
+    time: "समय"
+    view: "हेर्नुहोस्"
+    "yes": "छ"
+    "no": "छैन"
+    composition_scheme: "Composition scheme (कर संकलन गर्न सकिँदैन)"
+
+  dining_tables:
+    index:
+      title: "टेबलहरू"
+      kitchen: "भान्सा"
+      no_tables: "अहिलेसम्म कुनै टेबल थपिएको छैन। admin लाई सम्पर्क गर्नुहोस्।"
+      seats: "%{count} सिट"
+      continue_order: "अर्डर जारी राख्नुहोस्"
+      open_table: "टेबल खोल्नुहोस्"
+
+  kitchen_tickets:
+    index:
+      title: "भान्सा"
+      reconnecting: "जोडिँदै..."
+      seconds: "सेकेन्ड"
+      connected: "जोडिएको"
+      minutes_ago: "%{count}मि"
+      round_label: "राउन्ड #%{number}"
+      start_preparing: "तयारी सुरु"
+      ready: "तयार"
+      served: "पस्किइयो"
+
+  table_sessions:
+    show:
+      seats: "%{count} जना"
+      all_tables: "सबै टेबल"
+      bill: "बिल"
+      sending_orders: "अर्डर पठाइँदै... इन्टरनेट जोडिएन"
+      previous_rounds: "अघिल्ला राउन्डहरू"
+      round_label: "राउन्ड #%{number}"
+      menu: "मेनु"
+      cart: "कार्ट"
+      cart_empty: "अहिलेसम्म कुनै वस्तु छैन।"
+      send_to_kitchen: "भान्सामा पठाउनुहोस्"
+
+  bills:
+    show:
+      bill: "बिल"
+      all_tables: "टेबलहरू"
+      items: "वस्तुहरू"
+      void: "रद्द"
+      total_with_tax: "जम्मा (कर सहित)"
+      subtotal: "मूल्य"
+      composition_declaration: "Composition taxable person, not eligible to collect tax on supplies"
+      cgst: "मू.अ.कर (CGST)"
+      sgst: "मू.अ.कर (SGST)"
+      round_off: "राउन्ड अफ"
+      discount_with_reason: "छुट (%{reason})"
+      discount: "छुट"
+      amount_paise_placeholder: "रकम (paise)"
+      apply_discount: "छुट लागू गर्नुहोस्"
+      fully_paid: "पूरा भुक्तानी भयो"
+      remaining: "बाँकी: %{amount}"
+      paid_so_far: "भुक्तानी भइसकेको: %{amount}"
+      reference_placeholder: "सन्दर्भ नं. (वैकल्पिक)"
+      record_payment: "भुक्तानी दर्ता गर्नुहोस्"
+      session_status: "सत्र %{status}।"
+      invoice_number: "बीजक %{number}"
+      print_status: "प्रिन्ट स्थिति: %{status}"
+      print_failed: "प्रिन्ट असफल भयो: %{error}"
+      reprinted_count: "%{count} पटक पुन: छापियो।"
+      print_bill: "बिल छाप्नुहोस्"
+
+  sessions:
+    new:
+      title: "साइन इन"
+      subtitle: "आफ्नो नाम र PIN छान्नुहोस्"
+      user: "प्रयोगकर्ता"
+      sign_in: "साइन इन गर्नुहोस्"
+
+  admin:
+    root:
+      show:
+        title: "Admin"
+        menu: "मेनु"
+        menu_desc: "वस्तुहरू, मूल्य, श्रेणीहरू"
+        tables: "टेबलहरू"
+        tables_desc: "डाइनिङ टेबल / काउन्टर"
+        staff: "कर्मचारी"
+        staff_desc: "वेटर, क्यासियर, भान्सा PIN"
+        sales: "बिक्री"
+        sales_desc: "दैनिक मिलान"
+        devices: "यन्त्रहरू"
+        devices_desc: "जोडिएका ट्याब्लेट र फोन"
+        settings: "सेटिङ"
+        settings_desc: "पसलको विवरण, प्रिन्टर"
+    sessions:
+      new:
+        title: "Admin साइन इन"
+        subtitle: "प्रयोगकर्ता नाम र पासवर्ड"
+        sign_in: "साइन इन"
+    sales:
+      show:
+        title: "दैनिक बिक्री — %{date}"
+        invoice_total: "बीजक जम्मा"
+        invoices_issued: "जारी गरिएका बीजकहरू"
+        voided_lines: "रद्द गरिएका लाइनहरू"
+        reprints: "पुन: प्रिन्ट"
+        payments_received: "प्राप्त भुक्तानी"
+        payment_method_reconciliation: "भुक्तानी विधि मिलान"
+        invoices: "बीजकहरू"
+    settings:
+      edit:
+        title: "सेटिङ"
+        shop_details: "पसलको विवरण"
+        gst_state_code: "GST राज्य कोड"
+        fssai_licence: "FSSAI इजाजतपत्र"
+        printer_section: "भान्सा/बिल प्रिन्टर"
+        printer_help: "यो नेटवर्कमा तपाईंको थर्मल प्रिन्टरको IP ठेगाना। प्रिन्टर मिलाउनेलाई सोध्नुहोस्, वा यसको नेटवर्क सेटिङ पृष्ठ जाँच्नुहोस्।"
+        printer_ip: "प्रिन्टर IP ठेगाना"
+        save_settings: "सेटिङ सुरक्षित गर्नुहोस्"
+    dining_tables:
+      form:
+        label_hint: "लेबल (जस्तै T1, Bar 2)"
+        display_order: "देखाउने क्रम"
+      edit:
+        title: "टेबल सम्पादन"
+      new:
+        title: "टेबल थप्नुहोस्"
+      index:
+        title: "टेबलहरू"
+        add_table: "टेबल थप्नुहोस्"
+        seats: "सिट"
+        position: "क्रम"
+        remove: "हटाउनुहोस्"
+        remove_confirm: "यो टेबल हटाउने हो?"
+    menu_items:
+      form:
+        price_paise: "मूल्य (paise)"
+      edit:
+        title: "मेनु वस्तु सम्पादन"
+      new:
+        title: "मेनु वस्तु थप्नुहोस्"
+      index:
+        title: "मेनु"
+        add_item: "वस्तु थप्नुहोस्"
+        category: "श्रेणी"
+        price: "मूल्य"
+        deactivate: "निष्क्रिय गर्नुहोस्"
+    users:
+      form:
+        pin_hint_edit: "PIN (4 अंक — यथावत राख्न खाली छोड्नुहोस्)"
+        pin_hint_new: "PIN (4 अंक)"
+      edit:
+        title: "प्रयोगकर्ता सम्पादन"
+      new:
+        title: "प्रयोगकर्ता थप्नुहोस्"
+      index:
+        title: "प्रयोगकर्ताहरू"
+        add_user: "प्रयोगकर्ता थप्नुहोस्"
+        role: "भूमिका"
+        deactivate: "निष्क्रिय गर्नुहोस्"
+
+  devices:
+    index:
+      title: "यन्त्रहरू"
+      kind: "किसिम"
+      last_seen: "पछिल्लो पटक देखिएको"
+      never: "कहिल्यै छैन"
+      revoke: "खारेज गर्नुहोस्"
+    not_paired:
+      title: "यो यन्त्र जोडिएको छैन"
+      description: "यो ट्याब्लेट वा फोन अझै यो पसलसँग जोडिएको छैन। पसलको admin सँग जोड्ने PIN लिएर तल जोड्नुहोस्।"
+      pair_device: "यन्त्र जोड्नुहोस्"
+    pair:
+      title: "यो यन्त्र जोड्नुहोस्"
+      device_label: "यन्त्र लेबल"
+      device_label_placeholder: "भान्सा डिस्प्ले"
+      device_kind: "यन्त्र किसिम"
+      admin_pairing_pin: "Admin जोड्ने PIN"
+      pair_device: "यन्त्र जोड्नुहोस्"
+
+  setup:
+    new:
+      title: "तपाईंको रेस्टुरेन्ट सेटअप गर्नुहोस्"
+      subtitle: "एक पटकको सेटअप। तपाईंको पसल बनेपछि यो स्क्रिन देखिँदैन।"
+      shop: "पसल"
+      shop_name: "पसलको नाम"
+      gst_state_code: "GST राज्य कोड (2 अंक)"
+      address: "ठेगाना"
+      gstin_hint: "GSTIN (composition scheme मा भए खाली छोड्नुहोस्)"
+      device_pairing_pin: "यन्त्र जोड्ने PIN"
+      device_pairing_pin_help: "कुनै पनि ट्याब्लेट वा फोनलाई यो पसलसँग जोडिन एक पटक यो PIN चाहिन्छ। यो आफूसँगै राख्नुहोस् — यो लगइन होइन।"
+      four_digits: "4 अंक"
+      admin_login: "तपाईंको admin लगइन"
+      admin_login_help: "यो कर्मचारीको PIN भन्दा फरक हो। तपाईं कुनै पनि ब्राउजरबाट प्रयोगकर्ता नाम र पासवर्डले साइन इन गर्नुहुनेछ — यन्त्र जोड्न पर्दैन। कर्मचारी (वेटर/क्यासियर/भान्सा) ले जोडिएका ट्याब्लेटमा PIN प्रयोग गर्छन् र यो लगइन कहिल्यै देख्दैनन्।"
+      username: "प्रयोगकर्ता नाम"
+      password_hint: "पासवर्ड (कम्तीमा 8 अक्षर)"
+      create_shop: "पसल बनाउनुहोस् र साइन इन गर्नुहोस्"

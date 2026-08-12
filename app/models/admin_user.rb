@@ -4,12 +4,15 @@
 class AdminUser < ApplicationRecord
   include ShopScoped
 
+  LOCALES = %w[en ne].freeze
+
   has_secure_password
 
   has_many :audit_events, dependent: :restrict_with_error
 
   validates :username, presence: true, uniqueness: { scope: :shop_id, case_sensitive: false }
   validates :password, length: { minimum: 8 }, if: -> { password_digest.blank? || password.present? }
+  validates :locale, inclusion: { in: LOCALES }
 
   scope :active, -> { where(active: true) }
 

@@ -1,16 +1,20 @@
 <div class="min-h-screen bg-shell">
   <header class="bg-ink text-surface px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
-    <div class="text-[22px] font-bold">टेबलहरू</div>
+    <div class="text-[22px] font-bold"><%= t(".title") %></div>
     <nav class="flex items-center gap-2 flex-wrap text-[16px] font-semibold">
-      <%= link_to "भान्सा", kitchen_tickets_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
-      <%= link_to "साइन आउट", session_path, data: { turbo_method: :delete },
+      <%= link_to "EN", locale_path(locale: "en"), data: { turbo_method: :patch },
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+      <%= link_to "ने", locale_path(locale: "ne"), data: { turbo_method: :patch },
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+      <%= link_to t(".kitchen"), kitchen_tickets_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
+      <%= link_to t("shared.sign_out"), session_path, data: { turbo_method: :delete },
             class: "px-3.5 py-2 rounded-key bg-stop text-surface active:bg-stop-50 active:text-stop" %>
     </nav>
   </header>
 
   <% if @dining_tables.empty? %>
     <div class="p-6 text-center flex flex-col gap-3 items-center">
-      <div class="text-[18px] text-ink-3">अहिलेसम्म कुनै टेबल थपिएको छैन। admin लाई सम्पर्क गर्नुहोस्।</div>
+      <div class="text-[18px] text-ink-3"><%= t(".no_tables") %></div>
     </div>
   <% end %>
 
@@ -20,13 +24,13 @@
       <div class="min-h-[140px] p-4 rounded-tile border-2 <%= session ? 'bg-go-50 border-go' : 'bg-card border-line' %> flex flex-col justify-between gap-3">
         <div>
           <div class="text-[22px] font-bold"><%= dining_table.label %></div>
-          <div class="text-[16px] text-ink-3"><%= dining_table.seats %> सिट</div>
+          <div class="text-[16px] text-ink-3"><%= t(".seats", count: dining_table.seats) %></div>
         </div>
         <% if session %>
-          <%= link_to "अर्डर जारी राख्नुहोस्", table_session_path(session),
+          <%= link_to t(".continue_order"), table_session_path(session),
                 class: "min-h-[56px] px-3 rounded-ctl text-[17px] font-bold bg-go text-surface active:bg-go-700 flex items-center justify-center text-center" %>
         <% else %>
-          <%= button_to "टेबल खोल्नुहोस्", table_sessions_path(dining_table_id: dining_table.id),
+          <%= button_to t(".open_table"), table_sessions_path(dining_table_id: dining_table.id),
                 class: "w-full min-h-[56px] px-3 rounded-ctl text-[17px] font-bold bg-key text-ink active:bg-key-2" %>
         <% end %>
       </div>

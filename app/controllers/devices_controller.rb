@@ -1,6 +1,6 @@
 class DevicesController < ApplicationController
-  skip_before_action :require_device, only: [ :pair, :create ]
-  skip_before_action :require_user, only: [ :pair, :create ]
+  skip_before_action :require_device, only: [ :pair, :create, :index, :destroy ]
+  skip_before_action :require_user, only: [ :pair, :create, :index, :destroy ]
   before_action :require_admin_web_login, only: [ :index, :destroy ]
 
   rate_limit to: 5, within: 1.minute, by: -> { request.remote_ip },

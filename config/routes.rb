@@ -32,6 +32,7 @@ Rails.application.routes.draw do
   end
   resources :kitchen_tickets, only: [ :index, :update ]
   get "heartbeat" => "heartbeats#show"
+  patch "locale" => "locales#update"
 
   namespace :admin do
     resource :session, only: [ :new, :create, :destroy ]

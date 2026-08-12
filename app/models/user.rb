@@ -2,6 +2,7 @@ class User < ApplicationRecord
   include ShopScoped
 
   ROLES = %w[waiter cashier kitchen].freeze
+  LOCALES = %w[en ne].freeze
 
   has_secure_password :pin, validations: false
 
@@ -13,6 +14,7 @@ class User < ApplicationRecord
   validates :name, presence: true
   validates :role, inclusion: { in: ROLES }
   validates :pin, presence: true, format: { with: /\A\d{4}\z/, message: "must be 4 digits" }, if: -> { pin_digest.blank? || pin.present? }
+  validates :locale, inclusion: { in: LOCALES }
 
   scope :active, -> { where(active: true) }
 end

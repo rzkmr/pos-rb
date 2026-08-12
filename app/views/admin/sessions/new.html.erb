@@ -1,8 +1,14 @@
 <div class="min-h-screen flex items-center justify-center bg-shell p-5">
   <div class="w-full max-w-[392px] bg-surface rounded-phone p-6 flex flex-col gap-6">
+    <div class="flex items-center justify-end gap-2">
+      <%= link_to "EN", locale_path(locale: "en"), data: { turbo_method: :patch },
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+      <%= link_to "ने", locale_path(locale: "ne"), data: { turbo_method: :patch },
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+    </div>
     <div>
-      <div class="text-[21px] font-bold">Admin sign in</div>
-      <div class="text-[17px] text-ink-3">Username and password</div>
+      <div class="text-[21px] font-bold"><%= t(".title") %></div>
+      <div class="text-[17px] text-ink-3"><%= t(".subtitle") %></div>
     </div>
 
     <% if flash[:alert] %>
@@ -24,7 +30,7 @@
               class: "min-h-[56px] px-4 rounded-ctl border-2 border-line-2 bg-card text-[19px]" %>
       </div>
 
-      <%= f.submit "Sign in",
+      <%= f.submit t(".sign_in"),
             class: "min-h-[64px] px-4 py-2.5 rounded-tile text-[19px] font-bold bg-go text-surface active:bg-go-700" %>
     <% end %>
   </div>

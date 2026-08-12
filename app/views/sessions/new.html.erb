@@ -1,8 +1,14 @@
 <div class="min-h-screen flex items-center justify-center bg-shell p-5">
   <div class="w-full max-w-[392px] bg-surface rounded-phone p-6 flex flex-col gap-6">
+    <div class="flex items-center justify-end gap-2">
+      <%= link_to "EN", locale_path(locale: "en"), data: { turbo_method: :patch },
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+      <%= link_to "ने", locale_path(locale: "ne"), data: { turbo_method: :patch },
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+    </div>
     <div>
-      <div class="text-[21px] font-bold">साइन इन</div>
-      <div class="text-[17px] text-ink-3">आफ्नो नाम र PIN छान्नुहोस्</div>
+      <div class="text-[21px] font-bold"><%= t(".title") %></div>
+      <div class="text-[17px] text-ink-3"><%= t(".subtitle") %></div>
     </div>
 
     <% if flash[:alert] %>
@@ -13,7 +19,7 @@
 
     <%= form_with url: session_path, method: :post, class: "flex flex-col gap-5" do |f| %>
       <div class="flex flex-col gap-2">
-        <%= f.label :user_id, "प्रयोगकर्ता", class: "text-[17px] font-semibold" %>
+        <%= f.label :user_id, t(".user"), class: "text-[17px] font-semibold" %>
         <%= f.select :user_id, Current.shop.users.active.order(:name).pluck(:name, :id),
               {}, class: "min-h-[64px] px-4 rounded-ctl border-2 border-line-2 bg-card text-[19px]" %>
       </div>
@@ -24,7 +30,7 @@
               class: "min-h-[64px] px-4 rounded-ctl border-2 border-line-2 bg-card text-[28px] font-mono tracking-[0.5em] text-center" %>
       </div>
 
-      <%= f.submit "साइन इन गर्नुहोस्",
+      <%= f.submit t(".sign_in"),
             class: "min-h-[70px] px-4 py-2.5 rounded-tile text-[21px] font-bold leading-[1.35] bg-go text-surface active:bg-go-700" %>
     <% end %>
   </div>

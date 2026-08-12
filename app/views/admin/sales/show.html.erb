@@ -1,45 +1,45 @@
 <div class="min-h-screen bg-shell p-6">
   <div class="max-w-4xl mx-auto flex flex-col gap-5">
     <div class="flex items-center justify-between flex-wrap gap-3">
-      <h1 class="text-[26px] font-bold">Daily sales — <%= @daily_sales.date.to_fs(:long) %></h1>
+      <h1 class="text-[26px] font-bold"><%= t(".title", date: @daily_sales.date.to_fs(:long)) %></h1>
       <%= form_with url: admin_sales_path, method: :get, class: "flex items-center gap-2" do %>
         <%= date_field_tag :date, @daily_sales.date, class: "min-h-[44px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
-        <%= submit_tag "View", class: "min-h-[44px] px-4 rounded-ctl bg-key text-ink text-[16px] font-bold" %>
+        <%= submit_tag t("shared.view"), class: "min-h-[44px] px-4 rounded-ctl bg-key text-ink text-[16px] font-bold" %>
       <% end %>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
       <div class="bg-card rounded-tile border border-line p-4">
-        <div class="text-[14px] text-ink-3">Invoice total</div>
+        <div class="text-[14px] text-ink-3"><%= t(".invoice_total") %></div>
         <div class="text-[26px] font-mono font-bold"><%= money_to_inr(@daily_sales.invoice_total_paise) %></div>
       </div>
       <div class="bg-card rounded-tile border border-line p-4">
-        <div class="text-[14px] text-ink-3">Invoices issued</div>
+        <div class="text-[14px] text-ink-3"><%= t(".invoices_issued") %></div>
         <div class="text-[26px] font-mono font-bold"><%= @daily_sales.invoices.count %></div>
       </div>
       <div class="bg-card rounded-tile border border-line p-4">
-        <div class="text-[14px] text-ink-3">Voided lines</div>
+        <div class="text-[14px] text-ink-3"><%= t(".voided_lines") %></div>
         <div class="text-[26px] font-mono font-bold"><%= @daily_sales.void_count %></div>
       </div>
       <div class="bg-card rounded-tile border border-line p-4">
-        <div class="text-[14px] text-ink-3">Reprints</div>
+        <div class="text-[14px] text-ink-3"><%= t(".reprints") %></div>
         <div class="text-[26px] font-mono font-bold"><%= @daily_sales.reprint_count %></div>
       </div>
     </div>
 
     <div class="bg-card rounded-tile border border-line p-4">
-      <div class="text-[14px] text-ink-3">Payments received</div>
+      <div class="text-[14px] text-ink-3"><%= t(".payments_received") %></div>
       <div class="text-[26px] font-mono font-bold"><%= money_to_inr(@daily_sales.payment_total_paise) %></div>
     </div>
 
     <section>
-      <h2 class="text-[19px] font-bold mb-2">Payment method reconciliation</h2>
+      <h2 class="text-[19px] font-bold mb-2"><%= t(".payment_method_reconciliation") %></h2>
       <div class="bg-card rounded-tile border border-line overflow-x-auto">
         <table class="w-full text-[16px]">
           <thead>
             <tr class="bg-[#f2f1ec] text-left">
-              <th class="px-4 py-3 font-bold">Method</th>
-              <th class="px-4 py-3 font-bold">Total</th>
+              <th class="px-4 py-3 font-bold"><%= t("shared.method") %></th>
+              <th class="px-4 py-3 font-bold"><%= t("shared.total") %></th>
             </tr>
           </thead>
           <tbody>
@@ -55,14 +55,14 @@
     </section>
 
     <section>
-      <h2 class="text-[19px] font-bold mb-2">Invoices</h2>
+      <h2 class="text-[19px] font-bold mb-2"><%= t(".invoices") %></h2>
       <div class="bg-card rounded-tile border border-line overflow-x-auto">
         <table class="w-full text-[16px]">
           <thead>
             <tr class="bg-[#f2f1ec] text-left">
-              <th class="px-4 py-3 font-bold">Number</th>
-              <th class="px-4 py-3 font-bold">Time</th>
-              <th class="px-4 py-3 font-bold">Total</th>
+              <th class="px-4 py-3 font-bold"><%= t("shared.number") %></th>
+              <th class="px-4 py-3 font-bold"><%= t("shared.time") %></th>
+              <th class="px-4 py-3 font-bold"><%= t("shared.total") %></th>
             </tr>
           </thead>
           <tbody>
