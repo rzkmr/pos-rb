@@ -1,0 +1,21 @@
+<h1>Pair this device</h1>
+
+<% if flash[:alert] %>
+  <p><%= flash[:alert] %></p>
+<% end %>
+
+<%= form_with url: devices_path, method: :post do |f| %>
+  <div>
+    <%= f.label :label, "Device label" %>
+    <%= f.text_field :label, placeholder: "Kitchen display" %>
+  </div>
+  <div>
+    <%= f.label :kind, "Device kind" %>
+    <%= f.select :kind, Device::KINDS %>
+  </div>
+  <div>
+    <%= f.label :admin_pin, "Admin pairing PIN" %>
+    <%= f.password_field :admin_pin, inputmode: "numeric" %>
+  </div>
+  <%= f.submit "Pair device" %>
+<% end %>

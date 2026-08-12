@@ -1,0 +1,22 @@
+<h1>Devices</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Label</th>
+      <th>Kind</th>
+      <th>Last seen</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @devices.each do |device| %>
+      <tr>
+        <td><%= device.label %></td>
+        <td><%= device.kind %></td>
+        <td><%= device.last_seen_at&.to_fs(:short) || "never" %></td>
+        <td><%= button_to "Revoke", device_path(device), method: :delete %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
