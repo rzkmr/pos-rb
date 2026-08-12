@@ -45,22 +45,22 @@
    Do NOT use the Google Fonts CDN in production. */
 @font-face {
   font-family: "Noto Sans Devanagari";
-  src: url("/fonts/NotoSansDevanagari-Regular.woff2") format("woff2");
+  src: url("/fonts/NotoSansDevanagari-Regular.ttf") format("truetype");
   font-weight: 400; font-display: swap;
 }
 @font-face {
   font-family: "Noto Sans Devanagari";
-  src: url("/fonts/NotoSansDevanagari-Medium.woff2") format("woff2");
+  src: url("/fonts/NotoSansDevanagari-Medium.ttf") format("truetype");
   font-weight: 500; font-display: swap;
 }
 @font-face {
   font-family: "Noto Sans Devanagari";
-  src: url("/fonts/NotoSansDevanagari-SemiBold.woff2") format("woff2");
+  src: url("/fonts/NotoSansDevanagari-SemiBold.ttf") format("truetype");
   font-weight: 600; font-display: swap;
 }
 @font-face {
   font-family: "Noto Sans Devanagari";
-  src: url("/fonts/NotoSansDevanagari-Bold.woff2") format("woff2");
+  src: url("/fonts/NotoSansDevanagari-Bold.ttf") format("truetype");
   font-weight: 700; font-display: swap;
 }
 
