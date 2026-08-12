@@ -48,6 +48,6 @@ class Admin::DiningTablesController < Admin::BaseController
   end
 
   def dining_table_params
-    params.require(:dining_table).permit(:label, :seats, :position)
+    params.require(:dining_table).permit(:label, :seats, :position, :takeaway)
   end
 end

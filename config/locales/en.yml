@@ -50,6 +50,7 @@ en:
     index:
       title: "Tables"
       kitchen: "Kitchen"
+      takeaway: "Takeaway"
       no_tables: "No tables have been added yet. Contact the admin."
       seats:
         one: "%{count} seat"
@@ -116,6 +117,38 @@ en:
         other: "Reprinted %{count} times."
       print_bill: "Print bill"
 
+  takeaway_orders:
+    show:
+      all_tables: "All tables"
+      sending_orders: "Sending order... no internet connection"
+      menu: "Menu"
+      cart: "Cart"
+      cart_empty: "No items yet."
+      add_to_order: "Add to order"
+      items: "Items"
+      void: "Void"
+      total_with_tax: "Total (incl. tax)"
+      subtotal: "Subtotal"
+      composition_declaration: "Composition taxable person, not eligible to collect tax on supplies"
+      cgst: "CGST"
+      sgst: "SGST"
+      round_off: "Round off"
+      fully_paid: "Fully paid"
+      remaining: "Remaining: %{amount}"
+      amount_paise_placeholder: "Amount (paise)"
+      reference_placeholder: "Reference no. (optional)"
+      take_payment: "Take payment"
+      session_status: "Order %{status}."
+      invoice_number: "Invoice %{number}"
+      print_status: "Print status: %{status}"
+      print_failed: "Print failed: %{error}"
+      print_receipt: "Print receipt"
+      new_order: "Start new order"
+    no_counter:
+      title: "No takeaway counter set up"
+      description: "Ask an admin to mark one of the tables as a takeaway counter under Admin > Tables."
+      back: "Back to tables"
+
   sessions:
     new:
       title: "Sign in"
@@ -168,6 +201,7 @@ en:
       form:
         label_hint: "Label (e.g. T1, Bar 2)"
         display_order: "Display order"
+        takeaway_hint: "This is a takeaway/counter, not a sit-down table"
       edit:
         title: "Edit table"
       new:
@@ -179,6 +213,7 @@ en:
         position: "Position"
         remove: "Remove"
         remove_confirm: "Remove this table?"
+        takeaway: "Takeaway"
     menu_items:
       form:
         price_paise: "Price (paise)"

@@ -21,6 +21,7 @@ ne:
     index:
       title: "टेबलहरू"
       kitchen: "भान्सा"
+      takeaway: "टेकअवे"
       no_tables: "अहिलेसम्म कुनै टेबल थपिएको छैन। admin लाई सम्पर्क गर्नुहोस्।"
       seats: "%{count} सिट"
       continue_order: "अर्डर जारी राख्नुहोस्"
@@ -79,6 +80,38 @@ ne:
       reprinted_count: "%{count} पटक पुन: छापियो।"
       print_bill: "बिल छाप्नुहोस्"
 
+  takeaway_orders:
+    show:
+      all_tables: "टेबलहरू"
+      sending_orders: "अर्डर पठाइँदै... इन्टरनेट जोडिएन"
+      menu: "मेनु"
+      cart: "कार्ट"
+      cart_empty: "अहिलेसम्म कुनै वस्तु छैन।"
+      add_to_order: "अर्डरमा थप्नुहोस्"
+      items: "वस्तुहरू"
+      void: "रद्द"
+      total_with_tax: "जम्मा (कर सहित)"
+      subtotal: "मूल्य"
+      composition_declaration: "Composition taxable person, not eligible to collect tax on supplies"
+      cgst: "मू.अ.कर (CGST)"
+      sgst: "मू.अ.कर (SGST)"
+      round_off: "राउन्ड अफ"
+      fully_paid: "पूरा भुक्तानी भयो"
+      remaining: "बाँकी: %{amount}"
+      amount_paise_placeholder: "रकम (paise)"
+      reference_placeholder: "सन्दर्भ नं. (वैकल्पिक)"
+      take_payment: "भुक्तानी लिनुहोस्"
+      session_status: "अर्डर %{status}।"
+      invoice_number: "बीजक %{number}"
+      print_status: "प्रिन्ट स्थिति: %{status}"
+      print_failed: "प्रिन्ट असफल भयो: %{error}"
+      print_receipt: "रसिद छाप्नुहोस्"
+      new_order: "नयाँ अर्डर सुरु गर्नुहोस्"
+    no_counter:
+      title: "टेकअवे काउन्टर सेट अप गरिएको छैन"
+      description: "Admin > Tables मा गएर कुनै एउटा टेबललाई टेकअवे काउन्टर भनी चिन्ह लगाउन admin लाई भन्नुहोस्।"
+      back: "टेबलहरूमा फर्कनुहोस्"
+
   sessions:
     new:
       title: "साइन इन"
@@ -131,6 +164,7 @@ ne:
       form:
         label_hint: "लेबल (जस्तै T1, Bar 2)"
         display_order: "देखाउने क्रम"
+        takeaway_hint: "यो टेकअवे/काउन्टर हो, बस्ने टेबल होइन"
       edit:
         title: "टेबल सम्पादन"
       new:
@@ -142,6 +176,7 @@ ne:
         position: "क्रम"
         remove: "हटाउनुहोस्"
         remove_confirm: "यो टेबल हटाउने हो?"
+        takeaway: "टेकअवे"
     menu_items:
       form:
         price_paise: "मूल्य (paise)"

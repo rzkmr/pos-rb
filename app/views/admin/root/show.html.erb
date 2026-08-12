@@ -3,9 +3,9 @@
     <div class="text-[22px] font-bold"><%= t(".title") %></div>
     <nav class="flex items-center gap-2 flex-wrap text-[16px] font-semibold">
       <%= link_to "EN", locale_path(locale: "en"), data: { turbo_method: :patch },
-            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 text-surface active:bg-key-2 active:text-ink" %>
       <%= link_to "ने", locale_path(locale: "ne"), data: { turbo_method: :patch },
-            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 text-surface active:bg-key-2 active:text-ink" %>
       <%= link_to t("shared.sign_out"), admin_session_path, data: { turbo_method: :delete },
             class: "px-3.5 py-2 rounded-key bg-stop text-surface active:bg-stop-50 active:text-stop" %>
     </nav>

@@ -3,9 +3,9 @@
     <div class="text-[22px] font-bold"><%= @table_session.dining_table.label %> — <%= t(".bill") %></div>
     <div class="flex items-center gap-2">
       <%= link_to "EN", locale_path(locale: "en"), data: { turbo_method: :patch },
-            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 text-surface active:bg-key-2 active:text-ink" %>
       <%= link_to "ने", locale_path(locale: "ne"), data: { turbo_method: :patch },
-            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 text-surface active:bg-key-2 active:text-ink" %>
       <%= link_to "← #{t('.all_tables')}", dining_tables_path, class: "text-[16px] underline opacity-85" %>
     </div>
   </header>

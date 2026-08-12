@@ -20,7 +20,12 @@
         <tbody>
           <% @dining_tables.each do |dining_table| %>
             <tr class="border-t border-line">
-              <td class="px-4 py-3"><%= dining_table.label %></td>
+              <td class="px-4 py-3">
+                <%= dining_table.label %>
+                <% if dining_table.takeaway? %>
+                  <span class="ml-1.5 px-2 py-0.5 rounded-key bg-go-50 text-go text-[12px] font-bold"><%= t(".takeaway") %></span>
+                <% end %>
+              </td>
               <td class="px-4 py-3 font-mono"><%= dining_table.seats %></td>
               <td class="px-4 py-3 font-mono"><%= dining_table.position %></td>
               <td class="px-4 py-3 text-right whitespace-nowrap">

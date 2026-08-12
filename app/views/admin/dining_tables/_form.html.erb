@@ -24,5 +24,10 @@
     <%= f.number_field :position, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
   </div>
 
+  <div class="flex items-center gap-2">
+    <%= f.check_box :takeaway, class: "w-5 h-5" %>
+    <%= f.label :takeaway, t(".takeaway_hint"), class: "text-[15px] font-semibold" %>
+  </div>
+
   <%= f.submit class: "min-h-[52px] rounded-ctl text-[17px] font-bold bg-go text-surface active:bg-go-700" %>
 <% end %>

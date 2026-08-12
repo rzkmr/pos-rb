@@ -11,9 +11,9 @@
       <%= link_to "← #{t('.all_tables')}", dining_tables_path, class: "underline" %>
       · <%= link_to t(".bill"), table_session_bill_path(@table_session), class: "underline" %>
       <%= link_to "EN", locale_path(locale: "en"), data: { turbo_method: :patch },
-            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 text-surface active:bg-key-2 active:text-ink" %>
       <%= link_to "ने", locale_path(locale: "ne"), data: { turbo_method: :patch },
-            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 active:bg-key-2" %>
+            class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 text-surface active:bg-key-2 active:text-ink" %>
     </div>
   </header>
 

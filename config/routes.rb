@@ -18,6 +18,8 @@ Rails.application.routes.draw do
   end
 
   resources :dining_tables, only: [ :index ]
+  get "takeaway" => "takeaway_orders#current"
+  resources :takeaway_orders, only: [ :show ]
   resources :table_sessions, only: [ :create, :show ] do
     resource :bill, only: [ :show ], controller: "bills"
     resources :payments, only: [ :create ]
