@@ -48,7 +48,7 @@ module Authentication
   def require_device
     return if Current.device
 
-    render plain: "Device not paired", status: :unauthorized
+    render "devices/not_paired", status: :unauthorized, layout: true
   end
 
   def require_user
