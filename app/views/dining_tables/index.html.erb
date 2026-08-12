@@ -2,6 +2,12 @@
 
 <p>
   <%= link_to "Kitchen", kitchen_tickets_path %>
+  <% if Current.user&.role == "admin" %>
+    · <%= link_to "Menu", admin_menu_items_path %>
+    · <%= link_to "Users", admin_users_path %>
+    · <%= link_to "Sales", admin_sales_path %>
+    · <%= link_to "Devices", devices_path %>
+  <% end %>
   · <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
 </p>
 

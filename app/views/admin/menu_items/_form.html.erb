@@ -1,0 +1,26 @@
+<%= form_with model: [ :admin, menu_item ] do |f| %>
+  <% if menu_item.errors.any? %>
+    <ul>
+      <% menu_item.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= f.label :name %>
+  <%= f.text_field :name %>
+
+  <%= f.label :category %>
+  <%= f.select :category, MenuItem::CATEGORIES %>
+
+  <%= f.label :price_paise, "Price (paise)" %>
+  <%= f.number_field :price_paise %>
+
+  <%= f.label :hsn_sac, "HSN/SAC" %>
+  <%= f.text_field :hsn_sac %>
+
+  <%= f.label :active %>
+  <%= f.check_box :active %>
+
+  <%= f.submit %>
+<% end %>

@@ -32,6 +32,12 @@ Rails.application.routes.draw do
   resources :kitchen_tickets, only: [ :index, :update ]
   get "heartbeat" => "heartbeats#show"
 
+  namespace :admin do
+    resources :menu_items, except: [ :show ]
+    resources :users, except: [ :show ]
+    resource :sales, only: [ :show ], controller: "sales"
+  end
+
   # Defines the root path route ("/")
   root "dining_tables#index"
 end

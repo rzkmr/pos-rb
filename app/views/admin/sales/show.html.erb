@@ -1,0 +1,58 @@
+<h1>Daily sales — <%= @daily_sales.date.to_fs(:long) %></h1>
+
+<%= form_with url: admin_sales_path, method: :get do %>
+  <%= label_tag :date %>
+  <%= date_field_tag :date, @daily_sales.date %>
+  <%= submit_tag "View" %>
+<% end %>
+
+<section>
+  <h2>Totals</h2>
+  <p>Invoices issued: <%= @daily_sales.invoices.count %></p>
+  <p>Invoice total: <%= money_to_inr(@daily_sales.invoice_total_paise) %></p>
+  <p>Payments received: <%= money_to_inr(@daily_sales.payment_total_paise) %></p>
+  <p>Voided lines: <%= @daily_sales.void_count %></p>
+  <p>Reprints: <%= @daily_sales.reprint_count %></p>
+</section>
+
+<section>
+  <h2>Payment method reconciliation</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @daily_sales.by_payment_method.each do |row| %>
+        <tr>
+          <td><%= row.method %></td>
+          <td><%= money_to_inr(row.total_paise) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Invoices</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Number</th>
+        <th>Time</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @daily_sales.invoices.each do |invoice| %>
+        <tr>
+          <td><%= invoice.number %></td>
+          <td><%= invoice.issued_at.strftime("%H:%M") %></td>
+          <td><%= money_to_inr(invoice.total_paise) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

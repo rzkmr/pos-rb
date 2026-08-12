@@ -1,0 +1,23 @@
+<%= form_with model: [ :admin, user ] do |f| %>
+  <% if user.errors.any? %>
+    <ul>
+      <% user.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= f.label :name %>
+  <%= f.text_field :name %>
+
+  <%= f.label :role %>
+  <%= f.select :role, User::ROLES %>
+
+  <%= f.label :pin, "PIN (4 digits#{' — leave blank to keep current' if user.persisted?})" %>
+  <%= f.password_field :pin %>
+
+  <%= f.label :active %>
+  <%= f.check_box :active %>
+
+  <%= f.submit %>
+<% end %>

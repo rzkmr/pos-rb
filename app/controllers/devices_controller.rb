@@ -1,7 +1,9 @@
 class DevicesController < ApplicationController
+  include RequireAdmin
+
   skip_before_action :require_device, only: [ :pair, :create ]
   skip_before_action :require_user, only: [ :pair, :create ]
-  before_action :require_admin, only: [ :index, :destroy ]
+  skip_before_action :require_admin, only: [ :pair, :create ]
 
   rate_limit to: 5, within: 1.minute, by: -> { request.remote_ip },
              with: -> { render plain: "Too many attempts, try again shortly", status: :too_many_requests },
@@ -37,13 +39,5 @@ class DevicesController < ApplicationController
     AuditEvent.record!(action: "device_revoked", subject: device, user: Current.user, device: Current.device)
     device.destroy!
     redirect_to devices_path, notice: "Device revoked"
-  end
-
-  private
-
-  def require_admin
-    return if Current.user&.role == "admin"
-
-    render plain: "Admin only", status: :forbidden
   end
 end
