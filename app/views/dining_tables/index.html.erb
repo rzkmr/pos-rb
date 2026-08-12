@@ -5,14 +5,26 @@
       <%= link_to "भान्सा", kitchen_tickets_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
       <% if Current.user&.role == "admin" %>
         <%= link_to "मेनु", admin_menu_items_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
+        <%= link_to "टेबल व्यवस्थापन", admin_dining_tables_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
         <%= link_to "प्रयोगकर्ता", admin_users_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
         <%= link_to "बिक्री", admin_sales_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
         <%= link_to "यन्त्रहरू", devices_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
+        <%= link_to "सेटिङ", edit_admin_settings_path, class: "px-3.5 py-2 rounded-key bg-wall-3 active:bg-key-2" %>
       <% end %>
       <%= link_to "साइन आउट", session_path, data: { turbo_method: :delete },
             class: "px-3.5 py-2 rounded-key bg-stop text-surface active:bg-stop-50 active:text-stop" %>
     </nav>
   </header>
+
+  <% if @dining_tables.empty? %>
+    <div class="p-6 text-center flex flex-col gap-3 items-center">
+      <div class="text-[18px] text-ink-3">अहिलेसम्म कुनै टेबल थपिएको छैन।</div>
+      <% if Current.user&.role == "admin" %>
+        <%= link_to "पहिलो टेबल थप्नुहोस्", new_admin_dining_table_path,
+              class: "px-4 py-2.5 rounded-ctl bg-go text-surface text-[16px] font-bold" %>
+      <% end %>
+    </div>
+  <% end %>
 
   <div class="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
     <% @dining_tables.each do |dining_table| %>

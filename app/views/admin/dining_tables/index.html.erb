@@ -1,0 +1,37 @@
+<div class="min-h-screen bg-shell p-6">
+  <div class="max-w-4xl mx-auto flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-[26px] font-bold">Tables</h1>
+      <%= link_to "Add table", new_admin_dining_table_path,
+            class: "px-4 py-2.5 rounded-ctl bg-go text-surface text-[16px] font-bold" %>
+    </div>
+
+    <div class="bg-card rounded-tile border border-line overflow-x-auto">
+      <table class="w-full text-[16px]">
+        <thead>
+          <tr class="bg-[#f2f1ec] text-left">
+            <th class="px-4 py-3 font-bold">Label</th>
+            <th class="px-4 py-3 font-bold">Seats</th>
+            <th class="px-4 py-3 font-bold">Position</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @dining_tables.each do |dining_table| %>
+            <tr class="border-t border-line">
+              <td class="px-4 py-3"><%= dining_table.label %></td>
+              <td class="px-4 py-3 font-mono"><%= dining_table.seats %></td>
+              <td class="px-4 py-3 font-mono"><%= dining_table.position %></td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <%= link_to "Edit", edit_admin_dining_table_path(dining_table), class: "text-go font-semibold mr-3" %>
+                <%= button_to "Remove", admin_dining_table_path(dining_table), method: :delete,
+                      class: "px-3 py-1.5 rounded-key border-2 border-stop text-stop text-[14px] font-bold",
+                      form: { data: { turbo_confirm: "Remove this table?" } } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

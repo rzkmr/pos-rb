@@ -1,0 +1,28 @@
+<%= form_with model: [ :admin, dining_table ], class: "flex flex-col gap-4 max-w-lg" do |f| %>
+  <% if dining_table.errors.any? %>
+    <div class="px-4 py-3 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[15px]">
+      <ul class="list-disc pl-5">
+        <% dining_table.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :label, "Label (e.g. T1, Bar 2)", class: "text-[15px] font-semibold" %>
+    <%= f.text_field :label, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :seats, class: "text-[15px] font-semibold" %>
+    <%= f.number_field :seats, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <%= f.label :position, "Display order", class: "text-[15px] font-semibold" %>
+    <%= f.number_field :position, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+  </div>
+
+  <%= f.submit class: "min-h-[52px] rounded-ctl text-[17px] font-bold bg-go text-surface active:bg-go-700" %>
+<% end %>

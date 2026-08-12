@@ -1,0 +1,73 @@
+<div class="min-h-screen bg-shell p-6">
+  <div class="max-w-lg mx-auto flex flex-col gap-4">
+    <h1 class="text-[26px] font-bold">Settings</h1>
+
+    <%= form_with model: @shop, url: admin_settings_path, method: :patch, class: "flex flex-col gap-4" do |f| %>
+      <% if @shop.errors.any? %>
+        <div class="px-4 py-3 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[15px]">
+          <ul class="list-disc pl-5">
+            <% @shop.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="text-[15px] font-bold text-ink-2 pt-2">Shop details</div>
+
+      <div class="flex flex-col gap-1.5">
+        <%= f.label :name, class: "text-[15px] font-semibold" %>
+        <%= f.text_field :name, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <%= f.label :address, class: "text-[15px] font-semibold" %>
+        <%= f.text_field :address, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <%= f.label :gstin, class: "text-[15px] font-semibold" %>
+        <%= f.text_field :gstin, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <%= f.label :state_code, "GST state code", class: "text-[15px] font-semibold" %>
+        <%= f.text_field :state_code, maxlength: 2, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <%= f.label :fssai_licence, "FSSAI licence", class: "text-[15px] font-semibold" %>
+        <%= f.text_field :fssai_licence, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <%= f.check_box :composition_scheme, class: "w-5 h-5" %>
+        <%= f.label :composition_scheme, "Composition scheme (cannot collect GST)", class: "text-[15px] font-semibold" %>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <%= f.label :invoice_footer, class: "text-[15px] font-semibold" %>
+        <%= f.text_area :invoice_footer, rows: 2, class: "px-3 py-2 rounded-ctl border-2 border-line-2 text-[16px]" %>
+      </div>
+
+      <div class="text-[15px] font-bold text-ink-2 pt-2 border-t border-line">Kitchen/bill printer</div>
+      <div class="text-[14px] text-ink-3">
+        The IP address of your thermal printer on this network. Ask whoever set up the printer,
+        or check its network settings page.
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <%= f.label :printer_host, "Printer IP address", class: "text-[15px] font-semibold" %>
+        <%= f.text_field :printer_host, placeholder: "192.168.1.20",
+              class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <%= f.label :printer_port, class: "text-[15px] font-semibold" %>
+        <%= f.number_field :printer_port, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+      </div>
+
+      <%= f.submit "Save settings", class: "min-h-[52px] rounded-ctl text-[17px] font-bold bg-go text-surface active:bg-go-700" %>
+    <% end %>
+  </div>
+</div>

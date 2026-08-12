@@ -36,7 +36,9 @@ Rails.application.routes.draw do
   namespace :admin do
     resources :menu_items, except: [ :show ]
     resources :users, except: [ :show ]
+    resources :dining_tables, except: [ :show ]
     resource :sales, only: [ :show ], controller: "sales"
+    resource :settings, only: [ :edit, :update ], controller: "settings"
   end
 
   # Defines the root path route ("/")
