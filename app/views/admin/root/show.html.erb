@@ -32,8 +32,16 @@
       <span class="text-[14px] text-ink-3"><%= t(".sales_desc") %></span>
     <% end %>
 
-    <%= link_to devices_path, class: "min-h-[100px] p-4 rounded-tile bg-card border-2 border-line flex flex-col justify-center gap-1 active:border-go active:bg-go-50" do %>
-      <span class="text-[19px] font-bold"><%= t(".devices") %></span>
+    <% no_devices = @paired_device_count.zero? %>
+    <%= link_to devices_path, class: "min-h-[100px] p-4 rounded-tile border-2 flex flex-col justify-center gap-1 #{no_devices ? 'bg-warn-50 border-warn-700 active:bg-warn' : 'bg-card border-line active:border-go active:bg-go-50'}" do %>
+      <span class="flex items-center justify-between gap-2">
+        <span class="text-[19px] font-bold"><%= t(".devices") %></span>
+        <% if no_devices %>
+          <span class="px-2 py-0.5 rounded-key bg-warn-700 text-surface text-[12px] font-bold"><%= t(".devices_none_paired") %></span>
+        <% else %>
+          <span class="px-2 py-0.5 rounded-key bg-go-50 text-go text-[12px] font-bold"><%= t(".devices_paired_count", count: @paired_device_count) %></span>
+        <% end %>
+      </span>
       <span class="text-[14px] text-ink-3"><%= t(".devices_desc") %></span>
     <% end %>
 

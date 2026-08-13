@@ -174,6 +174,10 @@ en:
         sales_desc: "Daily reconciliation"
         devices: "Devices"
         devices_desc: "Paired tablets and phones"
+        devices_none_paired: "None paired"
+        devices_paired_count:
+          one: "%{count} paired"
+          other: "%{count} paired"
         settings: "Settings"
         settings_desc: "Shop details, printer"
     sessions:
@@ -254,8 +258,13 @@ en:
       title: "Devices"
       kind: "Kind"
       last_seen: "Last seen"
+      active_now: "Active now"
       never: "never"
       revoke: "Revoke"
+      revoke_confirm: "Revoke this device? It will need the pairing PIN again to reconnect."
+      none_paired_title: "No devices paired yet"
+      none_paired_help: "Staff can't sign in on a tablet or phone until it's paired to this shop. Pair the first one now, or hand out the pairing PIN from Settings and have staff pair their own."
+      pair_a_device: "Pair a device"
     not_paired:
       title: "This device is not paired"
       description: "This tablet or phone is not yet paired with this shop. Get the pairing PIN from the admin and pair it below."

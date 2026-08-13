@@ -1,31 +1,51 @@
 <div class="min-h-screen bg-shell p-6">
   <div class="max-w-3xl mx-auto flex flex-col gap-4">
+    <%= render "admin/shared/breadcrumb", title: t(".title") %>
     <h1 class="text-[26px] font-bold"><%= t(".title") %></h1>
 
-    <div class="bg-card rounded-tile border border-line overflow-x-auto">
-      <table class="w-full text-[16px]">
-        <thead>
-          <tr class="bg-[#f2f1ec] text-left">
-            <th class="px-4 py-3 font-bold"><%= t("shared.label") %></th>
-            <th class="px-4 py-3 font-bold"><%= t(".kind") %></th>
-            <th class="px-4 py-3 font-bold"><%= t(".last_seen") %></th>
-            <th class="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @devices.each do |device| %>
-            <tr class="border-t border-line">
-              <td class="px-4 py-3"><%= device.label %></td>
-              <td class="px-4 py-3"><%= device.kind %></td>
-              <td class="px-4 py-3 font-mono"><%= device.last_seen_at&.to_fs(:short) || t(".never") %></td>
-              <td class="px-4 py-3 text-right">
-                <%= button_to t(".revoke"), device_path(device), method: :delete,
-                      class: "px-3 py-1.5 rounded-key border-2 border-stop text-stop text-[14px] font-bold" %>
-              </td>
+    <% if @devices.empty? %>
+      <div class="rounded-ctl bg-warn-50 border-2 border-warn-700 p-4">
+        <p class="text-[16px] font-semibold text-warn-900"><%= t(".none_paired_title") %></p>
+        <p class="text-[14px] text-ink-3 mt-1"><%= t(".none_paired_help") %></p>
+        <%= link_to t(".pair_a_device"), pair_devices_path,
+              class: "mt-3 inline-block min-h-[48px] px-4 rounded-ctl text-[15px] font-bold bg-go text-surface active:bg-go-700 flex items-center justify-center w-fit" %>
+      </div>
+    <% else %>
+      <div class="bg-card rounded-tile border border-line overflow-x-auto">
+        <table class="w-full text-[16px]">
+          <thead>
+            <tr class="bg-[#f2f1ec] text-left">
+              <th class="px-4 py-3 font-bold"><%= t("shared.label") %></th>
+              <th class="px-4 py-3 font-bold"><%= t(".kind") %></th>
+              <th class="px-4 py-3 font-bold"><%= t(".last_seen") %></th>
+              <th class="px-4 py-3"></th>
             </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            <% @devices.each do |device| %>
+              <tr class="border-t border-line">
+                <td class="px-4 py-3"><%= device.label %></td>
+                <td class="px-4 py-3"><%= device.kind %></td>
+                <td class="px-4 py-3 font-mono">
+                  <% if device.last_seen_at && device.last_seen_at > 15.minutes.ago %>
+                    <span class="inline-flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-live"></span>
+                      <%= t(".active_now") %>
+                    </span>
+                  <% else %>
+                    <%= device.last_seen_at&.to_fs(:short) || t(".never") %>
+                  <% end %>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <%= button_to t(".revoke"), device_path(device), method: :delete,
+                        class: "px-3 py-1.5 rounded-key border-2 border-stop text-stop text-[14px] font-bold",
+                        form: { data: { turbo_confirm: t(".revoke_confirm") } } %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
   </div>
 </div>
