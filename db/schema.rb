@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -139,7 +139,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_130000) do
 
   create_table "shops", force: :cascade do |t|
     t.string "address"
-    t.string "admin_pin_digest", default: "", null: false
     t.boolean "composition_scheme", default: false, null: false
     t.datetime "created_at", null: false
     t.string "fssai_licence"
@@ -150,6 +149,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_130000) do
     t.string "invoice_prefix", default: "INV", null: false
     t.integer "invoice_sequence", default: 0, null: false
     t.string "name", null: false
+    t.string "pairing_pin"
     t.boolean "prices_include_tax", default: false, null: false
     t.string "printer_host"
     t.integer "printer_port", default: 9100, null: false

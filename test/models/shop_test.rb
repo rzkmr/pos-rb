@@ -3,9 +3,9 @@ require "test_helper"
 class ShopTest < ActiveSupport::TestCase
   teardown { Current.reset }
 
-  test "authenticates admin pairing pin" do
-    assert shops(:alpha).authenticate_admin_pin("9999")
-    assert_not shops(:alpha).authenticate_admin_pin("0000")
+  test "authenticates the device pairing pin" do
+    assert shops(:alpha).authenticate_pairing_pin("9999")
+    assert_not shops(:alpha).authenticate_pairing_pin("0000")
   end
 
   test "next_invoice_sequence! increments gaplessly within a financial year" do

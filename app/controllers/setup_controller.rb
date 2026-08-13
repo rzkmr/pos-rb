@@ -27,7 +27,7 @@ class SetupController < ApplicationController
     @shop.invoice_prefix = "INV" if @shop.invoice_prefix.blank?
     @shop.invoice_fy = Shop.financial_year_for(Date.current)
     @shop.gst_rate_bp = 500 if @shop.gst_rate_bp.blank?
-    @shop.admin_pin = params[:admin_pin]
+    @shop.pairing_pin = params[:admin_pin]
 
     ActiveRecord::Base.transaction do
       @shop.save!

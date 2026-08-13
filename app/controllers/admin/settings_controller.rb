@@ -12,7 +12,7 @@ class Admin::SettingsController < Admin::BaseController
     end
 
     pin_changed = params[:admin_pin].present?
-    @shop.admin_pin = params[:admin_pin] if pin_changed
+    @shop.pairing_pin = params[:admin_pin] if pin_changed
 
     if @shop.update(shop_params)
       AuditEvent.record!(

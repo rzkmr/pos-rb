@@ -13,7 +13,7 @@ class DevicesController < ApplicationController
   end
 
   def create
-    unless Current.shop&.authenticate_admin_pin(params[:admin_pin])
+    unless Current.shop&.authenticate_pairing_pin(params[:admin_pin])
       flash.now[:alert] = "Incorrect pairing PIN"
       return render :pair, status: :unprocessable_entity
     end

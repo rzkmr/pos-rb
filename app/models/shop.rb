@@ -1,5 +1,10 @@
 class Shop < ApplicationRecord
-  has_secure_password :admin_pin, validations: false
+  # A shared operational PIN handed out verbally by admin to staff pairing
+  # a new device — same trust model as a WiFi password, not a personal
+  # credential. Stored in the clear so admin can look it up and read it
+  # off any time from Settings; see the migration for why hashing it made
+  # the actual "how does staff learn this PIN" question unanswerable.
+  validates :pairing_pin, format: { with: /\A\d{4}\z/, message: "must be exactly 4 digits" }, allow_nil: true
 
   has_many :users, dependent: :restrict_with_error
   has_many :admin_users, dependent: :restrict_with_error
@@ -19,6 +24,10 @@ class Shop < ApplicationRecord
   validates :invoice_fy, presence: true
   validates :gst_rate_bp, numericality: { greater_than_or_equal_to: 0 }
   validates :invoice_sequence, numericality: { greater_than_or_equal_to: 0 }
+
+  def authenticate_pairing_pin(candidate)
+    pairing_pin.present? && ActiveSupport::SecurityUtils.secure_compare(pairing_pin, candidate.to_s)
+  end
 
   # India's financial year runs 1 April to 31 March.
   def self.financial_year_for(date)

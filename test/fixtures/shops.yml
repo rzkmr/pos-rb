@@ -5,7 +5,7 @@ alpha:
   invoice_fy: "2025-26"
   invoice_sequence: 0
   gst_rate_bp: 500
-  admin_pin_digest: <%= BCrypt::Password.create("9999") %>
+  pairing_pin: "9999"
 
 beta:
   name: Beta Restaurant
@@ -14,4 +14,4 @@ beta:
   invoice_fy: "2025-26"
   invoice_sequence: 0
   gst_rate_bp: 500
-  admin_pin_digest: <%= BCrypt::Password.create("8888") %>
+  pairing_pin: "8888"
