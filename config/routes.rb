@@ -9,7 +9,9 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  resource :setup, only: [ :new, :create ], controller: "setup"
+  resource :setup, only: [ :new, :create ], controller: "setup" do
+    get :done
+  end
   resource :session, only: [ :new, :create, :destroy ]
   resources :devices, only: [ :index, :create, :destroy ] do
     collection do

@@ -257,11 +257,13 @@ en:
       description: "This tablet or phone is not yet paired with this shop. Get the pairing PIN from the admin and pair it below."
       pair_device: "Pair device"
     pair:
-      title: "Pair this device"
+      title: "Connect this tablet"
+      subtitle: "For a physical device joining a shop that's already set up — waiter, kitchen, or cashier."
       device_label: "Device label"
       device_label_placeholder: "Kitchen display"
       device_kind: "Device kind"
-      admin_pairing_pin: "Admin pairing PIN"
+      shop_pairing_pin: "Shop pairing PIN"
+      shop_pairing_pin_help: "The 4-digit PIN chosen when this shop was set up. Not a personal login — every device uses the same one, just this once."
       pair_device: "Pair device"
 
   setup:
@@ -280,4 +282,12 @@ en:
       admin_login_help: "This is separate from staff PINs. You will sign in with a username and password from any browser — no device pairing needed. Staff (waiter/cashier/kitchen) use PINs on paired tablets and never see this login."
       username: "Username"
       password_hint: "Password (min 8 characters)"
-      create_shop: "Create shop and sign in"
+      create_shop: "Create shop"
+    done:
+      title: "Shop created"
+      subtitle: "You're set. One more thing before you start."
+      is_this_a_shop_tablet: "Is this browser on a tablet or phone you'll use in the shop?"
+      pair_now_help: "If this is a waiter, kitchen, or cashier device, connect it now with the pairing PIN you just chose — one less trip back to this screen."
+      pair_this_device: "Pair this device"
+      or_admin_login_html: "Or sign in as <strong>%{username}</strong> to set up your menu, tables, and staff."
+      go_to_admin_login: "Go to admin sign-in →"

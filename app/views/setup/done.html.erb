@@ -1,0 +1,23 @@
+<div class="min-h-screen flex items-center justify-center bg-shell p-5">
+  <div class="w-full max-w-md bg-surface rounded-phone p-6 flex flex-col gap-5 text-center">
+    <div class="text-[40px]">✅</div>
+    <div>
+      <h1 class="text-[22px] font-bold"><%= t(".title") %></h1>
+      <p class="text-[16px] text-ink-3 mt-1"><%= t(".subtitle") %></p>
+    </div>
+
+    <div class="rounded-ctl bg-go-50 border-2 border-go p-4 text-left">
+      <p class="text-[15px] font-semibold text-go"><%= t(".is_this_a_shop_tablet") %></p>
+      <p class="text-[14px] text-ink-3 mt-1"><%= t(".pair_now_help") %></p>
+      <%= link_to t(".pair_this_device"), pair_devices_path,
+            class: "mt-3 min-h-[56px] rounded-tile text-[17px] font-bold bg-go text-surface active:bg-go-700 flex items-center justify-center" %>
+    </div>
+
+    <div class="text-left">
+      <p class="text-[14px] text-ink-3">
+        <%= t(".or_admin_login_html", username: @admin_username) %>
+      </p>
+      <%= link_to t(".go_to_admin_login"), new_admin_session_path, class: "text-go font-semibold text-[15px]" %>
+    </div>
+  </div>
+</div>

@@ -1,7 +1,11 @@
 <% content_for :flash_in_card, true %>
 <div class="min-h-screen flex items-center justify-center bg-shell p-5">
   <div class="w-full max-w-md bg-surface rounded-phone p-6 flex flex-col gap-5">
-    <h1 class="text-[22px] font-bold"><%= t(".title") %></h1>
+    <div class="text-[32px]">📱</div>
+    <div>
+      <h1 class="text-[22px] font-bold"><%= t(".title") %></h1>
+      <p class="text-[15px] text-ink-3 mt-1"><%= t(".subtitle") %></p>
+    </div>
 
     <%= render "shared/flash" %>
 
@@ -16,7 +20,8 @@
         <%= f.select :kind, Device::KINDS, {}, class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
       </div>
       <div class="flex flex-col gap-1.5">
-        <%= f.label :admin_pin, t(".admin_pairing_pin"), class: "text-[15px] font-semibold" %>
+        <%= f.label :admin_pin, t(".shop_pairing_pin"), class: "text-[15px] font-semibold" %>
+        <p class="text-[13px] text-ink-3"><%= t(".shop_pairing_pin_help") %></p>
         <%= f.password_field :admin_pin, inputmode: "numeric",
               class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[20px] tracking-[0.4em] text-center" %>
       </div>

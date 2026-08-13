@@ -4,13 +4,13 @@
 # Authentication#redirect_to_setup_if_needed, the only other place that
 # references this controller.
 class SetupController < ApplicationController
-  skip_before_action :set_current_shop
-  skip_before_action :set_current_admin
+  skip_before_action :set_current_shop, except: [ :done ]
+  skip_before_action :set_current_admin, except: [ :done ]
   skip_before_action :set_current_device
   skip_before_action :set_current_user
   skip_before_action :require_device
   skip_before_action :require_user
-  before_action :ensure_not_already_set_up
+  before_action :ensure_not_already_set_up, except: [ :done ]
 
   def new
     @shop = Shop.new
@@ -34,9 +34,17 @@ class SetupController < ApplicationController
       @admin_user = @shop.admin_users.create!(username: params[:admin_username], password: params[:admin_password])
     end
 
-    redirect_to new_admin_session_path, notice: "Shop set up. Sign in as #{@admin_user.username} to continue."
+    redirect_to done_setup_path(username: @admin_user.username)
   rescue ActiveRecord::RecordInvalid
     render :new, status: :unprocessable_entity
+  end
+
+  # Offers to pair the browser/device that just finished setup, since it's
+  # very often also going to be used as a shop-floor tablet (e.g. the
+  # counter). Reachable any time after setup, not just immediately after —
+  # it links onward, it doesn't expose anything setup itself didn't.
+  def done
+    @admin_username = params[:username]
   end
 
   private
