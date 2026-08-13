@@ -1,7 +1,7 @@
 class Device < ApplicationRecord
   include ShopScoped
 
-  KINDS = %w[waiter kitchen cashier admin].freeze
+  KINDS = %w[waiter kitchen cashier].freeze
 
   has_secure_password :token, validations: false
 
