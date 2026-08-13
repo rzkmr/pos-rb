@@ -267,8 +267,9 @@ en:
       device_label_placeholder: "Kitchen display"
       device_kind: "Device kind"
       shop_pairing_pin: "Shop pairing PIN"
-      shop_pairing_pin_help: "The 4-digit PIN chosen when this shop was set up. Not a personal login — every device uses the same one, just this once."
+      shop_pairing_pin_help: "Don't know it? Ask your manager or admin — it's not your personal PIN, and it's the same one for every device in the shop."
       pair_device: "Pair device"
+      whats_next: "After this: you'll pick your own name and enter YOUR OWN PIN to sign in — that's different from this one."
 
   setup:
     new:
