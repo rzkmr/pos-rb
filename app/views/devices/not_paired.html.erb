@@ -1,5 +1,7 @@
+<% content_for :flash_in_card, true %>
 <div class="min-h-screen flex items-center justify-center bg-shell p-5">
   <div class="w-full max-w-md bg-surface rounded-phone p-6 flex flex-col gap-5 text-center">
+    <%= render "shared/flash" %>
     <h1 class="text-[22px] font-bold"><%= t(".title") %></h1>
     <p class="text-[16px] text-ink-3">
       <%= t(".description") %>

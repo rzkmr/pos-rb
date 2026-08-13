@@ -1,3 +1,4 @@
+<% content_for :flash_in_card, true %>
 <div class="min-h-screen flex items-center justify-center bg-shell p-5">
   <div class="w-full max-w-[392px] bg-surface rounded-phone p-6 flex flex-col gap-6">
     <div class="flex items-center justify-end gap-2">
@@ -10,6 +11,8 @@
       <div class="text-[21px] font-bold"><%= t(".title") %></div>
       <div class="text-[17px] text-ink-3"><%= t(".subtitle") %></div>
     </div>
+
+    <%= render "shared/flash" %>
 
     <%= form_with url: session_path, method: :post, class: "flex flex-col gap-5" do |f| %>
       <div class="flex flex-col gap-2">

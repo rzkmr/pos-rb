@@ -23,7 +23,7 @@
   </head>
 
   <body class="bg-shell text-ink">
-    <%= render "shared/flash" %>
+    <%= render "shared/flash" unless content_for?(:flash_in_card) %>
     <%= yield %>
   </body>
 </html>
