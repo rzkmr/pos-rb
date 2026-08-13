@@ -1,0 +1,10 @@
+<% if flash[:notice] %>
+  <div class="px-4 py-3 bg-go-50 border-b-2 border-go text-go text-[15px] font-semibold text-center">
+    <%= flash[:notice] %>
+  </div>
+<% end %>
+<% if flash[:alert] %>
+  <div class="px-4 py-3 bg-stop-50 border-b-2 border-stop text-stop text-[15px] font-semibold text-center">
+    <%= flash[:alert] %>
+  </div>
+<% end %>
