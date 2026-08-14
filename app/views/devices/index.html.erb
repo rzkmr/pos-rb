@@ -16,7 +16,6 @@
           <thead>
             <tr class="bg-[#f2f1ec] text-left">
               <th class="px-4 py-3 font-bold"><%= t("shared.label") %></th>
-              <th class="px-4 py-3 font-bold"><%= t(".kind") %></th>
               <th class="px-4 py-3 font-bold"><%= t(".last_seen") %></th>
               <th class="px-4 py-3"></th>
             </tr>
@@ -25,7 +24,6 @@
             <% @devices.each do |device| %>
               <tr class="border-t border-line">
                 <td class="px-4 py-3"><%= device.label %></td>
-                <td class="px-4 py-3"><%= device.kind %></td>
                 <td class="px-4 py-3 font-mono">
                   <% if device.last_seen_at && device.last_seen_at > 15.minutes.ago %>
                     <span class="inline-flex items-center gap-1.5">

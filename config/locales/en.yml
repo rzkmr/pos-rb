@@ -207,6 +207,7 @@ en:
         current_pairing_pin_help: "Read this to staff in person when they're pairing a new device. It's shared and operational, not a personal login."
         new_pairing_pin: "Change it"
         leave_blank_to_keep: "Leave blank to keep current"
+        generate_pin: "Generate"
         printer_section: "Kitchen/bill printer"
         printer_help: "The IP address of your thermal printer on this network. Ask whoever set up the printer, or check its network settings page."
         printer_ip: "Printer IP address"
@@ -261,7 +262,6 @@ en:
   devices:
     index:
       title: "Devices"
-      kind: "Kind"
       last_seen: "Last seen"
       active_now: "Active now"
       never: "never"
@@ -277,9 +277,6 @@ en:
     pair:
       title: "Connect this tablet"
       subtitle: "For a physical device joining a shop that's already set up — waiter, kitchen, or cashier."
-      device_label: "Device label"
-      device_label_placeholder: "Kitchen display"
-      device_kind: "Device kind"
       shop_pairing_pin: "Shop pairing PIN"
       shop_pairing_pin_help: "Don't know it? Ask your manager or admin — it's not your personal PIN, and it's the same one for every device in the shop."
       pair_device: "Pair device"

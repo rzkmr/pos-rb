@@ -36,7 +36,7 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def destroy
-    @user.update!(active: false)
+    @user.update_column(:active, false)
     AuditEvent.record!(action: "user_deactivated", subject: @user, admin_user: Current.admin)
     redirect_to admin_users_path, notice: "User deactivated"
   end

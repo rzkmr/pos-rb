@@ -8,16 +8,24 @@ class DevicesControllerTest < ActionDispatch::IntegrationTest
 
   test "create pairs a device with the correct admin pin" do
     assert_difference "Device.unscoped.count", 1 do
-      post devices_url, params: { label: "Kitchen", kind: "kitchen", admin_pin: "9999" }
+      post devices_url, params: { admin_pin: "9999" }
     end
 
     assert_redirected_to new_session_url
     assert cookies[:device_token].present?
   end
 
+  test "create redirects an admin back to the devices list, not staff PIN login" do
+    admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
+
+    post devices_url, params: { admin_pin: "9999" }
+
+    assert_redirected_to devices_path
+  end
+
   test "create rejects an incorrect admin pin" do
     assert_no_difference "Device.unscoped.count" do
-      post devices_url, params: { label: "Kitchen", kind: "kitchen", admin_pin: "0000" }
+      post devices_url, params: { admin_pin: "0000" }
     end
 
     assert_response :unprocessable_entity
@@ -25,12 +33,12 @@ class DevicesControllerTest < ActionDispatch::IntegrationTest
 
   test "create records a pairing_attempt for both success and failure" do
     assert_difference "PairingAttempt.count", 1 do
-      post devices_url, params: { label: "Kitchen", kind: "kitchen", admin_pin: "9999" }
+      post devices_url, params: { admin_pin: "9999" }
     end
     assert shops(:alpha).pairing_attempts.last.success
 
     assert_difference "PairingAttempt.count", 1 do
-      post devices_url, params: { label: "Kitchen", kind: "kitchen", admin_pin: "0000" }
+      post devices_url, params: { admin_pin: "0000" }
     end
     assert_not shops(:alpha).pairing_attempts.last.success
   end
@@ -41,7 +49,7 @@ class DevicesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_no_difference "Device.unscoped.count" do
-      post devices_url, params: { label: "Kitchen", kind: "kitchen", admin_pin: "9999" }
+      post devices_url, params: { admin_pin: "9999" }
     end
 
     assert_response :too_many_requests
@@ -57,7 +65,7 @@ class DevicesControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy requires admin web login and writes an audit_event" do
     admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
-    device, = Device.pair!(shop: shops(:alpha), label: "Old tablet", kind: "waiter")
+    device, = Device.pair!(shop: shops(:alpha), label: "Old tablet")
 
     assert_difference "AuditEvent.count", 1 do
       delete device_url(device)

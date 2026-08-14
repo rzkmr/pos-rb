@@ -25,14 +25,22 @@ class DevicesController < ApplicationController
     end
 
     record_pairing_attempt!(success: true)
-    device, token = Device.pair!(shop: Current.shop, label: params[:label], kind: params[:kind])
+    device, token = Device.pair!(shop: Current.shop, label: default_device_label)
     cookies.signed[Authentication::DEVICE_COOKIE] = {
       value: token,
       httponly: true,
       same_site: :lax,
       expires: 10.years
     }
-    redirect_to new_session_path, notice: "Device paired as #{device.label}"
+
+    # An admin pairing a device from /admin/devices is confirming setup,
+    # not about to use it as a shop-floor tablet — send them back to see
+    # it listed rather than dropping them on the staff PIN login screen.
+    if Current.admin
+      redirect_to devices_path, notice: "Device paired as #{device.label}"
+    else
+      redirect_to new_session_path, notice: "Device paired as #{device.label}"
+    end
   end
 
   def index
@@ -69,5 +77,12 @@ class DevicesController < ApplicationController
 
   def record_pairing_attempt!(success:)
     Current.shop.pairing_attempts.create!(success: success, ip_address: request.remote_ip)
+  end
+
+  # Pairing only asks for the PIN — the device isn't labeled by whoever's
+  # pairing it. Staff/admin can rename it later from Devices if they want
+  # something more specific than a timestamp.
+  def default_device_label
+    "Device paired #{Time.current.strftime('%-d %b, %-I:%M%p')}"
   end
 end

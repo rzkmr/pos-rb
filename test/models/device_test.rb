@@ -4,7 +4,7 @@ class DeviceTest < ActiveSupport::TestCase
   teardown { Current.reset }
 
   test "pair! returns a device and a plaintext token that authenticates" do
-    device, token = Device.pair!(shop: shops(:alpha), label: "Kitchen", kind: "kitchen")
+    device, token = Device.pair!(shop: shops(:alpha), label: "Kitchen")
 
     assert device.persisted?
     assert device.authenticate_token(token)

@@ -61,4 +61,14 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_not user.reload.active?
   end
+
+  test "destroy deactivates a user even if their pin is no longer valid" do
+    admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
+    user = users(:alpha_waiter)
+    user.update_column(:pin, nil)
+
+    delete admin_user_url(user)
+
+    assert_not user.reload.active?
+  end
 end

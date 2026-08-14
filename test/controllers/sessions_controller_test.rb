@@ -3,7 +3,7 @@ require "test_helper"
 class SessionsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @shop = shops(:alpha)
-    @device, @token = Device.pair!(shop: @shop, label: "Test", kind: "waiter")
+    @device, @token = Device.pair!(shop: @shop, label: "Test")
     cookies[:device_token] = @token
   end
 

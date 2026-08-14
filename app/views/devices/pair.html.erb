@@ -11,25 +11,18 @@
 
     <%= form_with url: devices_path, method: :post, class: "flex flex-col gap-4" do |f| %>
       <div class="flex flex-col gap-1.5">
-        <%= f.label :label, t(".device_label"), class: "text-[15px] font-semibold" %>
-        <%= f.text_field :label, placeholder: t(".device_label_placeholder"),
-              class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <%= f.label :kind, t(".device_kind"), class: "text-[15px] font-semibold" %>
-        <%= f.select :kind, Device::KINDS, {}, class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
-      </div>
-      <div class="flex flex-col gap-1.5">
         <%= f.label :admin_pin, t(".shop_pairing_pin"), class: "text-[15px] font-semibold" %>
         <p class="text-[13px] text-ink-3"><%= t(".shop_pairing_pin_help") %></p>
-        <%= f.password_field :admin_pin, inputmode: "numeric",
+        <%= f.password_field :admin_pin, inputmode: "numeric", autofocus: true,
               class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[20px] tracking-[0.4em] text-center" %>
       </div>
       <%= f.submit t(".pair_device"), class: "min-h-[60px] rounded-tile text-[18px] font-bold bg-go text-surface active:bg-go-700" %>
     <% end %>
 
-    <p class="text-[13px] text-ink-3 text-center border-t border-line pt-4">
-      <%= t(".whats_next") %>
-    </p>
+    <% unless Current.admin %>
+      <p class="text-[13px] text-ink-3 text-center border-t border-line pt-4">
+        <%= t(".whats_next") %>
+      </p>
+    <% end %>
   </div>
 </div>
