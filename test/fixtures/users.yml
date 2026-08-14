@@ -3,4 +3,4 @@ alpha_waiter:
   name: Waiter
   role: waiter
   active: true
-  pin_digest: <%= BCrypt::Password.create("2222") %>
+  pin: "2222"

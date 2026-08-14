@@ -32,12 +32,21 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   test "update without a pin keeps the existing pin" do
     admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
     user = users(:alpha_waiter)
-    original_digest = user.pin_digest
+    original_pin = user.pin
 
     patch admin_user_url(user), params: { user: { name: "Renamed Waiter", pin: "" } }
 
-    assert_equal original_digest, user.reload.pin_digest
+    assert_equal original_pin, user.reload.pin
     assert_equal "Renamed Waiter", user.name
+  end
+
+  test "edit shows the current PIN in the clear" do
+    admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
+    user = users(:alpha_waiter)
+
+    get edit_admin_user_url(user)
+
+    assert_match user.pin, response.body
   end
 
   test "destroy deactivates instead of deleting, and writes an audit_event" do

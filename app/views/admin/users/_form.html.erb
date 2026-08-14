@@ -19,6 +19,14 @@
     <%= f.select :role, User::ROLES, {}, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 text-[16px]" %>
   </div>
 
+  <% if user.persisted? && user.pin.present? %>
+    <div class="rounded-ctl bg-go-50 border-2 border-go p-4">
+      <p class="text-[13px] font-semibold text-go uppercase tracking-wide"><%= t(".current_pin") %></p>
+      <p class="text-[32px] font-mono font-bold tracking-[0.3em] text-ink"><%= user.pin %></p>
+      <p class="text-[13px] text-ink-3 mt-1"><%= t(".current_pin_help") %></p>
+    </div>
+  <% end %>
+
   <div class="flex flex-col gap-1.5">
     <%= f.label :pin, (user.persisted? ? t(".pin_hint_edit") : t(".pin_hint_new")), class: "text-[15px] font-semibold" %>
     <%= f.password_field :pin, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[18px] tracking-[0.4em]" %>

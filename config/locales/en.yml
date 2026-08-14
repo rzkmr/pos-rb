@@ -243,7 +243,9 @@ en:
         deactivate: "Deactivate"
     users:
       form:
-        pin_hint_edit: "PIN (4 digits — leave blank to keep current)"
+        current_pin: "Current PIN"
+        current_pin_help: "Read this to them if they've forgotten it. Setting a new one below replaces it immediately."
+        pin_hint_edit: "New PIN (4 digits — leave blank to keep current)"
         pin_hint_new: "PIN (4 digits)"
       edit:
         title: "Edit user"
@@ -253,6 +255,7 @@ en:
         title: "Users"
         add_user: "Add user"
         role: "Role"
+        pin: "PIN"
         deactivate: "Deactivate"
 
   devices:

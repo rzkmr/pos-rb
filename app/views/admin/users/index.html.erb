@@ -13,6 +13,7 @@
           <tr class="bg-[#f2f1ec] text-left">
             <th class="px-4 py-3 font-bold"><%= t("shared.name") %></th>
             <th class="px-4 py-3 font-bold"><%= t(".role") %></th>
+            <th class="px-4 py-3 font-bold"><%= t(".pin") %></th>
             <th class="px-4 py-3 font-bold"><%= t("shared.active") %></th>
             <th class="px-4 py-3"></th>
           </tr>
@@ -22,6 +23,7 @@
             <tr class="border-t border-line">
               <td class="px-4 py-3"><%= user.name %></td>
               <td class="px-4 py-3"><%= user.role %></td>
+              <td class="px-4 py-3 font-mono tracking-[0.2em]"><%= user.pin %></td>
               <td class="px-4 py-3"><%= user.active? ? t("shared.yes") : t("shared.no") %></td>
               <td class="px-4 py-3 text-right whitespace-nowrap">
                 <%= link_to t("shared.edit"), edit_admin_user_path(user), class: "text-go font-semibold mr-3" %>
