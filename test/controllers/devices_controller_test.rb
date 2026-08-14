@@ -23,6 +23,30 @@ class DevicesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
+  test "create records a pairing_attempt for both success and failure" do
+    assert_difference "PairingAttempt.count", 1 do
+      post devices_url, params: { label: "Kitchen", kind: "kitchen", admin_pin: "9999" }
+    end
+    assert shops(:alpha).pairing_attempts.last.success
+
+    assert_difference "PairingAttempt.count", 1 do
+      post devices_url, params: { label: "Kitchen", kind: "kitchen", admin_pin: "0000" }
+    end
+    assert_not shops(:alpha).pairing_attempts.last.success
+  end
+
+  test "create is locked out shop-wide after repeated failures, even with the correct PIN" do
+    PairingAttempt::LOCKOUT_THRESHOLD.times do
+      shops(:alpha).pairing_attempts.create!(success: false, ip_address: "10.0.0.#{rand(1..254)}")
+    end
+
+    assert_no_difference "Device.unscoped.count" do
+      post devices_url, params: { label: "Kitchen", kind: "kitchen", admin_pin: "9999" }
+    end
+
+    assert_response :too_many_requests
+  end
+
   test "index requires admin web login, not a paired device or PIN" do
     sign_in_as(users(:alpha_waiter), pin: "2222")
 

@@ -3,9 +3,14 @@ class DevicesController < ApplicationController
   skip_before_action :require_user, only: [ :pair, :create, :index, :destroy ]
   before_action :require_admin_web_login, only: [ :index, :destroy ]
 
-  rate_limit to: 5, within: 1.minute, by: -> { request.remote_ip },
+  # First line of defense: per-IP throttle. Not sufficient alone against a
+  # 4-digit (10,000-combination) PIN — an attacker who rotates source IPs,
+  # or shares a NAT gateway with legitimate staff, isn't meaningfully
+  # slowed by this. See require_not_locked_out for the shop-wide backstop.
+  rate_limit to: 5, within: 15.minutes, by: -> { request.remote_ip },
              with: -> { render plain: "Too many attempts, try again shortly", status: :too_many_requests },
              only: :create
+  before_action :require_not_locked_out, only: :create
 
   # Unauthenticated pairing screen: a fresh, unpaired device enters the
   # shop's admin pairing PIN to bind itself. See CLAUDE.md/ARCHITECTURE.md §8.
@@ -14,10 +19,12 @@ class DevicesController < ApplicationController
 
   def create
     unless Current.shop&.authenticate_pairing_pin(params[:admin_pin])
+      record_pairing_attempt!(success: false)
       flash.now[:alert] = "Incorrect pairing PIN"
       return render :pair, status: :unprocessable_entity
     end
 
+    record_pairing_attempt!(success: true)
     device, token = Device.pair!(shop: Current.shop, label: params[:label], kind: params[:kind])
     cookies.signed[Authentication::DEVICE_COOKIE] = {
       value: token,
@@ -47,5 +54,20 @@ class DevicesController < ApplicationController
     return if Current.admin
 
     redirect_to new_admin_session_path
+  end
+
+  # Shop-wide backstop the per-IP rate_limit above can't provide: counts
+  # recent failed attempts regardless of which IP made them, so rotating
+  # source IPs doesn't help an attacker grind through the PIN's 10,000
+  # combinations any faster.
+  def require_not_locked_out
+    return unless Current.shop && PairingAttempt.locked_out?(shop: Current.shop)
+
+    flash.now[:alert] = "Too many incorrect attempts. Pairing is locked for a few minutes — ask an admin if this keeps happening."
+    render :pair, status: :too_many_requests
+  end
+
+  def record_pairing_attempt!(success:)
+    Current.shop.pairing_attempts.create!(success: success, ip_address: request.remote_ip)
   end
 end

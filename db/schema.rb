@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -105,6 +105,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
     t.json "variants", default: [], null: false
     t.index ["shop_id", "active"], name: "index_menu_items_on_shop_id_and_active"
     t.index ["shop_id"], name: "index_menu_items_on_shop_id"
+  end
+
+  create_table "pairing_attempts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip_address", null: false
+    t.bigint "shop_id", null: false
+    t.boolean "success", null: false
+    t.datetime "updated_at", null: false
+    t.index ["shop_id", "success", "created_at"], name: "index_pairing_attempts_on_shop_id_and_success_and_created_at"
+    t.index ["shop_id"], name: "index_pairing_attempts_on_shop_id"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -235,6 +245,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_120000) do
   add_foreign_key "invoices", "shops"
   add_foreign_key "invoices", "table_sessions"
   add_foreign_key "menu_items", "shops"
+  add_foreign_key "pairing_attempts", "shops"
   add_foreign_key "payments", "shops"
   add_foreign_key "payments", "table_sessions"
   add_foreign_key "payments", "users", column: "received_by_id"
