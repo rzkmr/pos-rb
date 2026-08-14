@@ -6,6 +6,17 @@ class Shop < ApplicationRecord
   # the actual "how does staff learn this PIN" question unanswerable.
   validates :pairing_pin, format: { with: /\A\d{4}\z/, message: "must be exactly 4 digits" }, allow_nil: true
 
+  # Enforces the single-shop-per-deployment invariant everything else here
+  # (ShopScoped's default_scope, Authentication#set_current_shop) quietly
+  # assumes. Without this, a second row — created by a bug, a bad console
+  # command, a botched import — would sit there with undefined behavior:
+  # Shop.first has no ORDER BY, so which shop's data every request sees
+  # would depend on Postgres row-return order, not on anything the app
+  # controls. See ARCHITECTURE.md §11 for the real multi-tenancy path;
+  # this is not that, it's making the current single-shop assumption fail
+  # loudly instead of silently, if it's ever violated.
+  validate :only_one_shop_may_exist, on: :create
+
   has_many :users, dependent: :restrict_with_error
   has_many :admin_users, dependent: :restrict_with_error
   has_many :devices, dependent: :restrict_with_error
@@ -48,5 +59,9 @@ class Shop < ApplicationRecord
     return if invoice_fy == financial_year
 
     update!(invoice_fy: financial_year, invoice_sequence: 0)
+  end
+
+  def only_one_shop_may_exist
+    errors.add(:base, "a shop already exists — this deployment is single-shop only") if Shop.exists?
   end
 end

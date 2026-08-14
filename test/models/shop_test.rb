@@ -26,4 +26,11 @@ class ShopTest < ActiveSupport::TestCase
 
     assert_equal 1, reset
   end
+
+  test "refuses to create a second shop when one already exists" do
+    shop = Shop.new(name: "Second Shop", state_code: "07", invoice_prefix: "INV", invoice_fy: "2025-26")
+
+    assert_not shop.save
+    assert_includes shop.errors[:base], "a shop already exists — this deployment is single-shop only"
+  end
 end

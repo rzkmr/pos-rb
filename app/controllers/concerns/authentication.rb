@@ -30,9 +30,13 @@ module Authentication
     redirect_to new_setup_path unless is_a?(SetupController)
   end
 
-  # Single shop in production; see CLAUDE.md — multi-tenancy is a later routing change.
+  # Single shop in production; see CLAUDE.md — multi-tenancy is a later
+  # routing change. Shop itself enforces that only one row can ever exist
+  # (see Shop#only_one_shop_may_exist), but .first has no ORDER BY and
+  # isn't guaranteed stable — order explicitly so behavior stays
+  # well-defined even if that invariant is ever bypassed outside the app.
   def set_current_shop
-    Current.shop = Shop.first
+    Current.shop = Shop.order(:id).first
   end
 
   def set_current_device
