@@ -1,8 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Registers the assets-only service worker (see app/views/pwa/service-worker.js
-// — never caches HTML, per CLAUDE.md invariant #4) and shows a one-time
-// "Add to Home Screen" banner so staff open a real app icon instead of
+// Registers the service worker (see app/views/pwa/service-worker.js — caches
+// assets plus exactly one state-free HTML shell route, per CLAUDE.md
+// invariant #4) and shows a one-time "Add to Home Screen" banner so staff
+// open a real app icon instead of
 // typing a URL every shift. Chrome/Android fires beforeinstallprompt;
 // iOS Safari has no such event, so there we show a manual instruction
 // instead of a button. Dismissed state is remembered per-browser.

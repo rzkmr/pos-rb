@@ -45,6 +45,13 @@ en:
     "no": "No"
     composition_scheme: "Composition scheme (cannot collect GST)"
     admin_dashboard: "Admin"
+    offline_banner: "Offline — work is being saved and will send automatically"
+
+  offline_shells:
+    show:
+      title: "Offline"
+      offline: "Offline"
+      loading: "Loading local data..."
 
   dining_tables:
     index:

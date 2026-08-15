@@ -16,6 +16,13 @@ ne:
     "no": "छैन"
     composition_scheme: "Composition scheme (कर संकलन गर्न सकिँदैन)"
     admin_dashboard: "एडमिन"
+    offline_banner: "अफलाइन — काम सुरक्षित गरिँदैछ, स्वतः पठाइनेछ"
+
+  offline_shells:
+    show:
+      title: "अफलाइन"
+      offline: "अफलाइन"
+      loading: "स्थानीय डाटा लोड हुँदैछ..."
 
   dining_tables:
     index:

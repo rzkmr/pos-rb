@@ -22,7 +22,17 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-shell text-ink" data-controller="<%= 'pwa-install' if Current.user || Current.admin %>">
+  <% show_connectivity = Current.user || Current.admin %>
+  <% body_controllers = [] %>
+  <% body_controllers << "connectivity" if show_connectivity %>
+  <% body_controllers << "pwa-install" if show_connectivity %>
+  <body class="bg-shell text-ink" data-controller="<%= body_controllers.join(' ') %>">
+    <% if show_connectivity %>
+      <div data-controller="offline-banner" hidden
+           class="flex items-center justify-center gap-2 px-4 py-2 bg-warn text-warn-900 text-[14px] font-bold text-center">
+        <%= t("shared.offline_banner") %>
+      </div>
+    <% end %>
     <%= render "shared/flash" unless content_for?(:flash_in_card) %>
     <%= yield %>
   </body>

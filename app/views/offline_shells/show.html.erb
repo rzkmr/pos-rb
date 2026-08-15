@@ -1,0 +1,19 @@
+<%# Chrome only — no @dining_tables, no session, no cart, no invoice. Every
+    dynamic value below is filled in by offline-shell_controller.js from
+    IndexedDB. This is the one HTML page the Service Worker may cache
+    (CLAUDE.md invariant #4); keeping it structurally free of transactional
+    data is what makes that safe — there is nothing here that can go stale
+    in a way that matters. %>
+<div class="min-h-screen bg-shell" data-controller="offline-shell">
+  <header class="bg-ink text-surface px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+    <div class="text-[22px] font-bold"><%= t(".title") %></div>
+    <div class="px-3 py-1.5 rounded-key bg-warn text-warn-900 text-[14px] font-bold">
+      <%= t(".offline") %>
+    </div>
+  </header>
+
+  <div class="p-4">
+    <p class="text-[16px] text-ink-3" data-offline-shell-target="status"><%= t(".loading") %></p>
+    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5" data-offline-shell-target="menu"></div>
+  </div>
+</div>

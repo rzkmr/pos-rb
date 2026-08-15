@@ -8,4 +8,12 @@ class HeartbeatsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
   end
+
+  test "show returns ok with no device paired or user signed in" do
+    delete session_url
+
+    get heartbeat_url
+
+    assert_response :success
+  end
 end

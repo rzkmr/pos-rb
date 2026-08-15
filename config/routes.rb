@@ -5,8 +5,8 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Home-screen install: manifest + a minimal, assets-only service worker.
-  # See CLAUDE.md invariant #4 — it must never cache HTML.
+  # Home-screen install: manifest + service worker (assets + the state-free
+  # /offline_shell route only — see CLAUDE.md invariant #4).
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
@@ -42,6 +42,8 @@ Rails.application.routes.draw do
   resources :kitchen_tickets, only: [ :index, :update ]
   get "heartbeat" => "heartbeats#show"
   patch "locale" => "locales#update"
+  get "catalog_snapshot" => "catalog_snapshots#show"
+  get "offline_shell" => "offline_shells#show"
 
   namespace :admin do
     resource :session, only: [ :new, :create, :destroy ]
