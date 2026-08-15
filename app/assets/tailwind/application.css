@@ -165,7 +165,13 @@
 @media print {
   @page { size: 80mm auto; margin: 0; }
   html, body { width: 80mm !important; background: #fff !important; }
-  body > *:not(.receipt-print-root) { display: none !important; }
+  /* :has() matches at any depth, so this hides every element that is
+     neither .receipt-print-root nor one of its ancestors, regardless of
+     how deeply it's nested — needed because the offline pending receipt
+     (takeaway_checkout_controller#showPendingReceipt) lives inside the
+     controller root div, not as a direct body child like the
+     server-rendered receipt is. */
+  body *:not(.receipt-print-root):not(:has(.receipt-print-root)) { display: none !important; }
   .receipt-print-root { display: block !important; }
   .receipt-print-root .receipt-preview {
     width: 100% !important;

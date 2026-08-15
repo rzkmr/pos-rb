@@ -8,12 +8,26 @@
        data-takeaway-checkout-dining-table-id-value="<%= @dining_table.id %>"
        data-takeaway-checkout-held-carts-url-value="<%= dining_table_held_carts_path(@dining_table) %>"
        data-takeaway-checkout-gst-rate-bp-value="<%= Current.shop.gst_rate_bp %>"
-       data-takeaway-checkout-composition-scheme-value="<%= Current.shop.composition_scheme %>">
+       data-takeaway-checkout-composition-scheme-value="<%= Current.shop.composition_scheme %>"
+       data-takeaway-checkout-shop-name-value="<%= Current.shop.name %>"
+       data-takeaway-checkout-shop-address-value="<%= Current.shop.address %>"
+       data-takeaway-checkout-shop-gstin-value="<%= Current.shop.gstin %>"
+       data-takeaway-checkout-shop-fssai-value="<%= Current.shop.fssai_licence %>"
+       data-takeaway-checkout-shop-footer-value="<%= Current.shop.invoice_footer %>"
+       data-takeaway-checkout-table-label-value="<%= @dining_table.label %>">
 
     <%# status toast — hold/restore confirmations, top-centered, no action button %>
     <div data-takeaway-checkout-target="toast"
          class="fixed left-1/2 -translate-x-1/2 top-4 z-[60] px-4 py-3 rounded-tile bg-ink text-surface
                 text-[15px] font-semibold shadow-lg transition-opacity duration-200 opacity-0" hidden></div>
+
+    <%# Offline fallback: while a just-confirmed payment is still queued
+        (see attemptCheckout/scheduleRetry), show a receipt built from the
+        local cart snapshot instead of leaving the cashier on an empty cart.
+        Identical layout to the server-rendered receipt below — once the
+        queued request succeeds, a reload replaces this with the real one. %>
+    <div data-takeaway-checkout-target="pendingReceipt"
+         class="fixed inset-0 z-50 bg-shell overflow-y-auto" hidden></div>
 
     <div class="h-[100dvh] md:h-[820px] md:max-h-[85vh] w-full bg-shell flex flex-col md:flex-row overflow-hidden">
 
@@ -46,7 +60,7 @@
         <div data-takeaway-checkout-target="charging"
              class="shrink-0 flex items-center gap-2.5 px-4 py-3 bg-warn text-warn-900 border-y-[3px] border-warn-700" hidden>
           <span class="w-3.5 h-3.5 rounded-full bg-[#7a5300] animate-pulse shrink-0"></span>
-          <span class="text-[15px] font-bold"><%= t(".charging") %></span>
+          <span class="text-[15px] font-bold" data-charging-label><%= t(".charging") %></span>
         </div>
 
         <%# search %>

@@ -20,11 +20,14 @@ export default class extends Controller {
     "sheet", "sheetBackdrop",
     "payBackdrop", "payPanel", "payContent",
     "charging", "toast",
-    "heldBadge", "heldBackdrop", "heldPanel", "heldList"
+    "heldBadge", "heldBackdrop", "heldPanel", "heldList",
+    "pendingReceipt"
   ]
   static values = {
     tableSessionId: Number, checkoutUrl: String, diningTableId: Number, heldCartsUrl: String,
-    gstRateBp: Number, compositionScheme: Boolean
+    gstRateBp: Number, compositionScheme: Boolean,
+    shopName: String, shopAddress: String, shopGstin: String, shopFssai: String, shopFooter: String,
+    tableLabel: String
   }
 
   connect() {
@@ -480,11 +483,20 @@ export default class extends Controller {
 
   resumePendingCheckout() {
     const pending = this.readPending()
-    if (pending) this.attemptCheckout(pending)
+    if (!pending) return
+
+    // A reload mid-retry (e.g. the cashier checking the screen) would
+    // otherwise flash the empty cart before the first retry lands —
+    // show the pending receipt immediately since payment was already
+    // confirmed on-screen once and shouldn't look "undone" on refresh.
+    this.showPendingReceipt(pending)
+    this.attemptCheckout(pending, true)
   }
 
-  async attemptCheckout(payload) {
+  async attemptCheckout(payload, isRetry = false) {
     this.chargingTarget.hidden = false
+    this.chargingTarget.querySelector("[data-charging-label]").textContent =
+      this.t(isRetry ? "charging_offline" : "charging")
 
     try {
       const response = await fetch(this.checkoutUrlValue, {
@@ -509,12 +521,79 @@ export default class extends Controller {
       this.clearPending(payload.clientToken)
       window.location.reload()
     } catch {
+      this.showPendingReceipt(payload)
       this.scheduleRetry(payload)
     }
   }
 
   scheduleRetry(payload) {
-    this.retryTimeout = setTimeout(() => this.attemptCheckout(payload), 5000)
+    this.retryTimeout = setTimeout(() => this.attemptCheckout(payload, true), 5000)
+  }
+
+  // --- offline pending receipt ---
+  // Built entirely from the locally-saved cart snapshot (see
+  // completeCheckout/persistPending) — no invoice exists yet, since the
+  // server hasn't accepted the ticket+payment. Same layout, math, and
+  // buttons as the real post-payment receipt (show.html.erb's server-
+  // rendered version) so there is no visible difference to staff or
+  // customers; once the queued request succeeds, attemptCheckout reloads
+  // the page and the real, server-issued receipt takes over.
+  showPendingReceipt(payload) {
+    const billing = this.computeBilling(payload.items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0))
+    const now = new Date()
+    const dateStr = `${String(now.getDate()).padStart(2, "0")}-${now.toLocaleString("en", { month: "short" })}-${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+
+    const itemRows = payload.items.map((item) => `
+      <div class="flex justify-between gap-3 text-[13px] py-0.5">
+        <span class="flex-1">${item.quantity} x ${item.name}</span>
+        <span>${this.formatInr(item.quantity * Number(item.unitPricePaise))}</span>
+      </div>`).join("")
+
+    const taxRows = this.compositionSchemeValue
+      ? `<p class="text-[12px] mt-1">${this.t("composition_declaration")}</p>`
+      : `<div class="flex justify-between text-[13px]"><span>${this.t("cgst")}</span><span>${this.formatInr(billing.cgstPaise)}</span></div>
+         <div class="flex justify-between text-[13px]"><span>${this.t("sgst")}</span><span>${this.formatInr(billing.sgstPaise)}</span></div>`
+
+    this.pendingReceiptTarget.innerHTML = `
+      <header class="flex items-center gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
+        <h1 class="text-[19px] font-bold flex-1">${this.tableLabelValue}</h1>
+      </header>
+      <div class="p-4 flex flex-col items-center gap-4 w-full">
+        <div class="receipt-print-root">
+          <div class="receipt-preview rounded-ctl border border-line-2 shadow-sm p-4">
+            <div class="text-center">
+              <p class="font-bold text-[16px]">${this.shopNameValue}</p>
+              ${this.shopAddressValue ? `<p class="text-[12px]">${this.shopAddressValue}</p>` : ""}
+              ${this.shopGstinValue ? `<p class="text-[12px]">GSTIN: ${this.shopGstinValue}</p>` : ""}
+              ${this.shopFssaiValue ? `<p class="text-[12px]">FSSAI: ${this.shopFssaiValue}</p>` : ""}
+            </div>
+            <div class="receipt-rule my-2"></div>
+            <p class="text-[13px]">${dateStr}</p>
+            <p class="text-[13px]">${this.tableLabelValue}</p>
+            <div class="receipt-rule my-2"></div>
+            ${itemRows}
+            <div class="receipt-rule my-2"></div>
+            <div class="flex justify-between text-[13px]"><span>${this.t("subtotal")}</span><span>${this.formatInr(billing.taxablePaise)}</span></div>
+            ${taxRows}
+            <div class="receipt-rule my-2"></div>
+            <div class="flex justify-between text-[16px] font-bold"><span>${this.t("total")}</span><span>${this.formatInr(billing.totalPaise)}</span></div>
+            <div class="receipt-rule my-2"></div>
+            ${this.shopFooterValue ? `<p class="text-center text-[12px] mt-1">${this.shopFooterValue}</p>` : ""}
+          </div>
+        </div>
+        <div class="w-full max-w-[340px] flex flex-col gap-2.5">
+          <button type="button" onclick="window.print()"
+                  class="w-full min-h-[64px] rounded-tile text-[18px] font-bold bg-go text-surface active:bg-go-700">
+            ${this.t("print_receipt")}
+          </button>
+          <a href="/takeaway"
+             class="text-center min-h-[56px] flex items-center justify-center rounded-tile text-[15px] font-bold bg-key text-ink active:bg-key-2">
+            ${this.t("new_order")}
+          </a>
+        </div>
+      </div>`
+
+    this.pendingReceiptTarget.hidden = false
   }
 
   storageKey() {
@@ -729,6 +808,10 @@ export default class extends Controller {
       other_amount: { en: "Other amount", ne: "अर्को रकम" },
       change_due: { en: "Change due", ne: "फिर्ता रकम" },
       insufficient_amount: { en: "Insufficient amount", ne: "रकम अपुग छ" },
+      charging: { en: "Charging...", ne: "भुक्तानी हुँदैछ..." },
+      charging_offline: { en: "Waiting for internet — will send automatically", ne: "इन्टरनेट पर्खँदै — पुनः प्रयास हुँदैछ" },
+      print_receipt: { en: "Print receipt", ne: "रसिद छाप्नुहोस्" },
+      new_order: { en: "Start new order", ne: "नयाँ अर्डर सुरु गर्नुहोस्" },
       confirm_payment: { en: "Confirm payment", ne: "भुक्तानी पक्का गर्नुहोस्" },
       card_prompt: { en: "Tap or insert card...", ne: "कार्ड ट्याप वा इन्सर्ट गर्नुहोस्..." },
       card_approved: { en: "Payment approved", ne: "भुक्तानी स्वीकृत भयो" },
