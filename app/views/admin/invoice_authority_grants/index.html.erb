@@ -1,0 +1,55 @@
+<div class="min-h-screen bg-shell p-6">
+  <div class="max-w-3xl mx-auto flex flex-col gap-4">
+    <%= render "admin/shared/breadcrumb", title: t(".title") %>
+    <h1 class="text-[26px] font-bold"><%= t(".title") %></h1>
+    <p class="text-[14px] text-ink-3"><%= t(".help") %></p>
+
+    <% if @live_grant %>
+      <div class="rounded-ctl bg-warn-50 border-2 border-warn-700 p-4 flex flex-col gap-3">
+        <div>
+          <p class="text-[16px] font-semibold text-warn-900">
+            <%= t(".currently_held_by", device: @live_grant.device.label) %>
+          </p>
+          <p class="text-[14px] text-ink-3 mt-1">
+            <%= t(".since", time: l(@live_grant.granted_at, format: :short)) %>
+            &middot;
+            <%= t(".invoices_reported", count: (@live_grant.last_reported_sequence || @live_grant.granted_sequence) - @live_grant.granted_sequence) %>
+          </p>
+        </div>
+        <%= form_with url: force_release_admin_invoice_authority_grant_path(@live_grant), method: :post,
+              data: { turbo_confirm: t(".force_release_confirm") }, class: "flex items-center gap-2" %>
+          <%= text_field_tag :reason, nil, placeholder: t(".force_release_reason_placeholder"), required: true,
+                class: "flex-1 min-h-[44px] px-3 rounded-ctl border-2 border-line-2 text-[14px]" %>
+          <%= submit_tag t(".force_release"), class: "min-h-[44px] px-4 rounded-ctl border-2 border-stop text-stop text-[14px] font-bold bg-surface" %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="rounded-ctl bg-go-50 border-2 border-go p-4">
+        <p class="text-[16px] font-semibold text-go"><%= t(".none_held") %></p>
+      </div>
+    <% end %>
+
+    <div class="bg-card rounded-tile border border-line overflow-x-auto">
+      <table class="w-full text-[15px]">
+        <thead>
+          <tr class="bg-[#f2f1ec] text-left">
+            <th class="px-4 py-3 font-bold"><%= t("shared.label") %></th>
+            <th class="px-4 py-3 font-bold"><%= t(".granted") %></th>
+            <th class="px-4 py-3 font-bold"><%= t(".released") %></th>
+            <th class="px-4 py-3 font-bold"><%= t(".invoices_reported_col") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @grants.each do |grant| %>
+            <tr class="border-t border-line">
+              <td class="px-4 py-3"><%= grant.device.label %></td>
+              <td class="px-4 py-3 font-mono"><%= l(grant.granted_at, format: :short) %></td>
+              <td class="px-4 py-3 font-mono"><%= grant.released_at ? l(grant.released_at, format: :short) : t(".still_live") %></td>
+              <td class="px-4 py-3 font-mono"><%= (grant.last_reported_sequence || grant.granted_sequence) - grant.granted_sequence %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

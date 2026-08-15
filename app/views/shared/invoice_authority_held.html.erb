@@ -1,0 +1,12 @@
+<% content_for :flash_in_card, true %>
+<div class="min-h-screen flex items-center justify-center bg-shell p-5">
+  <div class="w-full max-w-md bg-surface rounded-phone p-6 flex flex-col gap-5 text-center">
+    <%= render "shared/flash" %>
+    <h1 class="text-[22px] font-bold"><%= t("shared.invoice_authority_held_title") %></h1>
+    <p class="text-[16px] text-ink-3">
+      <%= t("shared.invoice_authority_held_help") %>
+    </p>
+    <%= link_to t("shared.back"), dining_tables_path,
+          class: "min-h-[60px] rounded-tile text-[18px] font-bold bg-key text-ink active:bg-key-2 flex items-center justify-center" %>
+  </div>
+</div>

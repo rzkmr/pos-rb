@@ -46,6 +46,8 @@ Rails.application.routes.draw do
   get "offline_shell" => "offline_shells#show"
   namespace :sync do
     resources :actions, only: [ :create ]
+    resources :invoices, only: [ :create ]
+    resource :invoice_authority, only: [ :create, :destroy ], controller: "invoice_authority"
   end
 
   namespace :admin do
@@ -56,6 +58,9 @@ Rails.application.routes.draw do
     resources :dining_tables, except: [ :show ]
     resource :sales, only: [ :show ], controller: "sales"
     resource :settings, only: [ :edit, :update ], controller: "settings"
+    resources :invoice_authority_grants, only: [ :index ] do
+      member { post :force_release }
+    end
   end
 
   # Defines the root path route ("/")

@@ -98,6 +98,15 @@ export async function markAuthRequired(id) {
   await put("outbox", { ...entry, status: "auth_required" })
 }
 
+// Removes a queued action outright rather than letting it drain normally —
+// used when a takeaway_checkout entry is superseded by a locally-issued
+// offline invoice (lib/offline_invoice.js): the two must never both reach
+// the server, or the same sale gets recorded twice under two different
+// client_action_ids.
+export async function cancel(id) {
+  await remove("outbox", id)
+}
+
 async function sweepOldSent() {
   const entries = await getAll("outbox")
   const cutoff = Date.now() - SENT_RETENTION_MS

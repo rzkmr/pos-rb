@@ -96,6 +96,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
     t.index ["shop_id"], name: "index_held_carts_on_shop_id"
   end
 
+  create_table "invoice_authority_grants", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "device_id", null: false
+    t.datetime "expires_at", null: false
+    t.string "financial_year", null: false
+    t.datetime "granted_at", null: false
+    t.integer "granted_sequence", null: false
+    t.integer "last_reported_sequence"
+    t.datetime "reconciled_at"
+    t.datetime "released_at"
+    t.bigint "shop_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id"], name: "index_invoice_authority_grants_on_device_id"
+    t.index ["shop_id", "device_id"], name: "index_invoice_authority_grants_on_shop_id_and_device_id"
+    t.index ["shop_id"], name: "idx_one_live_grant_per_shop", unique: true, where: "(released_at IS NULL)"
+    t.index ["shop_id"], name: "index_invoice_authority_grants_on_shop_id"
+  end
+
   create_table "invoices", force: :cascade do |t|
     t.integer "cgst_paise", null: false
     t.datetime "created_at", null: false
@@ -279,6 +297,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
   add_foreign_key "held_carts", "dining_tables"
   add_foreign_key "held_carts", "shops"
   add_foreign_key "held_carts", "users", column: "held_by_id"
+  add_foreign_key "invoice_authority_grants", "devices"
+  add_foreign_key "invoice_authority_grants", "shops"
   add_foreign_key "invoices", "shops"
   add_foreign_key "invoices", "table_sessions"
   add_foreign_key "menu_items", "shops"

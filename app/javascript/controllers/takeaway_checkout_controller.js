@@ -1,6 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
-import { enqueue, all as allOutboxEntries, entryStatus } from "lib/outbox"
+import { enqueue, all as allOutboxEntries, entryStatus, cancel as cancelOutboxEntry } from "lib/outbox"
 import { drain } from "lib/sync"
+import { computeBilling as computeBillingShared } from "lib/billing"
+import { issueLocal, FyRolledOver, unreportedInvoices as unreportedOfflineInvoices } from "lib/offline_invoice"
+import { acquire as acquireAuthority, resume as resumeAuthority, release as releaseAuthority } from "lib/invoice_authority_client"
 
 // Counter checkout: build a cart, pick a payment method, confirm. That
 // single request submits the ticket (which fires to the kitchen immediately
@@ -31,6 +34,7 @@ export default class extends Controller {
     tableSessionId: Number, checkoutUrl: String, diningTableId: Number, heldCartsUrl: String,
     gstRateBp: Number, compositionScheme: Boolean,
     shopName: String, shopAddress: String, shopGstin: String, shopFssai: String, shopFooter: String,
+    shopInvoicePrefix: String,
     tableLabel: String
   }
 
@@ -41,6 +45,8 @@ export default class extends Controller {
     this.refreshHeldCount()
     this.updateClock()
     this.clockTimer = setInterval(() => this.updateClock(), 1000)
+    this.ensureAuthorityQuietly()
+    this.authorityTimer = setInterval(() => this.ensureAuthorityQuietly(), 60000)
   }
 
   disconnect() {
@@ -48,6 +54,35 @@ export default class extends Controller {
     if (this.toastTimeout) clearTimeout(this.toastTimeout)
     if (this.clockTimer) clearInterval(this.clockTimer)
     if (this.cardTimeout) clearTimeout(this.cardTimeout)
+    if (this.authorityTimer) clearInterval(this.authorityTimer)
+    this.releaseAuthorityIfClean()
+  }
+
+  // Only releases if there's nothing left for this grant to be responsible
+  // for — releasing while offline-issued invoices are still unreported
+  // would let another device or admin acquire a fresh grant immediately,
+  // which is exactly the two-writer situation the whole scheme exists to
+  // prevent. If invoices are still pending, the grant stays held; the next
+  // successful /heartbeat or reportPendingOfflineInvoices() call will
+  // either extend it or release it once genuinely clear.
+  async releaseAuthorityIfClean() {
+    const pending = await unreportedOfflineInvoices()
+    if (pending.length > 0) return
+    await releaseAuthority().catch(() => {})
+  }
+
+  // Acquires InvoiceAuthority in the background whenever this screen is
+  // open and online, so it's already cached locally the instant a
+  // checkout genuinely fails offline — acquiring AT that moment is too
+  // late, since the request to acquire it would fail for the exact same
+  // reason the checkout did. /heartbeat's own poll (connectivity_controller.js)
+  // extends an already-held grant; this only needs to acquire a fresh one.
+  // Best-effort and silent: failing here just means the next offline
+  // checkout falls back to the plain queued-retry receipt, same as today.
+  async ensureAuthorityQuietly() {
+    const existing = await resumeAuthority()
+    if (existing) return
+    await acquireAuthority().catch(() => {})
   }
 
   updateClock() {
@@ -258,22 +293,10 @@ export default class extends Controller {
     return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  // Mirrors Billing.compute exactly (app/models/billing.rb) so the on-screen
-  // preview matches what the server actually charges once the ticket is
-  // submitted — CGST+SGST split on the half rate, round-off to the nearest
-  // rupee, zero tax under composition scheme (CLAUDE.md invariant #7).
   computeBilling(taxablePaise) {
-    if (this.compositionSchemeValue) {
-      return { taxablePaise, cgstPaise: 0, sgstPaise: 0, totalPaise: taxablePaise }
-    }
-
-    const halfRateBp = this.gstRateBpValue / 2
-    const cgstPaise = Math.round((taxablePaise * halfRateBp) / 10000)
-    const sgstPaise = cgstPaise
-    const preRoundTotal = taxablePaise + cgstPaise + sgstPaise
-    const totalPaise = Math.round(preRoundTotal / 100) * 100
-
-    return { taxablePaise, cgstPaise, sgstPaise, totalPaise }
+    return computeBillingShared({
+      taxablePaise, gstRateBp: this.gstRateBpValue, compositionScheme: this.compositionSchemeValue
+    })
   }
 
   // --- mobile cart sheet ---
@@ -490,7 +513,7 @@ export default class extends Controller {
     this.cart.clear()
     this.render()
     setTimeout(() => this.closePayment(), method === "cash" || method === "other" ? 250 : 0)
-    this.attemptCheckout(entry.id, this.receiptPayloadFrom(entry.payload))
+    this.attemptCheckout(entry.id, this.receiptPayloadFrom(entry.payload), items, method)
   }
 
   receiptPayloadFrom(payload) {
@@ -520,10 +543,19 @@ export default class extends Controller {
     // confirmed on-screen once and shouldn't look "undone" on refresh.
     const receiptPayload = this.receiptPayloadFrom(pendingEntry.payload)
     this.showPendingReceipt(receiptPayload)
-    this.attemptCheckout(pendingEntry.id, receiptPayload, true)
+    const items = pendingEntry.payload.items.map((item) => ({
+      menuItemId: item.menu_item_id, quantity: item.quantity, name: item.name, unitPricePaise: item.unit_price_paise
+    }))
+    this.attemptCheckout(pendingEntry.id, receiptPayload, items, pendingEntry.payload.method, true)
   }
 
-  async attemptCheckout(entryId, receiptPayload, isRetry = false) {
+  // First attempt always tries the normal online path (enqueue + drain).
+  // Only once that's confirmed NOT to be working — not just slow — does
+  // this fall back to issuing a real invoice locally (see lib/offline_invoice.js),
+  // which requires holding InvoiceAuthority. That's a deliberate escalation,
+  // not a race: two different mechanisms racing to record the same sale is
+  // exactly the double-write this whole design exists to prevent.
+  async attemptCheckout(entryId, receiptPayload, items, method, isRetry = false) {
     this.chargingTarget.hidden = false
     this.chargingTarget.querySelector("[data-charging-label]").textContent =
       this.t(isRetry ? "charging_offline" : "charging")
@@ -542,12 +574,50 @@ export default class extends Controller {
       return
     }
 
+    // Still pending/failed_retryable/sending after a drain attempt means
+    // the server genuinely isn't reachable right now — only then attempt
+    // to issue offline.
+    const issued = await this.tryIssueOffline(entryId, items, method)
+    if (issued) {
+      this.showIssuedReceipt(issued)
+      return
+    }
+
     this.showPendingReceipt(receiptPayload)
-    this.scheduleRetry(entryId, receiptPayload)
+    this.scheduleRetry(entryId, receiptPayload, items, method)
   }
 
-  scheduleRetry(entryId, receiptPayload) {
-    this.retryTimeout = setTimeout(() => this.attemptCheckout(entryId, receiptPayload, true), 5000)
+  // Returns the issued invoice record on success, or null to fall back to
+  // the plain outbox-queue retry — null covers every case where issuing
+  // offline isn't safe or possible right now: no grant could be acquired
+  // (Billing.issue_invoice!'s guard, or another device already holds one),
+  // or the device's clock has crossed a financial-year boundary since the
+  // grant was seeded (lib/offline_invoice.js refuses outright rather than
+  // guess how the new FY's sequence should start — that decision belongs
+  // to the server).
+  async tryIssueOffline(entryId, items, method) {
+    let grant = await resumeAuthority()
+    if (!grant) grant = await acquireAuthority()
+    if (!grant) return null
+
+    try {
+      const shop = {
+        gstRateBp: this.gstRateBpValue, compositionScheme: this.compositionSchemeValue,
+        invoicePrefix: this.shopInvoicePrefixValue
+      }
+      const invoice = await issueLocal({
+        shop, tableSession: { id: this.tableSessionIdValue }, items, method
+      })
+      await cancelOutboxEntry(entryId)
+      return invoice
+    } catch (error) {
+      if (error instanceof FyRolledOver) return null
+      return null
+    }
+  }
+
+  scheduleRetry(entryId, receiptPayload, items, method) {
+    this.retryTimeout = setTimeout(() => this.attemptCheckout(entryId, receiptPayload, items, method, true), 5000)
   }
 
   // --- offline pending receipt ---
@@ -556,14 +626,33 @@ export default class extends Controller {
   // server hasn't accepted the ticket+payment. Same layout, math, and
   // buttons as the real post-payment receipt (show.html.erb's server-
   // rendered version) so there is no visible difference to staff or
-  // customers; once the queued request succeeds, attemptCheckout reloads
-  // the page and the real, server-issued receipt takes over.
+  // customers, EXCEPT for the invoice number line, which this genuinely
+  // doesn't have yet — see showIssuedReceipt for the version that does.
   showPendingReceipt(payload) {
     const billing = this.computeBilling(payload.items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0))
-    const now = new Date()
-    const dateStr = `${String(now.getDate()).padStart(2, "0")}-${now.toLocaleString("en", { month: "short" })}-${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+    this.renderReceipt({ items: payload.items, billing, invoiceNumber: null, issuedAt: new Date() })
+  }
 
-    const itemRows = payload.items.map((item) => `
+  // Real, fully-numbered invoice issued locally via lib/offline_invoice.js
+  // while this device holds InvoiceAuthority — see tryIssueOffline. Unlike
+  // showPendingReceipt, this has a genuine invoice number and genuine tax
+  // figures (already computed by issueLocal using the exact same math as
+  // Billing.compute, see lib/billing.js), because the sale is fully
+  // recorded and numbered the moment this renders, not merely queued.
+  showIssuedReceipt(invoice) {
+    const billing = {
+      taxablePaise: invoice.taxablePaise, cgstPaise: invoice.cgstPaise,
+      sgstPaise: invoice.sgstPaise, totalPaise: invoice.totalPaise
+    }
+    this.renderReceipt({
+      items: invoice.items, billing, invoiceNumber: invoice.number, issuedAt: new Date(invoice.issuedAt)
+    })
+  }
+
+  renderReceipt({ items, billing, invoiceNumber, issuedAt }) {
+    const dateStr = `${String(issuedAt.getDate()).padStart(2, "0")}-${issuedAt.toLocaleString("en", { month: "short" })}-${issuedAt.getFullYear()} ${String(issuedAt.getHours()).padStart(2, "0")}:${String(issuedAt.getMinutes()).padStart(2, "0")}`
+
+    const itemRows = items.map((item) => `
       <div class="flex justify-between gap-3 text-[13px] py-0.5">
         <span class="flex-1">${item.quantity} x ${item.name}</span>
         <span>${this.formatInr(item.quantity * Number(item.unitPricePaise))}</span>
@@ -588,6 +677,7 @@ export default class extends Controller {
               ${this.shopFssaiValue ? `<p class="text-[12px]">FSSAI: ${this.shopFssaiValue}</p>` : ""}
             </div>
             <div class="receipt-rule my-2"></div>
+            ${invoiceNumber ? `<p class="text-[13px]">${this.t("invoice_number")} ${invoiceNumber}</p>` : ""}
             <p class="text-[13px]">${dateStr}</p>
             <p class="text-[13px]">${this.tableLabelValue}</p>
             <div class="receipt-rule my-2"></div>
@@ -614,6 +704,7 @@ export default class extends Controller {
       </div>`
 
     this.pendingReceiptTarget.hidden = false
+    this.chargingTarget.hidden = true
   }
 
   // --- hold / held orders ---
@@ -810,6 +901,7 @@ export default class extends Controller {
       charging_offline: { en: "Waiting for internet — will send automatically", ne: "इन्टरनेट पर्खँदै — पुनः प्रयास हुँदैछ" },
       checkout_failed: { en: "Checkout could not be completed — ask an admin", ne: "चेकआउट पूरा हुन सकेन — admin लाई सोध्नुहोस्" },
       print_receipt: { en: "Print receipt", ne: "रसिद छाप्नुहोस्" },
+      invoice_number: { en: "Invoice", ne: "बीजक" },
       new_order: { en: "Start new order", ne: "नयाँ अर्डर सुरु गर्नुहोस्" },
       confirm_payment: { en: "Confirm payment", ne: "भुक्तानी पक्का गर्नुहोस्" },
       card_prompt: { en: "Tap or insert card...", ne: "कार्ड ट्याप वा इन्सर्ट गर्नुहोस्..." },

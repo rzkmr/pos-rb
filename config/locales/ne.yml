@@ -18,6 +18,9 @@ ne:
     admin_dashboard: "एडमिन"
     offline_banner: "अफलाइन — काम सुरक्षित गरिँदैछ, स्वतः पठाइनेछ"
     pending_sync: "पठाउन बाँकी"
+    invoice_authority_held: "टेकअवे काउन्टर (%{device}) ले %{since} देखि अफलाइन बिल जारी गर्दैछ। यो टेबल बिल गर्नु अघि यसलाई अनलाइन ल्याउनुहोस्, वा Settings बाट छोड्नुहोस्।"
+    invoice_authority_held_title: "टेकअवे काउन्टर अफलाइन बिल गर्दैछ"
+    invoice_authority_held_help: "टेकअवे काउन्टरसँग अहिले अफलाइन हुँदा बिल नम्बर जारी गर्ने एकल अधिकार छ। यो अनलाइन नआएसम्म, वा admin ले Settings बाट नछोडेसम्म यो टेबल बिल गर्न सकिँदैन।"
 
   offline_shells:
     show:
@@ -188,6 +191,9 @@ ne:
         devices_paired_count: "%{count} जोडिएको"
         settings: "सेटिङ"
         settings_desc: "पसलको विवरण, प्रिन्टर"
+        offline_billing: "अफलाइन बिलिङ"
+        offline_billing_active: "सक्रिय"
+        offline_billing_desc: "टेकअवे काउन्टर अफलाइन बिल अधिकार"
     sessions:
       new:
         title: "Admin साइन इन"
@@ -203,6 +209,21 @@ ne:
         payments_received: "प्राप्त भुक्तानी"
         payment_method_reconciliation: "भुक्तानी विधि मिलान"
         invoices: "बीजकहरू"
+    invoice_authority_grants:
+      index:
+        title: "अफलाइन बिलिङ"
+        help: "टेकअवे काउन्टरले अफलाइन हुँदा वास्तविक, नम्बरयुक्त बिल जारी गर्न सक्छ। एक पटकमा एउटा मात्र यन्त्रसँग यो अधिकार हुन सक्छ — यो पृष्ठले कसले र कहिलेदेखि राखेको छ देखाउँछ।"
+        currently_held_by: "%{device} ले अफलाइन बिल जारी गर्दैछ"
+        since: "%{time} देखि"
+        invoices_reported: "अहिलेसम्म %{count} बिल जारी भयो"
+        none_held: "अहिले कुनै यन्त्रसँग अफलाइन बिल अधिकार छैन"
+        force_release: "जबरजस्ती छोड्नुहोस्"
+        force_release_confirm: "जबरजस्ती छोड्ने हो? यदि यन्त्र पछि रिपोर्ट नगरिएको बिलसहित फेरि जोडियो भने, त्यो द्वन्द्वको रूपमा फ्ल्याग हुनेछ — यन्त्र हराएको वा बिग्रिएको भए मात्र यसो गर्नुहोस्।"
+        force_release_reason_placeholder: "कारण (आवश्यक)"
+        granted: "दिइयो"
+        released: "छोडियो"
+        still_live: "अझै राखिएको"
+        invoices_reported_col: "बिलहरू"
     settings:
       edit:
         title: "सेटिङ"

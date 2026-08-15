@@ -47,6 +47,9 @@ en:
     admin_dashboard: "Admin"
     offline_banner: "Offline — work is being saved and will send automatically"
     pending_sync: "pending"
+    invoice_authority_held: "The takeaway counter (%{device}) is issuing bills offline since %{since}. Bring it back online, or release it from Settings, before billing this table."
+    invoice_authority_held_title: "Takeaway counter is billing offline"
+    invoice_authority_held_help: "The takeaway counter currently holds sole authority to issue bill numbers while it's offline. This table can't be billed until it reconnects, or an admin releases it from Settings."
 
   offline_shells:
     show:
@@ -229,6 +232,9 @@ en:
           other: "%{count} paired"
         settings: "Settings"
         settings_desc: "Shop details, printer"
+        offline_billing: "Offline billing"
+        offline_billing_active: "Active"
+        offline_billing_desc: "Takeaway counter offline invoice authority"
     sessions:
       new:
         title: "Admin sign in"
@@ -244,6 +250,21 @@ en:
         payments_received: "Payments received"
         payment_method_reconciliation: "Payment method reconciliation"
         invoices: "Invoices"
+    invoice_authority_grants:
+      index:
+        title: "Offline billing"
+        help: "The takeaway counter can issue real, numbered bills while offline. Only one device may hold this at a time — this page shows who has it and when."
+        currently_held_by: "%{device} is issuing bills offline"
+        since: "since %{time}"
+        invoices_reported: "%{count} invoices issued so far"
+        none_held: "No device currently holds offline invoice authority"
+        force_release: "Force release"
+        force_release_confirm: "Force release? If the device reconnects later with unreported invoices, that will be flagged as a conflict — only do this if the device is lost or broken."
+        force_release_reason_placeholder: "Reason (required)"
+        granted: "Granted"
+        released: "Released"
+        still_live: "Still held"
+        invoices_reported_col: "Invoices"
     settings:
       edit:
         title: "Settings"

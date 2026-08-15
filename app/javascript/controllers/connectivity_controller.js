@@ -1,6 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { refresh as refreshCatalog } from "lib/catalog_cache"
 import { start as startSync } from "lib/sync"
+import { reportPending as reportPendingOfflineInvoices } from "lib/offline_invoice_sync"
 
 // Single source of connectivity truth for the whole app — mounted once on
 // <body>. Polls the existing /heartbeat endpoint (already used by the
@@ -72,6 +73,9 @@ export default class extends Controller {
     this.lastStateChangeAt = now
     document.documentElement.dataset.connectivity = next
     document.dispatchEvent(new CustomEvent("pos:connectivity", { detail: { state: next } }))
-    if (next === "online") this.refreshCatalogQuietly()
+    if (next === "online") {
+      this.refreshCatalogQuietly()
+      reportPendingOfflineInvoices().catch(() => {})
+    }
   }
 }
