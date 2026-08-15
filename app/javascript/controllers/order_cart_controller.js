@@ -1,10 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
+import { enqueue, all as allOutboxEntries, entryStatus } from "lib/outbox"
+import { drain } from "lib/sync"
 
 // Builds a cart of menu items client-side, then submits it as one ticket.
-// Submission is idempotent: a client_token is generated once per ticket,
-// persisted to localStorage before the request, and retried on failure —
-// see CLAUDE.md invariant #2 and ARCHITECTURE.md §5. Do not remove the
-// localStorage persistence; it is what survives a page refresh mid-retry.
+// Submission is idempotent: a client_token (== the outbox entry's id, also
+// the server-side client_action_id) is generated once per ticket and
+// persisted to IndexedDB via the shared outbox (lib/outbox.js) before the
+// request — see CLAUDE.md invariant #2 and ARCHITECTURE.md §5. Previously
+// this used a per-controller localStorage array retried one entry at a
+// time; the shared outbox drains every kind of write, in order, from one
+// loop, and doesn't stall behind a single slow entry.
 export default class extends Controller {
   static targets = [
     "list", "submit", "pendingBanner", "pendingCount",
@@ -19,7 +24,8 @@ export default class extends Controller {
   connect() {
     this.cart = new Map()
     this.render()
-    this.resumePendingSubmission()
+    this.updatePendingBanner()
+    this.pendingBannerTimer = setInterval(() => this.updatePendingBanner(), 3000)
   }
 
   add(event) {
@@ -241,94 +247,48 @@ export default class extends Controller {
     return li
   }
 
-  submit() {
+  async submit() {
     const items = Array.from(this.cart.values())
     if (items.length === 0) return
 
-    const clientToken = crypto.randomUUID()
-    const payload = { clientToken, tableSessionId: this.tableSessionIdValue, items }
+    const entry = await enqueue({
+      kind: "submit_ticket",
+      payload: {
+        table_session_id: this.tableSessionIdValue,
+        items: items.map((item) => ({ menu_item_id: item.menuItemId, quantity: item.quantity })),
+        // client_token is redundant with the outbox entry's own id, kept
+        // here too because Sync::Handlers::SubmitTicket / Ticket.submit!
+        // read it explicitly and it must survive being read back out of
+        // the payload independent of how the outbox names its own id.
+        client_token: crypto.randomUUID()
+      }
+    })
 
-    this.persistPending(payload)
     this.cart.clear()
     if (this.undoTimeout) clearTimeout(this.undoTimeout)
     this.hideUndo()
     this.render()
-    this.attemptSubmit(payload)
-  }
-
-  resumePendingSubmission() {
-    const pending = this.readPending()
-    if (pending) this.attemptSubmit(pending)
-  }
-
-  async attemptSubmit(payload) {
     this.updatePendingBanner()
 
-    try {
-      const response = await fetch(this.submitUrlValue, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-          client_token: payload.clientToken,
-          table_session_id: payload.tableSessionId,
-          items: payload.items.map((item) => ({
-            menu_item_id: item.menuItemId,
-            quantity: item.quantity
-          }))
-        })
-      })
-
-      if (!response.ok) throw new Error(`ticket submit failed: ${response.status}`)
-
-      this.clearPending(payload.clientToken)
-      window.location.reload()
-    } catch {
-      this.scheduleRetry(payload)
-    }
-  }
-
-  scheduleRetry(payload) {
-    this.retryTimeout = setTimeout(() => this.attemptSubmit(payload), 5000)
+    // drain() never rejects — failures are recorded on the entry itself,
+    // not thrown — so only reload if THIS entry actually made it through.
+    // Reloading unconditionally would discard the pending-state UI while
+    // still offline for no reason.
+    await drain()
+    const settled = await entryStatus(entry.id)
+    if (settled === "applied") window.location.reload()
+    else this.updatePendingBanner()
   }
 
   disconnect() {
-    if (this.retryTimeout) clearTimeout(this.retryTimeout)
     if (this.undoTimeout) clearTimeout(this.undoTimeout)
+    if (this.pendingBannerTimer) clearInterval(this.pendingBannerTimer)
   }
 
-  storageKey() {
-    return `pos:pending-tickets:${this.tableSessionIdValue}`
-  }
-
-  persistPending(payload) {
-    const pending = this.readAllPending()
-    pending.push(payload)
-    localStorage.setItem(this.storageKey(), JSON.stringify(pending))
-  }
-
-  readPending() {
-    return this.readAllPending()[0] ?? null
-  }
-
-  readAllPending() {
-    try {
-      return JSON.parse(localStorage.getItem(this.storageKey())) ?? []
-    } catch {
-      return []
-    }
-  }
-
-  clearPending(clientToken) {
-    const remaining = this.readAllPending().filter((p) => p.clientToken !== clientToken)
-    localStorage.setItem(this.storageKey(), JSON.stringify(remaining))
-  }
-
-  updatePendingBanner() {
-    const count = this.readAllPending().length
-    this.pendingBannerTarget.hidden = count === 0
-    this.pendingCountTarget.textContent = count
+  async updatePendingBanner() {
+    const entries = await allOutboxEntries()
+    const unsettled = entries.filter((entry) => entry.kind === "submit_ticket" && entry.status !== "applied")
+    this.pendingBannerTarget.hidden = unsettled.length === 0
+    this.pendingCountTarget.textContent = unsettled.length
   }
 }

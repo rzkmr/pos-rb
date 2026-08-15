@@ -44,6 +44,9 @@ Rails.application.routes.draw do
   patch "locale" => "locales#update"
   get "catalog_snapshot" => "catalog_snapshots#show"
   get "offline_shell" => "offline_shells#show"
+  namespace :sync do
+    resources :actions, only: [ :create ]
+  end
 
   namespace :admin do
     resource :session, only: [ :new, :create, :destroy ]

@@ -43,6 +43,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
     t.index ["user_id"], name: "index_audit_events_on_user_id"
   end
 
+  create_table "client_actions", force: :cascade do |t|
+    t.datetime "applied_at", null: false
+    t.string "client_action_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "device_id"
+    t.string "kind", null: false
+    t.jsonb "result", default: {}, null: false
+    t.bigint "shop_id", null: false
+    t.string "status", default: "applied", null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_id"], name: "index_client_actions_on_device_id"
+    t.index ["shop_id", "client_action_id"], name: "index_client_actions_on_shop_id_and_client_action_id", unique: true
+    t.index ["shop_id", "status"], name: "index_client_actions_on_shop_id_and_status"
+    t.index ["shop_id"], name: "index_client_actions_on_shop_id"
+  end
+
   create_table "devices", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "label", null: false
@@ -132,6 +148,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
 
   create_table "payments", force: :cascade do |t|
     t.integer "amount_paise", null: false
+    t.string "client_token"
     t.datetime "created_at", null: false
     t.string "method", null: false
     t.integer "received_by_id", null: false
@@ -139,6 +156,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
     t.integer "shop_id", null: false
     t.integer "table_session_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["client_token"], name: "index_payments_on_client_token", unique: true, where: "(client_token IS NOT NULL)"
     t.index ["received_by_id"], name: "index_payments_on_received_by_id"
     t.index ["shop_id", "table_session_id"], name: "index_payments_on_shop_id_and_table_session_id"
     t.index ["shop_id"], name: "index_payments_on_shop_id"
@@ -232,6 +250,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
     t.index ["placed_by_id"], name: "index_tickets_on_placed_by_id"
     t.index ["shop_id", "status"], name: "index_tickets_on_shop_id_and_status"
     t.index ["shop_id"], name: "index_tickets_on_shop_id"
+    t.index ["table_session_id", "number"], name: "index_tickets_on_table_session_id_and_number", unique: true
     t.index ["table_session_id"], name: "index_tickets_on_table_session_id"
   end
 
@@ -253,6 +272,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
   add_foreign_key "audit_events", "devices"
   add_foreign_key "audit_events", "shops"
   add_foreign_key "audit_events", "users"
+  add_foreign_key "client_actions", "devices"
+  add_foreign_key "client_actions", "shops"
   add_foreign_key "devices", "shops"
   add_foreign_key "dining_tables", "shops"
   add_foreign_key "held_carts", "dining_tables"

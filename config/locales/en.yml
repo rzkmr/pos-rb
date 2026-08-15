@@ -46,6 +46,7 @@ en:
     composition_scheme: "Composition scheme (cannot collect GST)"
     admin_dashboard: "Admin"
     offline_banner: "Offline — work is being saved and will send automatically"
+    pending_sync: "pending"
 
   offline_shells:
     show:

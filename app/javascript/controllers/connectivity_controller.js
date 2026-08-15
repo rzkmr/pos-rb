@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { refresh as refreshCatalog } from "lib/catalog_cache"
+import { start as startSync } from "lib/sync"
 
 // Single source of connectivity truth for the whole app — mounted once on
 // <body>. Polls the existing /heartbeat endpoint (already used by the
@@ -24,6 +25,7 @@ export default class extends Controller {
     this.poll()
     this.timer = setInterval(() => this.poll(), POLL_INTERVAL_MS)
     this.refreshCatalogQuietly()
+    startSync()
   }
 
   // Best-effort — the shell only ever needs *a* cached catalog, not the

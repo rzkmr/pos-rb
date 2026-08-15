@@ -1,12 +1,16 @@
 import { Controller } from "@hotwired/stimulus"
+import { enqueue, all as allOutboxEntries, entryStatus } from "lib/outbox"
+import { drain } from "lib/sync"
 
 // Counter checkout: build a cart, pick a payment method, confirm. That
 // single request submits the ticket (which fires to the kitchen immediately
-// via Ticket's broadcasts_refreshes_to — see TakeawayCheckoutsController),
-// pays the exact total in full, issues the invoice, and queues the print
-// job. Idempotent the same way order-cart is: a client_token is generated
-// once and persisted before the request so a retry after a network blip
-// never double-submits or double-charges (see CLAUDE.md invariant #2).
+// via Ticket's broadcasts_refreshes_to — see Sync::Handlers::TakeawayCheckout,
+// which mirrors TakeawayCheckoutsController#create), pays the exact total
+// in full, issues the invoice, and queues the print job. Idempotent the
+// same way order-cart is: a client_token is generated once and enqueued
+// via the shared offline outbox (lib/outbox.js) before anything is sent,
+// so a retry after a network blip never double-submits or double-charges
+// (see CLAUDE.md invariant #2).
 //
 // Cash received / change due (design_system §8.2) is a cashier aid only —
 // the server always charges the exact total; nothing about the tendered
@@ -459,18 +463,42 @@ export default class extends Controller {
     this.completeCheckout(event.params.method, event.currentTarget)
   }
 
-  completeCheckout(method, button) {
+  async completeCheckout(method, button) {
     if (button) this.stampButton(button)
 
     const items = Array.from(this.cart.values())
-    const clientToken = crypto.randomUUID()
-    const payload = { clientToken, tableSessionId: this.tableSessionIdValue, method, items }
 
-    this.persistPending(payload)
+    const entry = await enqueue({
+      kind: "takeaway_checkout",
+      payload: {
+        table_session_id: this.tableSessionIdValue,
+        method,
+        // name/unit_price_paise ride along for the offline receipt only
+        // (see receiptPayloadFrom below) — Sync::Handlers::TakeawayCheckout
+        // only reads menu_item_id/quantity/notes and ignores the rest, but
+        // this is the one place the display info survives a page reload,
+        // since the live cart is cleared right after this and IndexedDB
+        // is the only thing that persists across it.
+        items: items.map((item) => ({
+          menu_item_id: item.menuItemId, quantity: item.quantity,
+          name: item.name, unit_price_paise: item.unitPricePaise
+        })),
+        client_token: crypto.randomUUID()
+      }
+    })
+
     this.cart.clear()
     this.render()
     setTimeout(() => this.closePayment(), method === "cash" || method === "other" ? 250 : 0)
-    this.attemptCheckout(payload)
+    this.attemptCheckout(entry.id, this.receiptPayloadFrom(entry.payload))
+  }
+
+  receiptPayloadFrom(payload) {
+    return {
+      items: payload.items.map((item) => ({
+        name: item.name, unitPricePaise: item.unit_price_paise, quantity: item.quantity
+      }))
+    }
   }
 
   stampButton(button) {
@@ -481,58 +509,50 @@ export default class extends Controller {
     button.classList.add("stamp-punch")
   }
 
-  resumePendingCheckout() {
-    const pending = this.readPending()
-    if (!pending) return
+  async resumePendingCheckout() {
+    const entries = await allOutboxEntries()
+    const pendingEntry = entries.find((entry) => entry.kind === "takeaway_checkout" && entry.status !== "applied")
+    if (!pendingEntry) return
 
     // A reload mid-retry (e.g. the cashier checking the screen) would
     // otherwise flash the empty cart before the first retry lands —
     // show the pending receipt immediately since payment was already
     // confirmed on-screen once and shouldn't look "undone" on refresh.
-    this.showPendingReceipt(pending)
-    this.attemptCheckout(pending, true)
+    const receiptPayload = this.receiptPayloadFrom(pendingEntry.payload)
+    this.showPendingReceipt(receiptPayload)
+    this.attemptCheckout(pendingEntry.id, receiptPayload, true)
   }
 
-  async attemptCheckout(payload, isRetry = false) {
+  async attemptCheckout(entryId, receiptPayload, isRetry = false) {
     this.chargingTarget.hidden = false
     this.chargingTarget.querySelector("[data-charging-label]").textContent =
       this.t(isRetry ? "charging_offline" : "charging")
 
-    try {
-      const response = await fetch(this.checkoutUrlValue, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-          client_token: payload.clientToken,
-          table_session_id: payload.tableSessionId,
-          method: payload.method,
-          items: payload.items.map((item) => ({
-            menu_item_id: item.menuItemId,
-            quantity: item.quantity
-          }))
-        })
-      })
+    await drain()
+    const status = await entryStatus(entryId)
 
-      if (!response.ok) throw new Error(`checkout failed: ${response.status}`)
-
-      this.clearPending(payload.clientToken)
+    if (status === "applied") {
       window.location.reload()
-    } catch {
-      this.showPendingReceipt(payload)
-      this.scheduleRetry(payload)
+      return
     }
+
+    if (status === "rejected") {
+      this.chargingTarget.hidden = true
+      this.showToast(this.t("checkout_failed"))
+      return
+    }
+
+    this.showPendingReceipt(receiptPayload)
+    this.scheduleRetry(entryId, receiptPayload)
   }
 
-  scheduleRetry(payload) {
-    this.retryTimeout = setTimeout(() => this.attemptCheckout(payload, true), 5000)
+  scheduleRetry(entryId, receiptPayload) {
+    this.retryTimeout = setTimeout(() => this.attemptCheckout(entryId, receiptPayload, true), 5000)
   }
 
   // --- offline pending receipt ---
-  // Built entirely from the locally-saved cart snapshot (see
-  // completeCheckout/persistPending) — no invoice exists yet, since the
+  // Built entirely from the outbox entry's own payload (see
+  // completeCheckout/receiptPayloadFrom) — no invoice exists yet, since the
   // server hasn't accepted the ticket+payment. Same layout, math, and
   // buttons as the real post-payment receipt (show.html.erb's server-
   // rendered version) so there is no visible difference to staff or
@@ -594,28 +614,6 @@ export default class extends Controller {
       </div>`
 
     this.pendingReceiptTarget.hidden = false
-  }
-
-  storageKey() {
-    return `pos:pending-takeaway-checkout:${this.tableSessionIdValue}`
-  }
-
-  persistPending(payload) {
-    localStorage.setItem(this.storageKey(), JSON.stringify(payload))
-  }
-
-  readPending() {
-    try {
-      const raw = localStorage.getItem(this.storageKey())
-      return raw ? JSON.parse(raw) : null
-    } catch {
-      return null
-    }
-  }
-
-  clearPending(clientToken) {
-    const pending = this.readPending()
-    if (pending?.clientToken === clientToken) localStorage.removeItem(this.storageKey())
   }
 
   // --- hold / held orders ---
@@ -810,6 +808,7 @@ export default class extends Controller {
       insufficient_amount: { en: "Insufficient amount", ne: "रकम अपुग छ" },
       charging: { en: "Charging...", ne: "भुक्तानी हुँदैछ..." },
       charging_offline: { en: "Waiting for internet — will send automatically", ne: "इन्टरनेट पर्खँदै — पुनः प्रयास हुँदैछ" },
+      checkout_failed: { en: "Checkout could not be completed — ask an admin", ne: "चेकआउट पूरा हुन सकेन — admin लाई सोध्नुहोस्" },
       print_receipt: { en: "Print receipt", ne: "रसिद छाप्नुहोस्" },
       new_order: { en: "Start new order", ne: "नयाँ अर्डर सुरु गर्नुहोस्" },
       confirm_payment: { en: "Confirm payment", ne: "भुक्तानी पक्का गर्नुहोस्" },

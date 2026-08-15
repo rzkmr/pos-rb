@@ -52,16 +52,25 @@ class Billing
   # Records one payment and, if it brings the session to fully paid, issues
   # the invoice and closes the session out — the shared settle path used by
   # both the itemized payment form and the one-tap takeaway checkout.
-  def self.record_payment_and_settle!(table_session:, method:, amount_paise:, received_by:, reference: nil)
+  #
+  # client_token is optional (nil for the normal in-browser form submit,
+  # which Rails' own CSRF/double-submit protections already cover) but
+  # required for anything going through the offline write queue (see
+  # Sync::Handlers::RecordPayment) — a replayed queue entry must not
+  # double-credit the session. requires_new: true mirrors Ticket.submit!'s
+  # reasoning: without a savepoint, a RecordNotUnique here would poison the
+  # whole enclosing transaction, not just this insert.
+  def self.record_payment_and_settle!(table_session:, method:, amount_paise:, received_by:, reference: nil, client_token: nil)
     shop = table_session.shop
 
-    ActiveRecord::Base.transaction do
+    ActiveRecord::Base.transaction(requires_new: true) do
       table_session.payments.create!(
         shop: shop,
         method: method,
         amount_paise: amount_paise,
         reference: reference,
-        received_by: received_by
+        received_by: received_by,
+        client_token: client_token
       )
 
       result = compute(shop: shop, taxable_paise: table_session.subtotal_paise)
@@ -70,5 +79,9 @@ class Billing
         table_session.update!(status: "paid", closed_at: Time.current)
       end
     end
+  rescue ActiveRecord::RecordNotUnique
+    raise if client_token.nil?
+
+    table_session.payments.find_by!(client_token: client_token)
   end
 end
