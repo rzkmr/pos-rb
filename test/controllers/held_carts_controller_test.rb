@@ -48,4 +48,40 @@ class HeldCartsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :no_content
   end
+
+  test "restoring a held cart reads its exact snapshot, then consumes it" do
+    held = @counter.held_carts.create!(
+      items: [ { menu_item_id: menu_items(:alpha_dosa).id, name_snapshot: "Masala Dosa", unit_price_paise: 12000, quantity: 2 } ],
+      held_by: users(:alpha_waiter),
+      held_at: Time.current
+    )
+
+    get dining_table_held_carts_url(@counter), as: :json
+    restored = JSON.parse(response.body).find { |c| c["id"] == held.id }
+    assert_equal 24000, restored["total_paise"]
+    assert_equal [ "menu_item_id", "name_snapshot", "unit_price_paise", "quantity" ].sort,
+                 restored["items"].first.keys.sort
+
+    assert_difference "HeldCart.count", -1 do
+      delete held_cart_url(held)
+    end
+
+    get dining_table_held_carts_url(@counter), as: :json
+    assert_equal [], JSON.parse(response.body)
+  end
+
+  test "a menu price change after holding does not alter the restored snapshot" do
+    dosa = menu_items(:alpha_dosa)
+    held = @counter.held_carts.create!(
+      items: [ { menu_item_id: dosa.id, name_snapshot: dosa.name, unit_price_paise: dosa.price_paise, quantity: 1 } ],
+      held_by: users(:alpha_waiter),
+      held_at: Time.current
+    )
+    dosa.update!(price_paise: dosa.price_paise + 5000)
+
+    get dining_table_held_carts_url(@counter), as: :json
+    restored = JSON.parse(response.body).find { |c| c["id"] == held.id }
+
+    assert_not_equal dosa.price_paise, restored["items"].first["unit_price_paise"]
+  end
 end
