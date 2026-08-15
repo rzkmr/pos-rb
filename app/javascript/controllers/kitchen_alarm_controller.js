@@ -21,6 +21,7 @@ export default class extends Controller {
     const gain = context.createGain()
     oscillator.connect(gain)
     gain.connect(context.destination)
+    oscillator.type = "square"
     oscillator.frequency.value = 880
     gain.gain.setValueAtTime(0.2, context.currentTime)
     oscillator.start()

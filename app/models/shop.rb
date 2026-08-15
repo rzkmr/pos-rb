@@ -29,6 +29,7 @@ class Shop < ApplicationRecord
   has_many :print_jobs, dependent: :restrict_with_error
   has_many :audit_events, dependent: :restrict_with_error
   has_many :pairing_attempts, dependent: :restrict_with_error
+  has_many :held_carts, dependent: :destroy
 
   validates :name, presence: true
   validates :state_code, presence: true

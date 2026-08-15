@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_14_120300) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -64,6 +64,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_120300) do
     t.datetime "updated_at", null: false
     t.index ["shop_id", "label"], name: "index_dining_tables_on_shop_id_and_label", unique: true
     t.index ["shop_id"], name: "index_dining_tables_on_shop_id"
+  end
+
+  create_table "held_carts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "dining_table_id", null: false
+    t.datetime "held_at", null: false
+    t.bigint "held_by_id", null: false
+    t.json "items", default: [], null: false
+    t.bigint "shop_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dining_table_id"], name: "index_held_carts_on_dining_table_id"
+    t.index ["held_by_id"], name: "index_held_carts_on_held_by_id"
+    t.index ["shop_id", "dining_table_id"], name: "index_held_carts_on_shop_id_and_dining_table_id"
+    t.index ["shop_id"], name: "index_held_carts_on_shop_id"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -241,6 +255,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_120300) do
   add_foreign_key "audit_events", "users"
   add_foreign_key "devices", "shops"
   add_foreign_key "dining_tables", "shops"
+  add_foreign_key "held_carts", "dining_tables"
+  add_foreign_key "held_carts", "shops"
+  add_foreign_key "held_carts", "users", column: "held_by_id"
   add_foreign_key "invoices", "shops"
   add_foreign_key "invoices", "table_sessions"
   add_foreign_key "menu_items", "shops"

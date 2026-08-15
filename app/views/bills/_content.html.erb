@@ -9,11 +9,35 @@
           </span>
           <span class="w-[130px] text-right font-mono text-[20px]"><%= money_to_inr(item.quantity * item.unit_price_paise) %></span>
           <% if table_session.status == "open" %>
-            <%= form_with url: void_ticket_item_path(item), method: :patch, class: "flex items-center gap-2 w-full sm:w-auto" do %>
-              <%= text_field_tag :reason, nil, placeholder: t("shared.reason"), required: true,
-                    class: "min-h-[48px] flex-1 sm:w-40 px-3 rounded-key border-2 border-line-2 text-[17px]" %>
-              <%= submit_tag t("bills.show.void"), class: "shrink-0 min-h-[48px] px-4 rounded-key text-[17px] font-bold border-[2px] border-stop text-stop active:bg-stop-50" %>
-            <% end %>
+            <details class="w-full sm:w-auto" data-controller="bill-panel">
+              <summary class="shrink-0 min-h-[48px] px-4 rounded-key text-[17px] font-bold border-[2px] border-stop text-stop active:bg-stop-50 flex items-center justify-center cursor-pointer select-none">
+                <%= t("bills.show.void") %>
+              </summary>
+              <%# void modal — reason mandatory, chips first (design_system §2.4) %>
+              <div class="mt-2 p-3.5 rounded-tile border-t-8 border-stop bg-card shadow-lg">
+                <%= form_with url: void_ticket_item_path(item), method: :patch do %>
+                  <%= hidden_field_tag :reason, nil, data: { bill_panel_target: "voidReasonField" } %>
+                  <div class="flex flex-wrap gap-2 mb-2.5">
+                    <% [
+                      t("bills.show.void_reason_wrong_order"),
+                      t("bills.show.void_reason_customer_returned"),
+                      t("bills.show.void_reason_spoiled")
+                    ].each do |reason| %>
+                      <button type="button" data-action="bill-panel#chooseVoidReason" data-bill-panel-reason-param="<%= reason %>"
+                              data-bill-panel-target="voidReasonChip"
+                              class="min-h-[44px] px-3.5 rounded-key text-[15px] font-semibold border-2 border-line-2">
+                        <%= reason %>
+                      </button>
+                    <% end %>
+                  </div>
+                  <%= text_field_tag :void_reason_other, nil, placeholder: t("bills.show.void_reason_other_placeholder"),
+                        data: { action: "input->bill-panel#typeVoidReason", bill_panel_target: "voidReasonOther" },
+                        class: "w-full min-h-[48px] px-3 rounded-key border-2 border-line-2 text-[16px] mb-2.5" %>
+                  <%= submit_tag t("bills.show.void"), disabled: true, data: { bill_panel_target: "voidSubmit" },
+                        class: "w-full min-h-[52px] rounded-ctl text-[17px] font-bold bg-stop text-surface disabled:bg-key-2 disabled:text-ink-4" %>
+                <% end %>
+              </div>
+            </details>
           <% end %>
         </li>
       <% end %>
@@ -41,18 +65,32 @@
 </section>
 
 <% if table_session.status == "open" %>
-  <section class="bg-card rounded-tile border border-line p-4">
+  <section class="bg-card rounded-tile border border-line p-4" data-controller="bill-panel">
     <h2 class="text-[19px] font-semibold text-ink-2 mb-2"><%= t("bills.show.discount") %></h2>
     <%= form_with url: table_session_discount_path(table_session), method: :post, class: "flex flex-col gap-2.5" do %>
-      <%= text_field_tag :amount_paise, nil, placeholder: t("bills.show.amount_paise_placeholder"),
-            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px]" %>
-      <%= text_field_tag :reason, nil, placeholder: t("shared.reason"),
-            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[19px]" %>
+      <%= hidden_field_tag :amount_paise, nil, data: { bill_panel_target: "discountAmountField" } %>
+      <%= hidden_field_tag :reason, nil, data: { bill_panel_target: "discountReasonField" } %>
+      <div class="flex flex-wrap gap-2">
+        <% [5, 10, 15].each do |percent| %>
+          <% amount_paise = (billing.total_paise * percent / 100.0).round %>
+          <button type="button" data-action="bill-panel#chooseDiscount"
+                  data-bill-panel-amount-param="<%= amount_paise %>"
+                  data-bill-panel-reason-param="<%= percent %>%"
+                  data-bill-panel-target="discountChip"
+                  class="min-h-[52px] px-4 rounded-key text-[16px] font-bold border-2 border-line-2">
+            <%= percent %>% <span class="font-mono text-[13px] font-normal text-ink-3">(<%= money_to_inr(amount_paise) %>)</span>
+          </button>
+        <% end %>
+      </div>
+      <%= text_field_tag :discount_custom, nil, placeholder: t("bills.show.discount_custom_placeholder"),
+            data: { action: "input->bill-panel#typeCustomDiscount", bill_panel_target: "discountCustom" },
+            class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[18px]" %>
       <%= submit_tag t("bills.show.apply_discount"), class: "min-h-[56px] rounded-ctl text-[19px] font-bold bg-key text-ink active:bg-key-2" %>
     <% end %>
   </section>
 
-  <section class="rounded-tile border-2 border-go bg-go-50 p-4">
+  <section class="rounded-tile border-2 border-go bg-go-50 p-4" data-controller="bill-panel"
+           data-bill-panel-remaining-paise-value="<%= billing.total_paise - table_session.paid_paise %>">
     <div class="text-[24px] font-bold">
       <% remaining = billing.total_paise - table_session.paid_paise %>
       <% if remaining <= 0 %>
@@ -63,14 +101,48 @@
     </div>
     <div class="text-[18px] text-ink-3"><%= t("bills.show.paid_so_far", amount: money_to_inr(table_session.paid_paise)) %></div>
 
-    <%= form_with url: table_session_payments_path(table_session), method: :post, class: "mt-3 flex flex-col gap-2.5" do %>
-      <%= select_tag "payment[method]", options_for_select(Payment::METHODS),
-            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[19px]" %>
-      <%= text_field_tag "payment[amount_paise]", nil, placeholder: t("bills.show.amount_paise_placeholder"),
-            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[19px]" %>
-      <%= text_field_tag "payment[reference]", nil, placeholder: t("bills.show.reference_placeholder"),
-            class: "min-h-[56px] px-3 rounded-ctl border-2 border-line-2 text-[19px]" %>
-      <%= submit_tag t("bills.show.record_payment"), class: "min-h-[84px] rounded-tile text-[20px] font-bold border-[2.5px] border-ink bg-card active:bg-key" %>
+    <% if remaining > 0 %>
+      <%# payment method chips (design_system §2.4 — four buttons, min-h 84px, border-ink) %>
+      <div class="mt-3 grid grid-cols-2 gap-2.5">
+        <% Payment::METHODS.each do |method| %>
+          <button type="button" data-action="bill-panel#chooseMethod" data-bill-panel-method-param="<%= method %>"
+                  data-bill-panel-target="methodChip"
+                  class="min-h-[64px] px-3 rounded-tile text-[18px] font-bold border-[2.5px] border-line-2 active:bg-key">
+            <%= t("bills.show.pay_method_#{method}") %>
+          </button>
+        <% end %>
+      </div>
+
+      <%= form_with url: table_session_payments_path(table_session), method: :post, class: "mt-3 flex flex-col gap-2.5" do %>
+        <%= hidden_field_tag "payment[method]", "cash", data: { bill_panel_target: "methodField" } %>
+        <%= hidden_field_tag "payment[amount_paise]", remaining, data: { bill_panel_target: "payAmount" } %>
+
+        <div data-bill-panel-target="payMoreFields">
+          <div class="text-[13px] text-ink-3 font-semibold uppercase tracking-wide mb-1.5"><%= t("bills.show.cash_received") %></div>
+          <div class="grid grid-cols-4 gap-2 mb-2.5">
+            <% amounts = [remaining, remaining.fdiv(100).ceil * 100].uniq.sort %>
+            <% [2000, 5000, 10000].each { |bill| amounts << bill * 100 if bill * 100 >= remaining } %>
+            <% amounts = amounts.uniq.sort.first(4) %>
+            <% amounts.each do |amount| %>
+              <button type="button" data-action="bill-panel#setCashAmount" data-bill-panel-amount-param="<%= amount %>"
+                      data-bill-panel-target="cashChip"
+                      class="min-h-[52px] rounded-key border-2 border-line-2 font-mono font-bold text-[16px]">
+                <%= money_to_inr(amount) %>
+              </button>
+            <% end %>
+          </div>
+          <%= text_field_tag :payment_other_amount, nil, placeholder: t("bills.show.other_amount"), inputmode: "numeric",
+                data: { action: "input->bill-panel#typeCashAmount" },
+                class: "w-full min-h-[52px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[18px] mb-2.5" %>
+          <div data-bill-panel-target="changeDisplay" class="mb-1"></div>
+        </div>
+
+        <%= text_field_tag "payment[reference]", nil, placeholder: t("bills.show.reference_placeholder"),
+              class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
+
+        <%= submit_tag t("bills.show.record_payment"), disabled: true, data: { bill_panel_target: "paySubmit" },
+              class: "min-h-[84px] rounded-tile text-[20px] font-bold border-[2.5px] border-ink bg-card active:bg-key disabled:opacity-40" %>
+      <% end %>
     <% end %>
   </section>
 <% else %>

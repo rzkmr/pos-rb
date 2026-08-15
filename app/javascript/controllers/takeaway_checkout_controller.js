@@ -1,27 +1,57 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Counter checkout: build a cart, tap Cash/UPI/Card once. That single
-// request submits the ticket (which fires to the kitchen immediately via
-// Ticket's broadcasts_refreshes_to — see TakeawayCheckoutsController),
+// Counter checkout: build a cart, pick a payment method, confirm. That
+// single request submits the ticket (which fires to the kitchen immediately
+// via Ticket's broadcasts_refreshes_to — see TakeawayCheckoutsController),
 // pays the exact total in full, issues the invoice, and queues the print
 // job. Idempotent the same way order-cart is: a client_token is generated
 // once and persisted before the request so a retry after a network blip
 // never double-submits or double-charges (see CLAUDE.md invariant #2).
+//
+// Cash received / change due (design_system §8.2) is a cashier aid only —
+// the server always charges the exact total; nothing about the tendered
+// amount is ever sent.
 export default class extends Controller {
   static targets = [
-    "itemRow", "rowQty", "rowAccent", "categoryTab", "itemList",
-    "chitBar", "chitSummary", "chitTotal", "emptyFooter",
-    "sheet", "sheetBackdrop", "sheetTotal", "sheetChargeCash", "sheetChargeUpi", "sheetChargeCard",
-    "undoToast", "undoText", "charging"
+    "itemRow", "rowQty", "categoryTab", "itemList", "noSearchResults",
+    "search", "searchClear", "clock",
+    "cartListDesktop", "cartFooterDesktop", "cartListMobile", "cartFooterMobile",
+    "mobileBar", "mobileTotal", "mobileCartLabel", "cartFab", "fabBadge",
+    "sheet", "sheetBackdrop",
+    "payBackdrop", "payPanel", "payContent",
+    "charging", "toast",
+    "heldBadge", "heldBackdrop", "heldPanel", "heldList"
   ]
-  static values = { tableSessionId: Number, checkoutUrl: String }
+  static values = {
+    tableSessionId: Number, checkoutUrl: String, diningTableId: Number, heldCartsUrl: String,
+    gstRateBp: Number, compositionScheme: Boolean
+  }
 
   connect() {
     this.cart = new Map()
     this.render()
     this.resumePendingCheckout()
+    this.refreshHeldCount()
+    this.updateClock()
+    this.clockTimer = setInterval(() => this.updateClock(), 1000)
   }
 
+  disconnect() {
+    if (this.retryTimeout) clearTimeout(this.retryTimeout)
+    if (this.toastTimeout) clearTimeout(this.toastTimeout)
+    if (this.clockTimer) clearInterval(this.clockTimer)
+    if (this.cardTimeout) clearTimeout(this.cardTimeout)
+  }
+
+  updateClock() {
+    if (!this.hasClockTarget) return
+    const locale = document.documentElement.lang === "ne" ? "ne-NP" : "en-IN"
+    const now = new Date()
+    this.clockTarget.textContent = now.toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" }) +
+      "  " + now.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+  }
+
+  // --- cart ---
   add(event) {
     const { menuItemId, menuItemName, menuItemPrice } = event.params
     const existing = this.cart.get(menuItemId)
@@ -37,39 +67,26 @@ export default class extends Controller {
     this.render()
   }
 
-  remove(event) {
+  updateQty(event) {
+    const { menuItemId, delta } = event.params
+    const item = this.cart.get(menuItemId)
+    if (!item) return
+
+    item.quantity += delta
+    if (item.quantity <= 0) this.cart.delete(menuItemId)
+    this.render()
+  }
+
+  removeItem(event) {
     const { menuItemId } = event.params
-    const removed = this.cart.get(menuItemId)
     this.cart.delete(menuItemId)
     this.render()
-    if (removed) this.showUndo(removed)
   }
 
-  showUndo(removedItem) {
-    this.lastRemoved = removedItem
-    this.undoTextTarget.textContent = this.removedItemText(removedItem.name)
-    this.undoToastTarget.hidden = false
-
-    if (this.undoTimeout) clearTimeout(this.undoTimeout)
-    this.undoTimeout = setTimeout(() => this.hideUndo(), 5000)
-  }
-
-  hideUndo() {
-    this.undoToastTarget.hidden = true
-    this.lastRemoved = null
-  }
-
-  undoRemove() {
-    if (!this.lastRemoved) return
-    this.cart.set(this.lastRemoved.menuItemId, this.lastRemoved)
-    if (this.undoTimeout) clearTimeout(this.undoTimeout)
-    this.hideUndo()
+  clearCart() {
+    if (this.cart.size === 0) return
+    this.cart.clear()
     this.render()
-  }
-
-  removedItemText(name) {
-    const locale = document.documentElement.lang
-    return locale === "ne" ? `${name} हटाइयो` : `Removed ${name}`
   }
 
   flashRow(menuItemId) {
@@ -86,55 +103,56 @@ export default class extends Controller {
     this.categoryTabTargets.forEach((tab) => {
       const active = tab.dataset.takeawayCheckoutCategoryParam === category
       tab.classList.toggle("bg-ink", active)
+      tab.classList.toggle("border-ink", active)
       tab.classList.toggle("text-surface", active)
-      tab.classList.toggle("bg-key", !active)
-      tab.classList.toggle("text-ink", !active)
+      tab.classList.toggle("bg-card", !active)
+      tab.classList.toggle("border-line-2", !active)
+      tab.classList.toggle("text-ink-3", !active)
     })
 
     const section = this.itemListTarget.querySelector(`[data-takeaway-checkout-category-section="${category}"]`)
     section?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
-  toggleSheet() {
-    const isOpen = !this.sheetTarget.hidden
-    if (isOpen) {
-      this.closeSheet()
-    } else {
-      this.openSheet()
-    }
-  }
+  // --- search ---
+  filterItems() {
+    const query = this.searchTarget.value.trim().toLowerCase()
+    this.searchClearTarget.hidden = query.length === 0
 
-  openSheet() {
-    this.sheetBackdropTarget.hidden = false
-    this.sheetTarget.hidden = false
-    requestAnimationFrame(() => {
-      this.sheetBackdropTarget.classList.remove("opacity-0")
-      this.sheetTarget.classList.remove("translate-y-full")
+    let anyVisible = false
+    this.itemListTarget.querySelectorAll("[data-takeaway-checkout-category-section]").forEach((section) => {
+      let sectionHasMatch = false
+      section.querySelectorAll('[data-takeaway-checkout-target="itemRow"]').forEach((row) => {
+        const name = row.dataset.takeawayCheckoutMenuItemNameParam.toLowerCase()
+        const match = !query || name.includes(query)
+        row.hidden = !match
+        if (match) { sectionHasMatch = true; anyVisible = true }
+      })
+      section.hidden = !sectionHasMatch
     })
+
+    this.noSearchResultsTarget.hidden = anyVisible
   }
 
-  closeSheet() {
-    this.sheetTarget.classList.add("translate-y-full")
-    this.sheetBackdropTarget.classList.add("opacity-0")
-    setTimeout(() => {
-      this.sheetTarget.hidden = true
-      this.sheetBackdropTarget.hidden = true
-    }, 200)
+  clearSearch() {
+    this.searchTarget.value = ""
+    this.filterItems()
+    this.searchTarget.focus()
   }
 
+  // --- render ---
   render() {
     const items = Array.from(this.cart.values())
     const count = items.reduce((sum, item) => sum + item.quantity, 0)
     const totalPaise = items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0)
+    this.currentTotalPaise = totalPaise
 
-    const hasItems = items.length > 0;
-    [this.sheetChargeCashTarget, this.sheetChargeUpiTarget, this.sheetChargeCardTarget].forEach((button) => {
-      button.disabled = !hasItems
-    })
     this.renderRowQuantities()
-    this.renderChit(count, totalPaise)
+    this.renderCartLists(items)
+    this.renderFooters(count, totalPaise)
+    this.renderMobileChrome(count, totalPaise)
 
-    if (!hasItems) this.closeSheet()
+    if (count === 0) this.closeCart()
   }
 
   renderRowQuantities() {
@@ -142,44 +160,88 @@ export default class extends Controller {
       const id = row.dataset.takeawayCheckoutItemId
       const item = this.cart.get(id) || this.cart.get(Number(id))
       const qtyTarget = row.querySelector('[data-takeaway-checkout-target="rowQty"]')
-      const accent = row.querySelector('[data-takeaway-checkout-target="rowAccent"]')
       if (item) {
         qtyTarget.textContent = `× ${item.quantity}`
-        accent.classList.remove("w-1", "bg-line-2")
-        accent.classList.add("w-1.5", "bg-go")
+        qtyTarget.classList.remove("opacity-0", "scale-0")
+        qtyTarget.classList.add("opacity-100", "scale-100")
       } else {
         qtyTarget.textContent = ""
-        accent.classList.remove("w-1.5", "bg-go")
-        accent.classList.add("w-1", "bg-line-2")
+        qtyTarget.classList.add("opacity-0", "scale-0")
+        qtyTarget.classList.remove("opacity-100", "scale-100")
       }
     })
   }
 
-  renderChit(count, totalPaise) {
-    const hasItems = count > 0
-    this.chitBarTarget.hidden = !hasItems
-    this.emptyFooterTarget.hidden = hasItems
-    this.currentTotalPaise = totalPaise
-    if (!hasItems) return
+  renderCartLists(items) {
+    const html = items.length ? items.map((item) => this.cartRowHtml(item)).join("") :
+      `<div class="flex flex-col items-center justify-center py-14 text-ink-3">
+         <div class="text-[32px] mb-2">🛒</div>
+         <p class="text-[15px]">${this.t("cart_empty")}</p>
+       </div>`
 
-    this.chitSummaryTarget.textContent = this.pluralize(count)
-    const formatted = this.formatInr(totalPaise)
-    this.chitTotalTarget.textContent = formatted
-    this.sheetTotalTarget.textContent = formatted;
-    [this.sheetChargeCashTarget, this.sheetChargeUpiTarget, this.sheetChargeCardTarget].forEach((button) => {
-      button.querySelector("[data-amount]").textContent = formatted
-    })
+    this.cartListDesktopTarget.innerHTML = html
+    this.cartListMobileTarget.innerHTML = html
   }
 
-  pluralize(count) {
-    const locale = document.documentElement.lang
-    if (locale === "ne") return `${this.toDevanagariDigits(count)} वटा`
-    return count === 1 ? "1 item" : `${count} items`
+  cartRowHtml(item) {
+    const lineTotal = item.quantity * Number(item.unitPricePaise)
+    return `
+      <div class="flex items-center gap-3 py-2">
+        <div class="flex-1 min-w-0">
+          <p class="text-[15px] font-semibold truncate">${item.name}</p>
+          <p class="text-[13px] text-ink-3 font-mono">${this.formatInr(item.unitPricePaise)} ${this.t("each")}</p>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" data-action="takeaway-checkout#updateQty"
+                  data-takeaway-checkout-menu-item-id-param="${item.menuItemId}" data-takeaway-checkout-delta-param="-1"
+                  class="w-8 h-8 rounded-key border border-line-2 bg-card text-[16px] font-bold flex items-center justify-center active:bg-key">−</button>
+          <span class="w-6 text-center text-[15px] font-bold font-mono">${item.quantity}</span>
+          <button type="button" data-action="takeaway-checkout#updateQty"
+                  data-takeaway-checkout-menu-item-id-param="${item.menuItemId}" data-takeaway-checkout-delta-param="1"
+                  class="w-8 h-8 rounded-key border border-line-2 bg-card text-[16px] font-bold flex items-center justify-center active:bg-key">+</button>
+        </div>
+        <div class="w-[76px] text-right text-[15px] font-mono font-bold">${this.formatInr(lineTotal)}</div>
+      </div>`
   }
 
-  toDevanagariDigits(n) {
-    const map = "०१२३४५६७८९"
-    return String(n).replace(/\d/g, (d) => map[d])
+  renderFooters(count, totalPaise) {
+    const html = this.footerHtml(count, totalPaise)
+    this.cartFooterDesktopTarget.innerHTML = html
+    this.cartFooterMobileTarget.innerHTML = html
+  }
+
+  footerHtml(count, totalPaise) {
+    const billing = this.computeBilling(totalPaise)
+    const disabled = count === 0
+    const taxRows = this.compositionSchemeValue
+      ? `<div class="text-[12px] italic">${this.t("composition_declaration")}</div>`
+      : `<div class="flex justify-between"><span>${this.t("cgst")}</span><span class="font-mono">${this.formatInr(billing.cgstPaise)}</span></div>
+         <div class="flex justify-between"><span>${this.t("sgst")}</span><span class="font-mono">${this.formatInr(billing.sgstPaise)}</span></div>`
+
+    return `
+      <div class="flex flex-col gap-1 mb-3 text-[14px] text-ink-3">
+        <div class="flex justify-between"><span>${this.t("subtotal")}</span><span class="font-mono">${this.formatInr(billing.taxablePaise)}</span></div>
+        ${taxRows}
+        <div class="flex justify-between text-[17px] font-bold text-ink pt-1.5 border-t border-line"><span>${this.t("total")}</span><span class="font-mono">${this.formatInr(billing.totalPaise)}</span></div>
+      </div>
+      <button type="button" data-action="takeaway-checkout#openPayment" ${disabled ? "disabled" : ""}
+              class="w-full min-h-[56px] rounded-tile text-[16px] font-bold transition-colors
+                     ${disabled ? "bg-key-2 text-ink-4" : "bg-go text-surface active:bg-go-700"}">
+        ${disabled ? this.t("add_items_to_pay") : `${this.t("pay")}  ${this.formatInr(billing.totalPaise)}`}
+      </button>`
+  }
+
+  renderMobileChrome(count, totalPaise) {
+    const billing = this.computeBilling(totalPaise)
+
+    this.mobileBarTarget.hidden = count === 0
+    this.cartFabTarget.hidden = count === 0
+    if (count > 0) {
+      this.mobileTotalTarget.textContent = this.formatInr(billing.totalPaise)
+      this.mobileCartLabelTarget.textContent = `${this.t("view_cart")} (${count})`
+      this.fabBadgeTarget.hidden = false
+      this.fabBadgeTarget.textContent = count
+    }
   }
 
   formatInr(paise) {
@@ -187,21 +249,231 @@ export default class extends Controller {
     return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  charge(event) {
-    const items = Array.from(this.cart.values())
-    if (items.length === 0) return
+  // Mirrors Billing.compute exactly (app/models/billing.rb) so the on-screen
+  // preview matches what the server actually charges once the ticket is
+  // submitted — CGST+SGST split on the half rate, round-off to the nearest
+  // rupee, zero tax under composition scheme (CLAUDE.md invariant #7).
+  computeBilling(taxablePaise) {
+    if (this.compositionSchemeValue) {
+      return { taxablePaise, cgstPaise: 0, sgstPaise: 0, totalPaise: taxablePaise }
+    }
 
-    const { method } = event.params
+    const halfRateBp = this.gstRateBpValue / 2
+    const cgstPaise = Math.round((taxablePaise * halfRateBp) / 10000)
+    const sgstPaise = cgstPaise
+    const preRoundTotal = taxablePaise + cgstPaise + sgstPaise
+    const totalPaise = Math.round(preRoundTotal / 100) * 100
+
+    return { taxablePaise, cgstPaise, sgstPaise, totalPaise }
+  }
+
+  // --- mobile cart sheet ---
+  openCart() {
+    this.sheetBackdropTarget.hidden = false
+    this.sheetTarget.hidden = false
+    requestAnimationFrame(() => {
+      this.sheetBackdropTarget.classList.remove("opacity-0")
+      this.sheetBackdropTarget.classList.add("pointer-events-auto")
+      this.sheetTarget.classList.remove("translate-y-full")
+    })
+  }
+
+  closeCart() {
+    this.sheetTarget.classList.add("translate-y-full")
+    this.sheetBackdropTarget.classList.add("opacity-0")
+    this.sheetBackdropTarget.classList.remove("pointer-events-auto")
+    setTimeout(() => {
+      this.sheetTarget.hidden = true
+      this.sheetBackdropTarget.hidden = true
+    }, 300)
+  }
+
+  // --- payment modal ---
+  openPayment() {
+    if (this.cart.size === 0) return
+    this.closeCart()
+
+    const billing = this.computeBilling(this.currentTotalPaise)
+    this.payAmountDue = billing.totalPaise
+
+    this.payContentTarget.innerHTML = `
+      <div class="bg-shell rounded-ctl p-4 mb-4 text-center">
+        <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide mb-1">${this.t("amount_due")}</p>
+        <p class="text-[32px] font-mono font-bold text-go">${this.formatInr(billing.totalPaise)}</p>
+      </div>
+      <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide mb-2">${this.t("select_method")}</p>
+      <div class="grid grid-cols-2 gap-2.5 mb-2">
+        <button type="button" data-action="takeaway-checkout#selectPayMethod" data-takeaway-checkout-method-param="cash"
+                class="flex flex-col items-center gap-1.5 p-4 rounded-ctl border-2 border-line-2 bg-shell active:border-go">
+          <span class="text-[24px]">💵</span><span class="text-[14px] font-bold">${this.t("pay_method_cash")}</span>
+        </button>
+        <button type="button" data-action="takeaway-checkout#selectPayMethod" data-takeaway-checkout-method-param="upi"
+                class="flex flex-col items-center gap-1.5 p-4 rounded-ctl border-2 border-line-2 bg-shell active:border-go">
+          <span class="text-[24px]">📱</span><span class="text-[14px] font-bold">${this.t("pay_method_upi")}</span>
+        </button>
+        <button type="button" data-action="takeaway-checkout#selectPayMethod" data-takeaway-checkout-method-param="card"
+                class="flex flex-col items-center gap-1.5 p-4 rounded-ctl border-2 border-line-2 bg-shell active:border-go">
+          <span class="text-[24px]">💳</span><span class="text-[14px] font-bold">${this.t("pay_method_card")}</span>
+        </button>
+        <button type="button" data-action="takeaway-checkout#selectPayMethod" data-takeaway-checkout-method-param="other"
+                class="flex flex-col items-center gap-1.5 p-4 rounded-ctl border-2 border-line-2 bg-shell active:border-go">
+          <span class="text-[24px]">⋯</span><span class="text-[14px] font-bold">${this.t("pay_method_other")}</span>
+        </button>
+      </div>
+      <div data-takeaway-checkout-target="payDetail"></div>`
+
+    this.payBackdropTarget.hidden = false
+    this.payPanelTarget.hidden = false
+    requestAnimationFrame(() => {
+      this.payBackdropTarget.classList.remove("opacity-0")
+      this.payBackdropTarget.classList.add("pointer-events-auto")
+      this.payPanelTarget.classList.remove("translate-y-full")
+    })
+  }
+
+  closePayment() {
+    if (this.cardTimeout) clearTimeout(this.cardTimeout)
+    this.payPanelTarget.classList.add("translate-y-full")
+    this.payBackdropTarget.classList.add("opacity-0")
+    this.payBackdropTarget.classList.remove("pointer-events-auto")
+    setTimeout(() => {
+      this.payPanelTarget.hidden = true
+      this.payBackdropTarget.hidden = true
+    }, 300)
+  }
+
+  selectPayMethod(event) {
+    const method = event.params.method
+    this.payPanelTarget.querySelectorAll("[data-takeaway-checkout-method-param]").forEach((btn) => {
+      btn.classList.toggle("border-go", btn.dataset.takeawayCheckoutMethodParam === method)
+    })
+
+    const detail = this.payPanelTarget.querySelector('[data-takeaway-checkout-target="payDetail"]')
+
+    if (method === "cash") {
+      detail.innerHTML = this.cashDetailHtml()
+    } else if (method === "card") {
+      detail.innerHTML = `
+        <div class="mt-4 flex flex-col items-center py-6">
+          <div class="w-9 h-9 border-[3px] border-line-2 border-t-go rounded-full animate-spin mb-3"></div>
+          <p class="text-[14px] text-ink-3" data-card-status>${this.t("card_prompt")}</p>
+        </div>`
+      this.cardTimeout = setTimeout(() => {
+        const spinner = detail.querySelector(".animate-spin")
+        const status = detail.querySelector("[data-card-status]")
+        if (!spinner) return
+        spinner.outerHTML = `<span class="text-go text-[36px] mb-2">✓</span>`
+        status.textContent = this.t("card_approved")
+        status.classList.add("text-go")
+        this.cardTimeout = setTimeout(() => this.completeCheckout(method), 500)
+      }, 1200)
+    } else {
+      detail.innerHTML = `
+        <button type="button" data-action="takeaway-checkout#confirmNonCash" data-takeaway-checkout-method-param="${method}"
+                class="w-full min-h-[56px] mt-4 rounded-tile text-[16px] font-bold bg-go text-surface active:bg-go-700">
+          ${this.t("confirm_payment")}
+        </button>`
+    }
+  }
+
+  cashDetailHtml() {
+    const due = this.payAmountDue
+    const amounts = this.cashQuickAmounts(due)
+    return `
+      <div class="mt-4">
+        <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide mb-2">${this.t("cash_received")}</p>
+        <div class="grid grid-cols-4 gap-2 mb-3">
+          ${amounts.map((a) => `<button type="button" data-action="takeaway-checkout#setCashAmount" data-takeaway-checkout-amount-param="${a}"
+              class="cash-amt-btn min-h-[48px] rounded-key border-2 border-line-2 font-mono font-bold text-[14px]">${this.formatInr(a)}</button>`).join("")}
+        </div>
+        <input type="text" inputmode="numeric" placeholder="${this.t("other_amount")}" data-action="input->takeaway-checkout#typeCashAmount"
+               class="w-full min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px] mb-3">
+        <div data-change-display class="mb-1"></div>
+        <button type="button" data-action="takeaway-checkout#confirmCash" data-confirm-cash disabled
+                class="w-full min-h-[56px] mt-2 rounded-tile text-[16px] font-bold bg-go text-surface disabled:bg-key-2 disabled:text-ink-4">
+          ${this.t("confirm_payment")}
+        </button>
+      </div>`
+  }
+
+  cashQuickAmounts(duePaise) {
+    const exact = Math.ceil(duePaise / 100) * 100
+    const notes = [50000, 100000, 200000, 500000] // ₹500 / ₹1000 / ₹2000 / ₹5000 in paise
+    const amounts = [exact]
+    for (const note of notes) {
+      if (note >= exact && !amounts.includes(note)) amounts.push(note)
+      if (amounts.length >= 4) break
+    }
+    return amounts.sort((a, b) => a - b).slice(0, 4)
+  }
+
+  setCashAmount(event) {
+    this.applyCashAmount(Number(event.params.amount))
+  }
+
+  typeCashAmount(event) {
+    const rupees = parseFloat(event.currentTarget.value) || 0
+    this.applyCashAmount(Math.round(rupees * 100))
+  }
+
+  applyCashAmount(receivedPaise) {
+    this.cashReceivedPaise = receivedPaise
+    const due = this.payAmountDue
+    const change = receivedPaise - due
+
+    this.payPanelTarget.querySelectorAll(".cash-amt-btn").forEach((btn) => {
+      btn.classList.toggle("border-go", Number(btn.dataset.takeawayCheckoutAmountParam) === receivedPaise)
+    })
+
+    const display = this.payPanelTarget.querySelector("[data-change-display]")
+    const confirmBtn = this.payPanelTarget.querySelector("[data-confirm-cash]")
+    if (!display || !confirmBtn) return
+
+    if (receivedPaise <= 0) {
+      display.innerHTML = ""
+      confirmBtn.disabled = true
+    } else if (change < 0) {
+      display.innerHTML = `<div class="px-4 py-3 rounded-ctl bg-stop-50 border border-stop text-stop text-[14px] font-semibold text-center">${this.t("insufficient_amount")}</div>`
+      confirmBtn.disabled = true
+    } else {
+      display.innerHTML = `
+        <div class="flex items-center justify-between px-4 py-3 rounded-ctl bg-go text-surface">
+          <span class="text-[15px] font-semibold">${this.t("change_due")}</span>
+          <span class="text-[22px] font-mono font-bold">${this.formatInr(change)}</span>
+        </div>`
+      confirmBtn.disabled = false
+    }
+  }
+
+  confirmCash(event) {
+    if (!this.cashReceivedPaise || this.cashReceivedPaise < this.payAmountDue) return
+    this.completeCheckout("cash", event.currentTarget)
+  }
+
+  confirmNonCash(event) {
+    this.completeCheckout(event.params.method, event.currentTarget)
+  }
+
+  completeCheckout(method, button) {
+    if (button) this.stampButton(button)
+
+    const items = Array.from(this.cart.values())
     const clientToken = crypto.randomUUID()
     const payload = { clientToken, tableSessionId: this.tableSessionIdValue, method, items }
 
     this.persistPending(payload)
     this.cart.clear()
-    if (this.undoTimeout) clearTimeout(this.undoTimeout)
-    this.hideUndo()
     this.render()
-    this.closeSheet()
+    setTimeout(() => this.closePayment(), method === "cash" || method === "other" ? 250 : 0)
     this.attemptCheckout(payload)
+  }
+
+  stampButton(button) {
+    button.classList.add("stamp-btn", "relative")
+    button.classList.remove("stamp-punch")
+    // eslint-disable-next-line no-unused-expressions
+    button.offsetWidth
+    button.classList.add("stamp-punch")
   }
 
   resumePendingCheckout() {
@@ -243,11 +515,6 @@ export default class extends Controller {
     this.retryTimeout = setTimeout(() => this.attemptCheckout(payload), 5000)
   }
 
-  disconnect() {
-    if (this.retryTimeout) clearTimeout(this.retryTimeout)
-    if (this.undoTimeout) clearTimeout(this.undoTimeout)
-  }
-
   storageKey() {
     return `pos:pending-takeaway-checkout:${this.tableSessionIdValue}`
   }
@@ -268,5 +535,206 @@ export default class extends Controller {
   clearPending(clientToken) {
     const pending = this.readPending()
     if (pending?.clientToken === clientToken) localStorage.removeItem(this.storageKey())
+  }
+
+  // --- hold / held orders ---
+  // Held carts are server-side (HeldCart), not TableSession/Ticket — nothing
+  // reaches the kitchen or reserves an invoice number until restored and
+  // charged. This is what lets a hold survive a reload or a device switch.
+  async hold() {
+    const items = Array.from(this.cart.values())
+    if (items.length === 0) {
+      this.showToast(this.t("hold_empty"))
+      return
+    }
+
+    try {
+      const response = await fetch(this.heldCartsUrlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            menu_item_id: item.menuItemId,
+            name_snapshot: item.name,
+            unit_price_paise: item.unitPricePaise,
+            quantity: item.quantity
+          }))
+        })
+      })
+      if (!response.ok) throw new Error(`hold failed: ${response.status}`)
+
+      this.cart.clear()
+      this.render()
+      this.refreshHeldCount()
+      this.showToast(this.t("cart_held"))
+    } catch {
+      this.showToast(this.t("hold_empty"))
+    }
+  }
+
+  async refreshHeldCount() {
+    const carts = await this.fetchHeldCarts()
+    if (!carts) return
+    this.heldBadgeTarget.hidden = carts.length === 0
+    this.heldBadgeTarget.textContent = carts.length
+  }
+
+  async fetchHeldCarts() {
+    try {
+      const response = await fetch(this.heldCartsUrlValue, { headers: { Accept: "application/json" } })
+      if (!response.ok) return null
+      return await response.json()
+    } catch {
+      return null
+    }
+  }
+
+  async showHeld() {
+    const carts = await this.fetchHeldCarts()
+    this.renderHeldList(carts || [])
+
+    this.heldBackdropTarget.hidden = false
+    this.heldPanelTarget.hidden = false
+    requestAnimationFrame(() => {
+      this.heldBackdropTarget.classList.remove("opacity-0")
+      this.heldBackdropTarget.classList.add("pointer-events-auto")
+      this.heldPanelTarget.classList.remove("translate-y-full")
+    })
+  }
+
+  closeHeld() {
+    this.heldPanelTarget.classList.add("translate-y-full")
+    this.heldBackdropTarget.classList.add("opacity-0")
+    this.heldBackdropTarget.classList.remove("pointer-events-auto")
+    setTimeout(() => {
+      this.heldPanelTarget.hidden = true
+      this.heldBackdropTarget.hidden = true
+    }, 300)
+  }
+
+  renderHeldList(carts) {
+    if (carts.length === 0) {
+      this.heldListTarget.innerHTML = `<p class="py-10 text-center text-[16px] text-ink-3">${this.t("no_held_orders")}</p>`
+      return
+    }
+
+    this.heldListTarget.innerHTML = carts.map((cart) => {
+      const time = new Date(cart.held_at).toLocaleTimeString(document.documentElement.lang === "ne" ? "ne-NP" : "en-IN", { hour: "2-digit", minute: "2-digit" })
+      return `
+        <div class="flex items-center gap-3 p-3.5 rounded-tile bg-card border-l-[6px] border-warn border-y border-r border-line">
+          <div class="flex-1 min-w-0">
+            <div class="text-[16px] font-semibold">${this.pluralizeCount(cart.item_count)}</div>
+            <div class="text-[13px] text-ink-3">${this.t("held_at").replace("%{time}", time)}</div>
+          </div>
+          <div class="font-mono font-bold text-[17px]">${this.formatInr(cart.total_paise)}</div>
+          <button type="button" data-action="takeaway-checkout#restoreHeld" data-held-cart-id="${cart.id}"
+                  class="shrink-0 min-h-[44px] px-4 rounded-key bg-go text-surface text-[15px] font-bold active:bg-go-700">
+            ${this.t("restore")}
+          </button>
+          <button type="button" data-action="takeaway-checkout#deleteHeld" data-held-cart-id="${cart.id}"
+                  class="shrink-0 min-h-[44px] w-[44px] rounded-key border-2 border-line-2 text-ink-3 text-[15px] font-bold">✕</button>
+        </div>`
+    }).join("")
+  }
+
+  async restoreHeld(event) {
+    const carts = await this.fetchHeldCarts()
+    const cart = (carts || []).find((c) => String(c.id) === event.currentTarget.dataset.heldCartId)
+    if (!cart) return
+
+    if (this.cart.size > 0) this.cart.clear()
+    cart.items.forEach((item) => {
+      this.cart.set(item.menu_item_id, {
+        menuItemId: item.menu_item_id,
+        name: item.name_snapshot,
+        unitPricePaise: item.unit_price_paise,
+        quantity: item.quantity
+      })
+    })
+
+    await this.deleteHeldCart(cart.id)
+    this.render()
+    this.refreshHeldCount()
+    this.closeHeld()
+    this.showToast(this.t("cart_restored"))
+  }
+
+  async deleteHeld(event) {
+    await this.deleteHeldCart(event.currentTarget.dataset.heldCartId)
+    this.showHeld()
+    this.refreshHeldCount()
+  }
+
+  async deleteHeldCart(id) {
+    try {
+      await fetch(`/held_carts/${id}`, {
+        method: "DELETE",
+        headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content }
+      })
+    } catch {
+      // best-effort — a stray held cart just sits in the list, no data loss
+    }
+  }
+
+  showToast(message) {
+    this.toastTarget.textContent = message
+    this.toastTarget.hidden = false
+    requestAnimationFrame(() => this.toastTarget.classList.remove("opacity-0"))
+
+    if (this.toastTimeout) clearTimeout(this.toastTimeout)
+    this.toastTimeout = setTimeout(() => {
+      this.toastTarget.classList.add("opacity-0")
+      setTimeout(() => { this.toastTarget.hidden = true }, 200)
+    }, 2500)
+  }
+
+  pluralizeCount(count) {
+    const locale = document.documentElement.lang
+    if (locale === "ne") return `${this.toDevanagariDigits(count)} वटा`
+    return count === 1 ? "1 item" : `${count} items`
+  }
+
+  toDevanagariDigits(n) {
+    const map = "०१२३४५६७८९"
+    return String(n).replace(/\d/g, (d) => map[d])
+  }
+
+  t(key) {
+    const locale = document.documentElement.lang
+    const strings = {
+      hold_empty: { en: "Cart is empty", ne: "कार्ट खाली छ" },
+      cart_held: { en: "Order held", ne: "अर्डर पर्खाइयो" },
+      cart_restored: { en: "Order restored", ne: "अर्डर फिर्ता आयो" },
+      no_held_orders: { en: "No held orders", ne: "कुनै पर्खिरहेको अर्डर छैन" },
+      held_at: { en: "Held at %{time}", ne: "%{time} मा राखियो" },
+      restore: { en: "Restore", ne: "फिर्ता ल्याउनुहोस्" },
+      cart_empty: { en: "Tap items to add", ne: "थप्न वस्तुमा थिच्नुहोस्" },
+      view_cart: { en: "View cart", ne: "कार्ट हेर्नुहोस्" },
+      pay: { en: "Pay", ne: "तिर्नुहोस्" },
+      add_items_to_pay: { en: "Add items to pay", ne: "तिर्न वस्तु थप्नुहोस्" },
+      amount_due: { en: "Amount due", ne: "तिर्नुपर्ने रकम" },
+      select_method: { en: "Select method", ne: "माध्यम छान्नुहोस्" },
+      pay_method_cash: { en: "Cash", ne: "नगद" },
+      pay_method_upi: { en: "UPI", ne: "UPI" },
+      pay_method_card: { en: "Card", ne: "कार्ड" },
+      pay_method_other: { en: "Other", ne: "अन्य" },
+      cash_received: { en: "Cash received", ne: "प्राप्त नगद" },
+      other_amount: { en: "Other amount", ne: "अर्को रकम" },
+      change_due: { en: "Change due", ne: "फिर्ता रकम" },
+      insufficient_amount: { en: "Insufficient amount", ne: "रकम अपुग छ" },
+      confirm_payment: { en: "Confirm payment", ne: "भुक्तानी पक्का गर्नुहोस्" },
+      card_prompt: { en: "Tap or insert card...", ne: "कार्ड ट्याप वा इन्सर्ट गर्नुहोस्..." },
+      card_approved: { en: "Payment approved", ne: "भुक्तानी स्वीकृत भयो" },
+      subtotal: { en: "Subtotal", ne: "मूल्य" },
+      cgst: { en: "CGST", ne: "मू.अ.कर (CGST)" },
+      sgst: { en: "SGST", ne: "मू.अ.कर (SGST)" },
+      composition_declaration: { en: "Composition taxable person, not eligible to collect tax on supplies", ne: "Composition taxable person, not eligible to collect tax on supplies" },
+      total: { en: "Total", ne: "जम्मा" },
+      each: { en: "each", ne: "प्रति" }
+    }
+    return strings[key][locale] || strings[key].en
   }
 }

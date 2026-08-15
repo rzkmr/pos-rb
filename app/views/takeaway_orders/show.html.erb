@@ -1,145 +1,218 @@
 <% if @table_session.status == "open" %>
-  <div class="h-[100dvh] bg-shell flex flex-col overflow-hidden" data-controller="takeaway-checkout"
+  <%# Counter shell — full-bleed on phone, a centered card on md: up (design_system §8.1).
+      Same tokens as every other screen; only the layout shape is specific to this one. %>
+  <div class="bg-shell"
+       data-controller="takeaway-checkout"
        data-takeaway-checkout-table-session-id-value="<%= @table_session.id %>"
-       data-takeaway-checkout-checkout-url-value="<%= takeaway_checkouts_path %>">
+       data-takeaway-checkout-checkout-url-value="<%= takeaway_checkouts_path %>"
+       data-takeaway-checkout-dining-table-id-value="<%= @dining_table.id %>"
+       data-takeaway-checkout-held-carts-url-value="<%= dining_table_held_carts_path(@dining_table) %>"
+       data-takeaway-checkout-gst-rate-bp-value="<%= Current.shop.gst_rate_bp %>"
+       data-takeaway-checkout-composition-scheme-value="<%= Current.shop.composition_scheme %>">
 
-    <header class="shrink-0 bg-go text-[#f2f7f4] px-4 pt-[max(0.875rem,env(safe-area-inset-top))] pb-3.5">
-      <div class="flex items-center justify-between gap-3">
-        <div class="min-w-0 text-[22px] sm:text-[24px] font-bold truncate"><%= @dining_table.label %></div>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <%= link_to "EN", locale_path(locale: "en"), data: { turbo_method: :patch },
-                class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 text-surface active:bg-key-2 active:text-ink" %>
-          <%= link_to "ने", locale_path(locale: "ne"), data: { turbo_method: :patch },
-                class: "px-2.5 py-1.5 rounded-key text-[13px] font-bold bg-wall-3 text-surface active:bg-key-2 active:text-ink" %>
-        </div>
-      </div>
-      <div class="mt-1 text-[14px] sm:text-[15px] opacity-85">
-        <%= link_to "← #{t('.all_tables')}", dining_tables_path, class: "underline" %>
-      </div>
-    </header>
+    <%# status toast — hold/restore confirmations, top-centered, no action button %>
+    <div data-takeaway-checkout-target="toast"
+         class="fixed left-1/2 -translate-x-1/2 top-4 z-[60] px-4 py-3 rounded-tile bg-ink text-surface
+                text-[15px] font-semibold shadow-lg transition-opacity duration-200 opacity-0" hidden></div>
 
-    <div data-takeaway-checkout-target="charging"
-         class="shrink-0 flex items-center gap-2.5 px-4 py-3 bg-warn text-warn-900 border-b-[3px] border-warn-700" hidden>
-      <span class="w-3.5 h-3.5 rounded-full bg-[#7a5300] animate-pulse shrink-0"></span>
-      <span class="text-[15px] sm:text-[17px] font-bold"><%= t(".charging") %></span>
-    </div>
+    <div class="h-[100dvh] md:h-[820px] md:max-h-[85vh] w-full bg-shell flex flex-col md:flex-row overflow-hidden">
 
-    <nav class="shrink-0 border-b border-line bg-surface overflow-x-auto [-webkit-overflow-scrolling:touch]" style="scrollbar-width: none;">
-      <div class="flex gap-2 px-3.5 py-2.5 w-max snap-x">
-        <% @menu_items.group_by(&:category).keys.each_with_index do |category, index| %>
-          <button type="button" data-action="takeaway-checkout#jumpToCategory" data-takeaway-checkout-category-param="<%= category %>"
-                  data-takeaway-checkout-target="categoryTab"
-                  class="snap-start shrink-0 min-h-[44px] px-4 rounded-key text-[15px] font-bold whitespace-nowrap
-                         <%= index.zero? ? 'bg-ink text-surface' : 'bg-key text-ink' %>">
-            <%= t("table_sessions.show.category_#{category}", default: category.titleize) %>
-          </button>
-        <% end %>
-      </div>
-    </nav>
-
-    <section class="flex-1 overflow-y-auto" data-takeaway-checkout-target="itemList">
-      <% @menu_items.group_by(&:category).each do |category, items| %>
-        <div data-takeaway-checkout-category-section="<%= category %>" class="scroll-mt-2">
-          <div class="sticky top-0 z-10 px-4 py-2 bg-shell/95 backdrop-blur-sm text-[13px] font-bold tracking-wide text-ink-3 uppercase">
-            <%= t("table_sessions.show.category_#{category}", default: category.titleize) %>
+      <%# ── catalogue column ─────────────────────────────────────── %>
+      <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <header class="shrink-0 flex items-center justify-between gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
+          <div class="min-w-0">
+            <h1 class="text-[19px] font-bold leading-tight truncate"><%= @dining_table.label %></h1>
+            <p class="text-[13px] text-ink-3 font-mono mt-0.5" data-takeaway-checkout-target="clock"></p>
           </div>
-          <div class="flex flex-col">
-            <% items.each do |menu_item| %>
-              <button type="button"
-                      data-action="takeaway-checkout#add"
-                      data-takeaway-checkout-menu-item-id-param="<%= menu_item.id %>"
-                      data-takeaway-checkout-menu-item-name-param="<%= menu_item.name %>"
-                      data-takeaway-checkout-menu-item-price-param="<%= menu_item.price_paise %>"
-                      data-takeaway-checkout-target="itemRow"
-                      data-takeaway-checkout-item-id="<%= menu_item.id %>"
-                      class="chit-row-fill group relative min-h-[64px] w-full px-4 py-3 flex items-center gap-3.5
-                             border-b border-line/70 text-left active:bg-go-50">
-                <span class="shrink-0 w-1 self-stretch -my-3 rounded-full bg-line-2 transition-[width,background-color] duration-200
-                             group-active:bg-go" data-takeaway-checkout-target="rowAccent"></span>
-                <span class="flex-1 min-w-0">
-                  <span class="block text-[18px] font-semibold leading-[1.3] truncate"><%= menu_item.name %></span>
-                  <span class="block text-[15px] font-mono text-ink-3"><%= money_to_inr(menu_item.price_paise) %></span>
-                </span>
-                <span class="shrink-0 min-w-[2.75rem] text-right text-[17px] font-bold font-mono text-go"
-                      data-takeaway-checkout-target="rowQty"></span>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" data-action="takeaway-checkout#hold" title="<%= t(".hold") %>"
+                    class="w-9 h-9 rounded-key bg-card border border-line-2 flex items-center justify-center text-ink-3 active:text-ink active:bg-key">
+              ❙❙
+            </button>
+            <button type="button" data-action="takeaway-checkout#showHeld" title="<%= t(".held_orders") %>"
+                    class="relative w-9 h-9 rounded-key bg-card border border-line-2 flex items-center justify-center text-ink-3 active:text-ink active:bg-key">
+              ▤
+              <span data-takeaway-checkout-target="heldBadge"
+                    class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-warn text-warn-900
+                           text-[11px] font-bold flex items-center justify-center leading-none" hidden></span>
+            </button>
+            <%= link_to "EN", locale_path(locale: "en"), data: { turbo_method: :patch },
+                  class: "px-2.5 h-9 rounded-key text-[13px] font-bold bg-card border border-line-2 text-ink-3 active:bg-key flex items-center" %>
+            <%= link_to "ने", locale_path(locale: "ne"), data: { turbo_method: :patch },
+                  class: "px-2.5 h-9 rounded-key text-[13px] font-bold bg-card border border-line-2 text-ink-3 active:bg-key flex items-center" %>
+          </div>
+        </header>
+
+        <div class="shrink-0 px-4 pb-1.5">
+          <%= link_to "← #{t('.all_tables')}", dining_tables_path, class: "text-[13px] text-ink-3 underline" %>
+        </div>
+
+        <div data-takeaway-checkout-target="charging"
+             class="shrink-0 flex items-center gap-2.5 px-4 py-3 bg-warn text-warn-900 border-y-[3px] border-warn-700" hidden>
+          <span class="w-3.5 h-3.5 rounded-full bg-[#7a5300] animate-pulse shrink-0"></span>
+          <span class="text-[15px] font-bold"><%= t(".charging") %></span>
+        </div>
+
+        <%# search %>
+        <div class="shrink-0 px-4 pb-3">
+          <div class="flex items-center bg-card border border-line-2 rounded-ctl px-3 gap-2 focus-within:border-go transition-colors">
+            <span class="text-ink-3 text-[16px]">⌕</span>
+            <input type="text" inputmode="search" placeholder="<%= t(".search_placeholder") %>"
+                   data-takeaway-checkout-target="search" data-action="input->takeaway-checkout#filterItems"
+                   class="flex-1 bg-transparent border-none outline-none text-[16px] py-2.5 placeholder:text-ink-3">
+            <button type="button" data-action="takeaway-checkout#clearSearch" data-takeaway-checkout-target="searchClear"
+                    class="text-ink-3 text-[14px] font-bold" hidden>✕</button>
+          </div>
+        </div>
+
+        <%# category chips — pill-shaped (design_system §8.1) %>
+        <nav class="shrink-0 overflow-x-auto [-webkit-overflow-scrolling:touch]" style="scrollbar-width: none;">
+          <div class="flex gap-2 px-4 pb-3 w-max snap-x">
+            <% @menu_items.group_by(&:category).keys.each_with_index do |category, index| %>
+              <button type="button" data-action="takeaway-checkout#jumpToCategory" data-takeaway-checkout-category-param="<%= category %>"
+                      data-takeaway-checkout-target="categoryTab"
+                      class="snap-start shrink-0 min-h-[44px] px-4 rounded-full border text-[14px] font-bold whitespace-nowrap
+                             <%= index.zero? ? 'bg-ink border-ink text-surface' : 'bg-card border-line-2 text-ink-3' %>">
+                <%= t("table_sessions.show.category_#{category}", default: category.titleize) %>
               </button>
             <% end %>
           </div>
-        </div>
-      <% end %>
-    </section>
+        </nav>
 
-    <div class="shrink-0 relative">
-      <button type="button" data-action="takeaway-checkout#toggleSheet" data-takeaway-checkout-target="chitBar"
-              class="chit-torn-edge w-full pt-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] px-4
-                     bg-chit border-t border-chit-edge flex items-center justify-between gap-3"
-              hidden>
-        <span class="flex items-center gap-2.5 min-w-0">
-          <span class="shrink-0 w-2.5 h-2.5 rounded-full bg-go"></span>
-          <span class="text-[16px] font-bold truncate" data-takeaway-checkout-target="chitSummary"></span>
-        </span>
-        <span class="shrink-0 flex items-center gap-2">
-          <span class="text-[20px] font-mono font-bold" data-takeaway-checkout-target="chitTotal"></span>
-          <span class="text-ink-3 text-[13px] font-bold"><%= t("table_sessions.show.view_order") %> ▴</span>
-        </span>
-      </button>
-
-      <div data-takeaway-checkout-target="emptyFooter" class="px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-surface border-t border-line">
-        <p class="text-[15px] text-ink-3 text-center"><%= t("table_sessions.show.cart_empty") %></p>
+        <%# item grid %>
+        <section class="flex-1 overflow-y-auto pb-24 md:pb-3" data-takeaway-checkout-target="itemList">
+          <% @menu_items.group_by(&:category).each do |category, items| %>
+            <div data-takeaway-checkout-category-section="<%= category %>" class="scroll-mt-2">
+              <div class="sticky top-0 z-10 px-4 py-2 bg-shell/95 backdrop-blur-sm text-[13px] font-bold tracking-wide text-ink-3 uppercase">
+                <%= t("table_sessions.show.category_#{category}", default: category.titleize) %>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-4 pb-3">
+                <% items.each do |menu_item| %>
+                  <button type="button"
+                          data-action="takeaway-checkout#add"
+                          data-takeaway-checkout-menu-item-id-param="<%= menu_item.id %>"
+                          data-takeaway-checkout-menu-item-name-param="<%= menu_item.name %>"
+                          data-takeaway-checkout-menu-item-price-param="<%= menu_item.price_paise %>"
+                          data-takeaway-checkout-target="itemRow"
+                          data-takeaway-checkout-item-id="<%= menu_item.id %>"
+                          class="pcard-fill relative min-h-[124px] p-3 rounded-tile bg-card border border-line overflow-hidden
+                                 flex flex-col justify-between items-start text-left gap-1.5
+                                 active:scale-[.97] transition-transform">
+                    <span class="absolute top-0 left-0 right-0 h-[3px] bg-go"></span>
+                    <span class="absolute top-2.5 right-2.5 min-w-[22px] h-[22px] px-1.5 rounded-full bg-go text-surface
+                                 text-[12px] font-bold font-mono flex items-center justify-center leading-none
+                                 opacity-0 scale-0 transition-all duration-200" data-takeaway-checkout-target="rowQty"></span>
+                    <span class="text-[17px] font-semibold leading-[1.3] pr-6"><%= menu_item.name %></span>
+                    <span class="text-[15px] font-mono text-ink-2"><%= money_to_inr(menu_item.price_paise) %></span>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+          <div data-takeaway-checkout-target="noSearchResults" class="px-4 py-14 text-center text-ink-3" hidden>
+            <div class="text-[32px] mb-2">⌕</div>
+            <p class="text-[15px]"><%= t(".no_search_results") %></p>
+          </div>
+        </section>
       </div>
+      <%# ── /catalogue column ────────────────────────────────────── %>
+
+      <%# ── cart sidebar — desktop/tablet only, permanent, own header/footer ───── %>
+      <aside class="hidden md:flex md:w-[380px] md:shrink-0 md:border-l md:border-line md:flex-col md:bg-surface">
+        <div class="shrink-0 flex items-center justify-between px-4 pt-4 pb-3 border-b border-line">
+          <h2 class="text-[17px] font-bold"><%= t("table_sessions.show.cart") %></h2>
+          <button type="button" data-action="takeaway-checkout#clearCart"
+                  class="text-[13px] font-semibold text-ink-3 active:text-stop">
+            <%= t(".clear") %>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2" data-takeaway-checkout-target="cartListDesktop"></div>
+        <div class="shrink-0 border-t border-line p-4" data-takeaway-checkout-target="cartFooterDesktop"></div>
+      </aside>
     </div>
 
-    <div data-takeaway-checkout-target="sheetBackdrop" data-action="click->takeaway-checkout#closeSheet"
-         class="fixed inset-0 z-40 bg-black/40 transition-opacity duration-200" hidden></div>
+    <%# ── mobile bottom bar — total + View Cart (design_system §8, adapted mobile) ───── %>
+    <div data-takeaway-checkout-target="mobileBar"
+         class="md:hidden fixed bottom-0 left-0 right-0 z-30 h-[72px] bg-surface border-t border-line
+                flex items-center justify-between px-4 pb-[env(safe-area-inset-bottom)]" hidden>
+      <div>
+        <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide"><%= t("shared.total") %></p>
+        <p class="text-[20px] font-mono font-bold" data-takeaway-checkout-target="mobileTotal"></p>
+      </div>
+      <button type="button" data-action="takeaway-checkout#openCart"
+              class="min-h-[52px] px-6 rounded-tile bg-go text-surface text-[15px] font-bold active:bg-go-700">
+        <span data-takeaway-checkout-target="mobileCartLabel"></span>
+      </button>
+    </div>
+
+    <%# ── mobile cart FAB — shown once the bottom bar has content, replaces the bar's own affordance on very small screens ───── %>
+    <button type="button" data-action="takeaway-checkout#openCart" data-takeaway-checkout-target="cartFab"
+            class="md:hidden fixed bottom-[92px] right-4 z-30 w-14 h-14 rounded-tile bg-go text-surface
+                   flex items-center justify-center shadow-lg active:scale-90 transition-transform" hidden>
+      🛒
+      <span data-takeaway-checkout-target="fabBadge"
+            class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-stop text-surface
+                   text-[11px] font-bold flex items-center justify-center leading-none" hidden></span>
+    </button>
+
+    <%# ── mobile cart sheet — slides up, own header/list/footer, mirrors the sidebar content ───── %>
+    <div data-takeaway-checkout-target="sheetBackdrop" data-action="click->takeaway-checkout#closeCart"
+         class="md:hidden fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none transition-opacity duration-300" hidden></div>
     <div data-takeaway-checkout-target="sheet"
-         class="fixed left-0 right-0 bottom-0 z-50 max-h-[80dvh] flex flex-col
-                bg-surface rounded-t-[24px] shadow-2xl translate-y-full transition-transform duration-200 ease-out"
+         class="md:hidden fixed left-0 right-0 bottom-0 z-50 max-h-[85dvh] flex flex-col
+                bg-surface rounded-t-[24px] shadow-2xl translate-y-full transition-transform duration-300 ease-out"
          hidden>
       <div class="shrink-0 pt-3 pb-2 flex justify-center">
         <span class="w-10 h-1.5 rounded-full bg-line-2"></span>
       </div>
       <div class="shrink-0 px-4 pb-2 flex items-center justify-between">
         <h2 class="text-[19px] font-bold"><%= t("table_sessions.show.cart") %></h2>
-        <button type="button" data-action="takeaway-checkout#toggleSheet" class="min-h-[44px] px-3 text-[15px] font-bold text-ink-3">✕</button>
+        <div class="flex items-center gap-3">
+          <button type="button" data-action="takeaway-checkout#clearCart"
+                  class="text-[14px] font-semibold text-ink-3 active:text-stop">
+            <%= t(".clear") %>
+          </button>
+          <button type="button" data-action="takeaway-checkout#closeCart" class="min-h-[44px] px-3 text-[15px] font-bold text-ink-3">✕</button>
+        </div>
       </div>
+      <div class="flex-1 overflow-y-auto px-4 py-2 flex flex-col gap-2" data-takeaway-checkout-target="cartListMobile"></div>
+      <div class="shrink-0 border-t border-line p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" data-takeaway-checkout-target="cartFooterMobile"></div>
+    </div>
 
-      <div data-takeaway-checkout-target="undoToast"
-           class="mx-4 mb-3 flex items-center gap-3 px-4 py-3.5 rounded-tile bg-ink text-surface" hidden>
-        <span class="flex-1 text-[16px] font-semibold" data-takeaway-checkout-target="undoText"></span>
-        <button type="button" data-action="takeaway-checkout#undoRemove"
-                class="shrink-0 min-h-[44px] px-4 rounded-key bg-warn text-warn-900 text-[16px] font-bold">
-          <%= t("table_sessions.show.undo") %>
-        </button>
+    <%# ── payment modal — bottom sheet on mobile, centered card on desktop ───── %>
+    <div data-takeaway-checkout-target="payBackdrop" data-action="click->takeaway-checkout#closePayment"
+         class="fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none transition-opacity duration-300" hidden></div>
+    <div data-takeaway-checkout-target="payPanel"
+         class="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] flex flex-col
+                bg-surface rounded-t-[24px] shadow-2xl translate-y-full transition-transform duration-300 ease-out
+                md:inset-0 md:m-auto md:bottom-auto md:w-[420px] md:h-fit md:max-h-[85dvh] md:rounded-[24px]"
+         hidden>
+      <div class="shrink-0 pt-3 pb-2 flex justify-center md:hidden">
+        <span class="w-10 h-1.5 rounded-full bg-line-2"></span>
       </div>
+      <div class="shrink-0 px-5 pt-4 pb-2 flex items-center justify-between">
+        <h2 class="text-[19px] font-bold"><%= t(".payment") %></h2>
+        <button type="button" data-action="takeaway-checkout#closePayment" class="min-h-[44px] px-3 text-[15px] font-bold text-ink-3">✕</button>
+      </div>
+      <div class="px-5 pb-5 overflow-y-auto" data-takeaway-checkout-target="payContent"></div>
+    </div>
 
-      <div class="shrink-0 px-4 pb-2">
-        <div class="text-[13px] text-ink-3 font-semibold uppercase tracking-wide"><%= t("shared.total") %></div>
-        <div class="text-[28px] font-mono font-bold" data-takeaway-checkout-target="sheetTotal"></div>
+    <%# ── held-orders modal ───── %>
+    <div data-takeaway-checkout-target="heldBackdrop" data-action="click->takeaway-checkout#closeHeld"
+         class="fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none transition-opacity duration-300" hidden></div>
+    <div data-takeaway-checkout-target="heldPanel"
+         class="fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] flex flex-col
+                bg-surface rounded-t-[24px] shadow-2xl translate-y-full transition-transform duration-300 ease-out
+                md:inset-0 md:m-auto md:bottom-auto md:w-[480px] md:h-fit md:max-h-[85dvh] md:rounded-[24px]"
+         hidden>
+      <div class="shrink-0 pt-3 pb-2 flex justify-center md:hidden">
+        <span class="w-10 h-1.5 rounded-full bg-line-2"></span>
       </div>
-
-      <div class="shrink-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-line pt-3 flex flex-col gap-2">
-        <button type="button" data-action="takeaway-checkout#charge" data-takeaway-checkout-method-param="cash"
-                data-takeaway-checkout-target="sheetChargeCash" disabled
-                class="min-h-[64px] px-4 rounded-tile text-[18px] font-bold flex items-center justify-between px-5
-                       bg-go text-surface active:bg-go-700 disabled:bg-key-2 disabled:text-ink-4">
-          <span><%= t(".charge_cash") %></span>
-          <span class="font-mono" data-amount></span>
-        </button>
-        <button type="button" data-action="takeaway-checkout#charge" data-takeaway-checkout-method-param="upi"
-                data-takeaway-checkout-target="sheetChargeUpi" disabled
-                class="min-h-[56px] px-5 rounded-tile text-[17px] font-bold flex items-center justify-between
-                       border-[2.5px] border-ink bg-card active:bg-key disabled:opacity-40">
-          <span><%= t(".charge_upi") %></span>
-          <span class="font-mono" data-amount></span>
-        </button>
-        <button type="button" data-action="takeaway-checkout#charge" data-takeaway-checkout-method-param="card"
-                data-takeaway-checkout-target="sheetChargeCard" disabled
-                class="min-h-[56px] px-5 rounded-tile text-[17px] font-bold flex items-center justify-between
-                       border-[2.5px] border-ink bg-card active:bg-key disabled:opacity-40">
-          <span><%= t(".charge_card") %></span>
-          <span class="font-mono" data-amount></span>
-        </button>
+      <div class="shrink-0 px-5 pt-4 pb-2 flex items-center justify-between">
+        <h2 class="text-[19px] font-bold"><%= t(".held_orders") %></h2>
+        <button type="button" data-action="takeaway-checkout#closeHeld" class="min-h-[44px] px-3 text-[15px] font-bold text-ink-3">✕</button>
       </div>
+      <div data-takeaway-checkout-target="heldList" class="flex-1 overflow-y-auto px-5 pb-5 flex flex-col gap-2.5"></div>
     </div>
   </div>
 <% else %>
@@ -149,59 +222,91 @@
       <%= link_to "← #{t('.all_tables')}", dining_tables_path, class: "text-[16px] underline opacity-85" %>
     </header>
 
-    <div class="p-4 flex flex-col gap-4 max-w-[640px] mx-auto w-full">
-      <section class="bg-card rounded-tile border border-line p-4">
-        <h2 class="text-[17px] font-semibold text-ink-2 mb-2"><%= t(".items") %></h2>
-        <ul class="flex flex-col gap-2">
+    <div class="p-4 flex flex-col items-center gap-4 w-full">
+      <% if @invoice %>
+        <% latest_print_job = @invoice.print_jobs.order(:created_at).last %>
+        <% if latest_print_job&.status == "failed" %>
+          <div class="w-full max-w-[340px] px-3 py-2 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[14px] font-semibold text-center">
+            <%= t(".print_failed", error: latest_print_job.last_error) %>
+          </div>
+        <% end %>
+      <% end %>
+
+      <%# receipt preview — mirrors EscposReceipt's field order exactly (design_system §2.5),
+          so what the cashier sees on screen matches what the thermal printer produces.
+          .receipt-print-root is the only thing visible to window.print(). %>
+      <div class="receipt-print-root">
+        <div class="receipt-preview rounded-ctl border border-line-2 shadow-sm p-4">
+          <div class="text-center">
+            <p class="font-bold text-[16px]"><%= Current.shop.name %></p>
+            <% if Current.shop.address.present? %>
+              <p class="text-[12px]"><%= Current.shop.address %></p>
+            <% end %>
+            <% if @invoice&.gstin_snapshot.present? %>
+              <p class="text-[12px]">GSTIN: <%= @invoice.gstin_snapshot %></p>
+            <% end %>
+            <% if Current.shop.fssai_licence.present? %>
+              <p class="text-[12px]">FSSAI: <%= Current.shop.fssai_licence %></p>
+            <% end %>
+          </div>
+
+          <div class="receipt-rule my-2"></div>
+
+          <% if @invoice %>
+            <p class="text-[13px]"><%= t(".invoice_number", number: @invoice.number) %></p>
+            <p class="text-[13px]"><%= @invoice.issued_at.strftime("%d-%b-%Y %H:%M") %></p>
+          <% end %>
+          <p class="text-[13px]"><%= @dining_table.label %></p>
+
+          <div class="receipt-rule my-2"></div>
+
           <% @tickets.each do |ticket| %>
             <% ticket.ticket_items.active.each do |item| %>
-              <li class="flex items-center justify-between gap-3 py-2 border-b border-line last:border-0">
-                <span class="text-[19px] flex-1">
-                  <span class="font-mono text-ink-2"><%= item.quantity %> ×</span> <%= item.name_snapshot %>
-                </span>
-                <span class="w-[120px] text-right font-mono text-[18px]"><%= money_to_inr(item.quantity * item.unit_price_paise) %></span>
-              </li>
+              <div class="flex justify-between gap-3 text-[13px] py-0.5">
+                <span class="flex-1"><%= item.quantity %> x <%= item.name_snapshot %></span>
+                <span><%= money_to_inr(item.quantity * item.unit_price_paise) %></span>
+              </div>
             <% end %>
           <% end %>
-        </ul>
-      </section>
 
-      <section class="bg-card rounded-tile border border-line p-5">
-        <div class="text-[22px] font-semibold"><%= t(".total_with_tax") %></div>
-        <div class="text-[34px] font-mono font-bold"><%= money_to_inr(@billing.total_paise) %></div>
-        <div class="mt-3 flex flex-col gap-1 text-[16px] text-ink-3">
-          <div class="flex justify-between"><span><%= t(".subtotal") %></span><span class="font-mono"><%= money_to_inr(@billing.taxable_paise) %></span></div>
+          <div class="receipt-rule my-2"></div>
+
+          <div class="flex justify-between text-[13px]"><span><%= t(".subtotal") %></span><span><%= money_to_inr(@billing.taxable_paise) %></span></div>
           <% if Current.shop.composition_scheme %>
-            <div class="text-[14px] italic"><%= t(".composition_declaration") %></div>
+            <p class="text-[12px] mt-1"><%= t(".composition_declaration") %></p>
           <% else %>
-            <div class="flex justify-between"><span><%= t(".cgst") %></span><span class="font-mono"><%= money_to_inr(@billing.cgst_paise) %></span></div>
-            <div class="flex justify-between"><span><%= t(".sgst") %></span><span class="font-mono"><%= money_to_inr(@billing.sgst_paise) %></span></div>
+            <div class="flex justify-between text-[13px]"><span><%= t(".cgst") %></span><span><%= money_to_inr(@billing.cgst_paise) %></span></div>
+            <div class="flex justify-between text-[13px]"><span><%= t(".sgst") %></span><span><%= money_to_inr(@billing.sgst_paise) %></span></div>
           <% end %>
-          <div class="flex justify-between"><span><%= t(".round_off") %></span><span class="font-mono"><%= money_to_inr(@billing.round_off_paise) %></span></div>
+          <% if @billing.round_off_paise.to_i != 0 %>
+            <div class="flex justify-between text-[13px]"><span><%= t(".round_off") %></span><span><%= money_to_inr(@billing.round_off_paise) %></span></div>
+          <% end %>
+
+          <div class="receipt-rule my-2"></div>
+
+          <div class="flex justify-between text-[16px] font-bold"><span><%= t(".total_with_tax") %></span><span><%= money_to_inr(@billing.total_paise) %></span></div>
+
+          <div class="receipt-rule my-2"></div>
+
+          <p class="text-center text-[13px]"><%= t(".session_status", status: @table_session.status) %></p>
+          <% if Current.shop.invoice_footer.present? %>
+            <p class="text-center text-[12px] mt-1"><%= Current.shop.invoice_footer %></p>
+          <% end %>
         </div>
-      </section>
+      </div>
 
-      <div class="text-center text-[16px] text-ink-3"><%= t(".session_status", status: @table_session.status) %></div>
-
-      <% if @invoice %>
-        <section class="bg-card rounded-tile border border-line p-4">
-          <h2 class="text-[18px] font-bold mb-1"><%= t(".invoice_number", number: @invoice.number) %></h2>
-          <% latest_print_job = @invoice.print_jobs.order(:created_at).last %>
-          <% if latest_print_job %>
-            <p class="text-[15px] text-ink-3"><%= t(".print_status", status: latest_print_job.status) %></p>
-            <% if latest_print_job.status == "failed" %>
-              <p class="mt-1 px-3 py-2 rounded-ctl bg-stop-50 border-2 border-stop text-stop text-[15px] font-semibold">
-                <%= t(".print_failed", error: latest_print_job.last_error) %>
-              </p>
-            <% end %>
-          <% end %>
-          <%= button_to t(".print_receipt"), reprint_invoice_path(@invoice), method: :post,
-                class: "mt-3 w-full min-h-[70px] rounded-tile text-[20px] font-bold bg-go text-surface active:bg-go-700" %>
-        </section>
-
+      <div class="w-full max-w-[340px] flex flex-col gap-2.5">
+        <% if @invoice %>
+          <button type="button" onclick="window.print()"
+                  class="w-full min-h-[64px] rounded-tile text-[18px] font-bold bg-go text-surface active:bg-go-700">
+            <%= t(".print_receipt") %>
+          </button>
+          <%= button_to t(".reprint_to_printer"), reprint_invoice_path(@invoice), method: :post,
+                class: "w-full min-h-[56px] rounded-tile text-[15px] font-bold border-2 border-line-2 bg-card active:bg-key" %>
+        <% end %>
         <%= link_to t(".new_order"), takeaway_path,
-              class: "text-center min-h-[64px] flex items-center justify-center rounded-tile text-[19px] font-bold bg-key text-ink active:bg-key-2" %>
-      <% end %>
+              class: "text-center min-h-[56px] flex items-center justify-center rounded-tile text-[15px] font-bold bg-key text-ink active:bg-key-2" %>
+      </div>
     </div>
   </div>
 <% end %>

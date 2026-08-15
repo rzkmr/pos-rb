@@ -8,7 +8,15 @@ English toggle. Devanagari numerals for dates / table numbers / guest counts; Ar
 money, quantities and phone numbers. All money is computed from **integer paisa** — never floats.
 
 ## About the design files
-`Restaurant POS.dc.html` in this bundle is a **design reference built in HTML** — a working
+Two prototypes ship in this bundle:
+
+| File | What it is |
+|---|---|
+| `Restaurant POS.dc.html` | The six-screen Nepali POS (§2) — waiter, kitchen, cashier, print, admin, PIN |
+| `QuickPOS.dc.html` | Single-screen counter service (§8), same token set, English/USD |
+| `QuickPOS-standalone.html` | The same screen bundled offline — open it directly, no server, no assets |
+
+They are **design references built in HTML** — a working
 prototype of the intended look and behavior, not production code to copy. The task is to recreate
 it in the target codebase's own environment (Rails + Hotwire + Tailwind, React, etc.) using that
 project's established patterns. Open the file in a browser: the dashed **SIM** row drives the
@@ -280,8 +288,10 @@ None. No images, no icon library — state glyphs are the text characters `■ �
 self-host Noto Sans Devanagari (400/500/600/700 woff2) at `/fonts/`.
 
 # 6. Files
-- `Restaurant POS.dc.html` — the full interactive prototype (all six screens, all edge states).
-  Open in a browser; use the tab row to switch screens and the dashed SIM row to drive states.
+- `Restaurant POS.dc.html` — the six-screen prototype. Use the tab row to switch screens and the
+  dashed SIM row to drive offline / stale / aging / void / split-payment / undo states.
+- `QuickPOS.dc.html` + `QuickPOS-standalone.html` — the counter-service screen (§8).
+- `support.js` — runtime for the `.dc.html` files; keep it beside them. The standalone file needs nothing.
 
 # 7. Before you call it done
 - [ ] Tested on the cheapest Android phone a waiter actually owns
@@ -290,3 +300,54 @@ self-host Noto Sans Devanagari (400/500/600/700 woff2) at `/fonts/`.
 - [ ] Devanagari verified on the actual thermal printer via the raster path
 - [ ] Every money figure traced from integer paisa to display — no float in between
 - [ ] A waiter who has never seen the app can place an order after under two minutes of instruction
+
+---
+
+# 8. QuickPOS — counter service, one screen
+
+A second, simpler layout on the identical token set: English, USD, no table sessions. Use it as the
+reference for any single-operator counter (café, takeaway, bar). Every color, radius and target size
+below is already defined in §1.1 — nothing new is introduced.
+
+## 8.1 Layout
+`1240px` shell, `rounded-[18px] border border-line-2 bg-surface`, min-height 780px, two columns.
+
+**Left — catalogue.** Header: shop name 22px bold + date/time 15px mono `text-ink-3`; right side holds
+`Hold` and `Held orders` (both `min-h-[64px] border-2 border-line-2 bg-card`, the latter with a count
+pill that turns `bg-warn` once anything is parked). Search row: full-width `h-[64px]` field,
+`⌕` glyph in mono, clear button appears only when non-empty. Category chips: `min-h-[52px] rounded-full`,
+selected `bg-ink text-surface`. Grid: `repeat(auto-fill, minmax(178px, 1fr))`, gap 12px, tiles
+`min-h-[132px] rounded-tile bg-card border-2 border-line` with a 4px accent bar along the top edge,
+a 40px mono-initials square tinted per category, name 18px, price 19px mono, and `× n` in `go` once
+the item is in the cart. Empty search state is a plain sentence, never an illustration.
+
+**Right — cart, 396px.** Header `Current order` + `Clear` (red label only when the cart has contents).
+Rows: name 18px / `$x.xx each` 15px mono / 48px −/+ steppers / 84px right-aligned mono line total.
+Footer on `bg-surface`: subtotal + tax rows 16px `text-ink-3`, rule, `Total` 20px with the figure at
+30px mono, then the `min-h-[72px]` pay button — `bg-go` with the amount inline, `bg-key-2` and
+"Add items to pay" when empty.
+
+## 8.2 Payment, receipt, hold
+- **Payment modal** (520px): due amount 40px mono on a white card, then Cash / Card as two 84px
+  buttons. Cash reveals four quick-tender chips (exact amount first, then the next round notes) plus
+  an "Other amount" field; the change block is 44px mono — `bg-go` when covered, `bg-stop` with the
+  label flipped to **Short by** when not. Confirm stays disabled until the tender covers the total.
+  Card runs a 1.5s spinner → green check → auto-completes.
+- **Receipt modal** (460px): green check, order number `#0043`, then an 80mm-style receipt block on
+  white with dashed rules — shop block, order/timestamp line, item lines, subtotal + tax, solid rule,
+  `TOTAL` 19px bold, tender + change. Actions: `Print` (outlined) and `New order` (`bg-go`).
+- **Hold** parks the cart with a 5s undo toast; `Held orders` lists each parked ticket on a card with
+  a 6px `warn` left edge, item summary, time, total, `Restore` (`bg-go`) and an outlined-`stop` delete.
+- **Toast** is centred bottom, `bg-ink`, with an amber `Undo` when the action is reversible. Clearing
+  the cart and holding an order both use it — neither gets a confirm dialog.
+
+## 8.3 State
+```
+cart:    [{ id, name, price_cents, qty }]
+held:    [{ items[], at }]
+ui:      category, query, pay_open, method, cash_input, card_stage, receipt, held_open, toast
+props:   shop_name, tax_rate (default 8%)
+```
+Money is integer cents end to end; `tax = round(subtotal * rate / 100)`; the displayed total is
+`subtotal + tax`. Quick-tender chips are derived, not hardcoded: `ceil(total)` first, then the round
+notes above it.

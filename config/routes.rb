@@ -20,7 +20,10 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :dining_tables, only: [ :index ]
+  resources :dining_tables, only: [ :index ] do
+    resources :held_carts, only: [ :index, :create ]
+  end
+  resources :held_carts, only: [ :destroy ]
   get "takeaway" => "takeaway_orders#current"
   resources :takeaway_orders, only: [ :show ]
   resources :table_sessions, only: [ :create, :show ] do

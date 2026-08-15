@@ -2,6 +2,7 @@ class DiningTable < ApplicationRecord
   include ShopScoped
 
   has_many :table_sessions, dependent: :restrict_with_error
+  has_many :held_carts, dependent: :destroy
 
   validates :label, presence: true, uniqueness: { scope: :shop_id }
   validates :seats, numericality: { greater_than: 0 }

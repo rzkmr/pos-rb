@@ -8,7 +8,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "list", "submit", "pendingBanner", "pendingCount",
-    "itemRow", "rowQty", "rowAccent", "categoryTab", "itemList",
+    "itemRow", "rowQty", "categoryTab", "itemList",
     "chitBar", "chitSummary", "chitTotal", "emptyFooter",
     "sheet", "sheetBackdrop", "sheetTotal",
     "undoToast", "undoText",
@@ -172,15 +172,18 @@ export default class extends Controller {
       const id = row.dataset.orderCartItemId
       const item = this.cart.get(id) || this.cart.get(Number(id))
       const qtyTarget = row.querySelector('[data-order-cart-target="rowQty"]')
-      const accent = row.querySelector('[data-order-cart-target="rowAccent"]')
       if (item) {
         qtyTarget.textContent = `× ${item.quantity}`
-        accent.classList.remove("w-1", "bg-line-2")
-        accent.classList.add("w-1.5", "bg-go")
+        qtyTarget.classList.remove("opacity-0", "scale-75")
+        qtyTarget.classList.add("opacity-100", "scale-100")
+        row.classList.add("border-go", "bg-go-50")
+        row.classList.remove("border-line")
       } else {
         qtyTarget.textContent = ""
-        accent.classList.remove("w-1.5", "bg-go")
-        accent.classList.add("w-1", "bg-line-2")
+        qtyTarget.classList.add("opacity-0", "scale-75")
+        qtyTarget.classList.remove("opacity-100", "scale-100")
+        row.classList.remove("border-go", "bg-go-50")
+        row.classList.add("border-line")
       }
     })
   }

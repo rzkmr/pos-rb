@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Mono:wght@400;500;600&display=swap" />
+<style>
+  html, body { margin: 0; padding: 0; background: #edece7; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  button { font-family: inherit; border: 0; cursor: pointer; }
+  input { font-family: inherit; }
+  a { color: #1d5c48; text-decoration: none; }
+  a:hover { color: #12402f; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #d2d0c8; border-radius: 3px; }
+  @keyframes riseIn { from { transform: translateY(14px); opacity: 0 } to { transform: none; opacity: 1 } }
+  @keyframes popIn { from { transform: scale(.94); opacity: 0 } to { transform: none; opacity: 1 } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+</style>
+<template id="__bundler_thumbnail" data-bg-color="#1d5c48">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#1d5c48"/>
+    <rect x="360" y="240" width="480" height="320" rx="40" fill="#f7f6f2"/>
+    <rect x="410" y="300" width="180" height="90" rx="18" fill="#e4e2da"/>
+    <rect x="610" y="300" width="180" height="90" rx="18" fill="#e4e2da"/>
+    <rect x="410" y="420" width="380" height="80" rx="20" fill="#f0b429"/>
+  </svg>
+</template>
+</helmet>
+
+<div style="min-height: 100vh; background: #edece7; color: #16181c; font-family: 'Noto Sans Devanagari', system-ui, sans-serif; line-height: 1.6; text-wrap: pretty; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 22px 22px 48px;">
+
+  <div style="width: 100%; max-width: 1240px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; justify-content: space-between;">
+    <div>
+      <div style="font-size: 14px; font-family: 'Noto Sans Mono', monospace; color: #7a7d84; letter-spacing: .06em;">QUICKPOS / DESIGN TOKENS APPLIED</div>
+      <div style="font-size: 24px; font-weight: 700; letter-spacing: -.015em;">Counter service — one screen</div>
+    </div>
+    <div style="font-size: 15px; color: #6a6d74; max-width: 420px;">Same structure as the Tailwind draft, rebuilt on the POS token set: warm neutrals, one action green, amber for held, red for destructive.</div>
+  </div>
+
+  <div style="width: 100%; max-width: 1240px; display: flex; align-items: stretch; gap: 0; border-radius: 18px; overflow: hidden; border: 1.5px solid #d2d0c8; background: #f7f6f2; min-height: 780px; box-shadow: 0 24px 56px -30px rgba(0,0,0,.4);">
+
+    <!-- ── MAIN ── -->
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px 14px;">
+        <div>
+          <div style="font-size: 22px; font-weight: 700; line-height: 1.3;">{{ shopName }}</div>
+          <div style="font-size: 15px; color: #6a6d74; font-family: 'Noto Sans Mono', monospace;">{{ clock }}</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onClick="{{ holdOrder }}" style="min-height: 64px; padding: 0 18px; border-radius: 14px; background: #ffffff; border: 2px solid #d2d0c8; font-size: 17px; font-weight: 600; color: #16181c; display: flex; align-items: center; gap: 8px;" style-hover="border-color: #a97400;">
+            <span style="font-family: 'Noto Sans Mono', monospace; font-size: 18px; color: #a97400;">❚❚</span>
+            <span>Hold</span>
+          </button>
+          <button onClick="{{ openHeld }}" style="position: relative; min-height: 64px; padding: 0 18px; border-radius: 14px; background: #ffffff; border: 2px solid #d2d0c8; font-size: 17px; font-weight: 600; color: #16181c; display: flex; align-items: center; gap: 10px;" style-hover="border-color: #16181c;">
+            <span>Held orders</span>
+            <span style="min-width: 30px; height: 30px; padding: 0 8px; border-radius: 15px; background: {{ heldBadgeBg }}; color: {{ heldBadgeFg }}; font-family: 'Noto Sans Mono', monospace; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{ heldCount }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="padding: 0 22px 12px; display: flex; align-items: center; gap: 10px; ">
+        <div style="flex: 1; display: flex; align-items: center; gap: 10px; background: #ffffff; border: 2px solid #d2d0c8; border-radius: 14px; padding: 0 16px; height: 64px;">
+          <span style="font-family: 'Noto Sans Mono', monospace; font-size: 18px; color: #7a7d84;">⌕</span>
+          <input value="{{ query }}" onChange="{{ setQuery }}" placeholder="Search menu" style="flex: 1; border: 0; outline: none; background: transparent; font-size: 19px; color: #16181c; height: 100%;" />
+          <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ clearQuery }}" style="width: 40px; height: 40px; border-radius: 10px; background: #e4e2da; font-size: 18px; color: #4a4d54;">✕</button>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="padding: 0 22px 14px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+          <button onClick="{{ c.pick }}" style="min-height: 52px; padding: 0 18px; border-radius: 999px; font-size: 17px; font-weight: 600; border: 2px solid {{ c.border }}; background: {{ c.bg }}; color: {{ c.fg }};">{{ c.label }}</button>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1; overflow: auto; padding: 0 22px 22px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 12px; align-content: start;">
+          <sc-for list="{{ products }}" as="p" hint-placeholder-count="8">
+            <button onClick="{{ p.add }}" style="position: relative; min-height: 132px; padding: 14px 14px 12px; border-radius: 16px; background: #ffffff; border: 2px solid #dddbd3; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 10px; text-align: left; overflow: hidden;" style-hover="border-color: #16181c;" style-active="border-color: #1d5c48; background: #e8f2ee;">
+              <span style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: {{ p.accent }};"></span>
+              <span style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                <span style="width: 40px; height: 40px; border-radius: 10px; background: {{ p.chipBg }}; color: {{ p.accent }}; font-family: 'Noto Sans Mono', monospace; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ p.initials }}</span>
+                <span style="flex: 1; font-size: 18px; font-weight: 600; line-height: 1.35;">{{ p.name }}</span>
+              </span>
+              <span style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <span style="font-size: 19px; font-weight: 700; font-family: 'Noto Sans Mono', monospace; color: #16181c;">{{ p.priceText }}</span>
+                <span style="font-size: 16px; font-weight: 700; font-family: 'Noto Sans Mono', monospace; color: #1d5c48;">{{ p.qtyBadge }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 70px 20px; text-align: center; color: #7a7d84; font-size: 19px;">No items match “{{ query }}”. Clear the search or pick another category.</div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- ── CART SIDEBAR ── -->
+    <div style="width: 396px; flex-shrink: 0; border-left: 1.5px solid #dddbd3; background: #ffffff; display: flex; flex-direction: column;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; border-bottom: 1.5px solid #dddbd3;">
+        <div style="font-size: 20px; font-weight: 700;">Current order</div>
+        <button onClick="{{ clearCart }}" style="min-height: 44px; padding: 0 14px; border-radius: 10px; background: #f7f6f2; font-size: 16px; font-weight: 600; color: {{ clearFg }};" style-hover="background: #e4e2da;">Clear</button>
+      </div>
+
+      <div style="flex: 1; overflow: auto;">
+        <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding: 60px 24px; text-align: center; color: #7a7d84; font-size: 18px;">Tap items to add them here.</div>
+        </sc-if>
+        <sc-for list="{{ cartLines }}" as="l" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #eeece6; animation: riseIn .16s ease-out;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 18px; font-weight: 600;">{{ l.name }}</div>
+              <div style="font-size: 15px; color: #6a6d74; font-family: 'Noto Sans Mono', monospace;">{{ l.eachText }}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button onClick="{{ l.dec }}" style="width: 48px; height: 48px; border-radius: 12px; background: #e4e2da; font-size: 24px; font-weight: 700; color: #16181c;" style-active="background: #cfccc2;">−</button>
+              <div style="width: 34px; text-align: center; font-size: 20px; font-weight: 700; font-family: 'Noto Sans Mono', monospace;">{{ l.qty }}</div>
+              <button onClick="{{ l.inc }}" style="width: 48px; height: 48px; border-radius: 12px; background: #1d5c48; font-size: 24px; font-weight: 700; color: #f2f7f4;" style-active="background: #12402f;">+</button>
+            </div>
+            <div style="width: 84px; text-align: right; font-size: 18px; font-weight: 700; font-family: 'Noto Sans Mono', monospace;">{{ l.lineText }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="border-top: 1.5px solid #dddbd3; padding: 16px 20px 20px; background: #f7f6f2; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <sc-for list="{{ totalsRows }}" as="t" hint-placeholder-count="2">
+            <div style="display: flex; justify-content: space-between; font-size: 16px; color: #6a6d74;">
+              <span>{{ t.label }}</span>
+              <span style="font-family: 'Noto Sans Mono', monospace;">{{ t.value }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding-top: 10px; border-top: 1.5px solid #dddbd3;">
+          <span style="font-size: 20px; font-weight: 700;">Total</span>
+          <span style="font-size: 30px; font-weight: 700; font-family: 'Noto Sans Mono', monospace;">{{ totalText }}</span>
+        </div>
+        <button onClick="{{ openPay }}" style="min-height: 72px; border-radius: 16px; font-size: 21px; font-weight: 700; background: {{ payBg }}; color: {{ payFg }};" style-active="background: #12402f;">{{ payLabel }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAYMENT MODAL ── -->
+  <sc-if value="{{ payOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 60; background: rgba(20,22,26,.5); display: flex; align-items: center; justify-content: center; padding: 26px;">
+      <div style="width: 520px; max-width: 100%; max-height: 92vh; overflow: auto; background: #f7f6f2; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 16px; animation: popIn .18s ease-out;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 24px; font-weight: 700;">Payment</div>
+          <button onClick="{{ closePay }}" style="width: 48px; height: 48px; border-radius: 12px; background: #e4e2da; font-size: 20px; color: #4a4d54;">✕</button>
+        </div>
+
+        <div style="padding: 18px; border-radius: 14px; background: #ffffff; border: 2px solid #dddbd3; text-align: center;">
+          <div style="font-size: 16px; color: #6a6d74;">Amount due</div>
+          <div style="font-size: 40px; font-weight: 700; font-family: 'Noto Sans Mono', monospace;">{{ totalText }}</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <sc-for list="{{ methods }}" as="m" hint-placeholder-count="2">
+            <button onClick="{{ m.pick }}" style="min-height: 84px; border-radius: 14px; font-size: 20px; font-weight: 700; background: {{ m.bg }}; border: 2.5px solid {{ m.border }}; color: {{ m.fg }};">{{ m.label }}</button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ cashMode }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 12px; animation: riseIn .16s ease-out;">
+            <div style="font-size: 16px; font-weight: 600; color: #6a6d74;">Cash received</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+              <sc-for list="{{ quickAmounts }}" as="a" hint-placeholder-count="4">
+                <button onClick="{{ a.pick }}" style="min-height: 64px; border-radius: 12px; font-size: 19px; font-weight: 700; font-family: 'Noto Sans Mono', monospace; background: {{ a.bg }}; border: 2px solid {{ a.border }}; color: {{ a.fg }};">{{ a.label }}</button>
+              </sc-for>
+            </div>
+            <input value="{{ cashInput }}" onChange="{{ setCash }}" inputMode="decimal" placeholder="Other amount" style="height: 64px; border-radius: 12px; border: 2px solid #d2d0c8; background: #ffffff; padding: 0 16px; font-size: 20px; font-family: 'Noto Sans Mono', monospace;" />
+            <div style="padding: 16px 18px; border-radius: 12px; background: {{ changeBg }}; color: {{ changeFg }};">
+              <div style="font-size: 17px; font-weight: 600;">{{ changeLabel }}</div>
+              <div style="font-size: 44px; font-weight: 700; line-height: 1.2; font-family: 'Noto Sans Mono', monospace;">{{ changeText }}</div>
+            </div>
+            <button onClick="{{ confirmCash }}" style="min-height: 72px; border-radius: 14px; font-size: 20px; font-weight: 700; background: {{ confirmBg }}; color: {{ confirmFg }};">Confirm payment</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ cardMode }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px 0; animation: riseIn .16s ease-out;">
+            <sc-if value="{{ cardPending }}" hint-placeholder-val="{{ true }}">
+              <div style="width: 44px; height: 44px; border-radius: 50%; border: 4px solid #dddbd3; border-top-color: #1d5c48; animation: spin .7s linear infinite;"></div>
+            </sc-if>
+            <sc-if value="{{ cardApproved }}" hint-placeholder-val="{{ false }}">
+              <div style="width: 52px; height: 52px; border-radius: 50%; background: #1d5c48; color: #f2f7f4; font-size: 26px; display: flex; align-items: center; justify-content: center;">✓</div>
+            </sc-if>
+            <div style="font-size: 19px; font-weight: 600; color: {{ cardFg }};">{{ cardStatus }}</div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ── RECEIPT ── -->
+  <sc-if value="{{ receiptOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 70; background: rgba(20,22,26,.5); display: flex; align-items: center; justify-content: center; padding: 26px;">
+      <div style="width: 460px; max-width: 100%; max-height: 92vh; overflow: auto; background: #f7f6f2; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 16px; animation: popIn .18s ease-out;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+          <div style="width: 52px; height: 52px; border-radius: 50%; background: #1d5c48; color: #f2f7f4; font-size: 26px; display: flex; align-items: center; justify-content: center;">✓</div>
+          <div style="font-size: 22px; font-weight: 700;">Order complete</div>
+          <div style="font-size: 16px; font-family: 'Noto Sans Mono', monospace; color: #6a6d74;">{{ receipt.orderNo }}</div>
+        </div>
+
+        <div style="background: #ffffff; padding: 20px 18px; font-size: 15px; line-height: 1.65; border: 1.5px solid #dddbd3;">
+          <div style="text-align: center;">
+            <div style="font-size: 19px; font-weight: 700;">{{ shopNameUpper }}</div>
+            <div style="font-size: 14px; color: #4a4d54;">123 Coffee Street, NY 10001</div>
+            <div style="font-size: 14px; color: #4a4d54; font-family: 'Noto Sans Mono', monospace;">Tel (555) 123-4567</div>
+          </div>
+          <div style="margin: 10px 0; border-top: 1px dashed #9a9aa0;"></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4a4d54; font-family: 'Noto Sans Mono', monospace;">
+            <span>{{ receipt.orderNo }}</span><span>{{ receipt.stamp }}</span>
+          </div>
+          <div style="margin: 10px 0; border-top: 1px dashed #9a9aa0;"></div>
+          <sc-for list="{{ receipt.lines }}" as="r" hint-placeholder-count="3">
+            <div style="display: flex; justify-content: space-between; gap: 10px;">
+              <span style="flex: 1;">{{ r.label }}</span>
+              <span style="font-family: 'Noto Sans Mono', monospace;">{{ r.amount }}</span>
+            </div>
+          </sc-for>
+          <div style="margin: 10px 0; border-top: 1px dashed #9a9aa0;"></div>
+          <sc-for list="{{ receipt.totals }}" as="r" hint-placeholder-count="2">
+            <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4a4d54;">
+              <span>{{ r.label }}</span>
+              <span style="font-family: 'Noto Sans Mono', monospace;">{{ r.amount }}</span>
+            </div>
+          </sc-for>
+          <div style="margin: 8px 0; border-top: 1px solid #16181c;"></div>
+          <div style="display: flex; justify-content: space-between; font-size: 19px; font-weight: 700;">
+            <span>TOTAL</span><span style="font-family: 'Noto Sans Mono', monospace;">{{ receipt.total }}</span>
+          </div>
+          <div style="margin: 10px 0; border-top: 1px dashed #9a9aa0;"></div>
+          <sc-for list="{{ receipt.tender }}" as="r" hint-placeholder-count="1">
+            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+              <span>{{ r.label }}</span><span style="font-family: 'Noto Sans Mono', monospace;">{{ r.amount }}</span>
+            </div>
+          </sc-for>
+          <div style="margin-top: 12px; text-align: center; font-size: 14px; color: #4a4d54;">Thank you for your visit.</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <button onClick="{{ printReceipt }}" style="min-height: 68px; border-radius: 14px; font-size: 19px; font-weight: 700; background: #ffffff; border: 2px solid #d2d0c8; color: #16181c;">Print</button>
+          <button onClick="{{ newOrder }}" style="min-height: 68px; border-radius: 14px; font-size: 19px; font-weight: 700; background: #1d5c48; color: #f2f7f4;">New order</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ── HELD ORDERS ── -->
+  <sc-if value="{{ heldOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 60; background: rgba(20,22,26,.5); display: flex; align-items: center; justify-content: center; padding: 26px;">
+      <div style="width: 560px; max-width: 100%; max-height: 90vh; overflow: auto; background: #f7f6f2; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 14px; animation: popIn .18s ease-out;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 24px; font-weight: 700;">{{ heldTitle }}</div>
+          <button onClick="{{ closeHeld }}" style="width: 48px; height: 48px; border-radius: 12px; background: #e4e2da; font-size: 20px; color: #4a4d54;">✕</button>
+        </div>
+        <sc-if value="{{ heldEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding: 50px 20px; text-align: center; color: #7a7d84; font-size: 18px;">Nothing on hold. Park an order with Hold when a guest steps away.</div>
+        </sc-if>
+        <sc-for list="{{ heldList }}" as="h" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 14px; background: #ffffff; border: 2px solid #dddbd3; border-left: 6px solid #f0b429;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 19px; font-weight: 700;">{{ h.summary }}</div>
+              <div style="font-size: 15px; color: #6a6d74; font-family: 'Noto Sans Mono', monospace;">{{ h.time }}</div>
+            </div>
+            <div style="font-size: 20px; font-weight: 700; font-family: 'Noto Sans Mono', monospace;">{{ h.total }}</div>
+            <button onClick="{{ h.restore }}" style="min-height: 56px; padding: 0 18px; border-radius: 12px; background: #1d5c48; color: #f2f7f4; font-size: 17px; font-weight: 700;">Restore</button>
+            <button onClick="{{ h.remove }}" style="width: 56px; height: 56px; border-radius: 12px; background: #ffffff; border: 2px solid #b4231d; color: #b4231d; font-size: 18px; font-weight: 700;">✕</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ── TOAST ── -->
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; z-index: 90; left: 50%; transform: translateX(-50%); bottom: 28px; display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 14px; background: #16181c; color: #f7f6f2; animation: riseIn .16s ease-out; box-shadow: 0 18px 40px -18px rgba(0,0,0,.6);">
+      <span style="font-size: 18px; font-weight: 600;">{{ toastText }}</span>
+      <sc-if value="{{ toastUndoable }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ undo }}" style="padding: 12px 16px; border-radius: 10px; background: #f0b429; color: #22190a; font-size: 17px; font-weight: 700;">Undo</button>
+      </sc-if>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1300,&quot;height&quot;:900},&quot;shopName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;The Brew House&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Shop&quot;},&quot;taxRate&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:8,&quot;min&quot;:0,&quot;max&quot;:20,&quot;step&quot;:0.5,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Shop&quot;}}">
+class Component extends DCLogic {
+  CATS = [
+    { id:'all',    name:'All',         accent:'#16181c', chip:'#e4e2da' },
+    { id:'coffee', name:'Coffee',      accent:'#1d5c48', chip:'#e8f2ee' },
+    { id:'tea',    name:'Tea',         accent:'#3d4249', chip:'#e9e8e2' },
+    { id:'pastry', name:'Pastry',      accent:'#a97400', chip:'#fdf3dc' },
+    { id:'food',   name:'Food',        accent:'#4a4d54', chip:'#e9e8e2' },
+    { id:'cold',   name:'Cold drinks', accent:'#1d5c48', chip:'#e8f2ee' },
+  ];
+  PRODUCTS = [
+    { id:1,  name:'Espresso',         price:350,  cat:'coffee' },
+    { id:2,  name:'Americano',        price:400,  cat:'coffee' },
+    { id:3,  name:'Latte',            price:550,  cat:'coffee' },
+    { id:4,  name:'Cappuccino',       price:500,  cat:'coffee' },
+    { id:5,  name:'Mocha',            price:600,  cat:'coffee' },
+    { id:6,  name:'Flat White',       price:550,  cat:'coffee' },
+    { id:7,  name:'Green Tea',        price:350,  cat:'tea' },
+    { id:8,  name:'Chamomile',        price:350,  cat:'tea' },
+    { id:9,  name:'Earl Grey',        price:400,  cat:'tea' },
+    { id:10, name:'Matcha Latte',     price:550,  cat:'tea' },
+    { id:11, name:'Croissant',        price:350,  cat:'pastry' },
+    { id:12, name:'Blueberry Muffin', price:400,  cat:'pastry' },
+    { id:13, name:'Scone',            price:350,  cat:'pastry' },
+    { id:14, name:'Cinnamon Roll',    price:450,  cat:'pastry' },
+    { id:15, name:'Club Sandwich',    price:850,  cat:'food' },
+    { id:16, name:'Caesar Salad',     price:900,  cat:'food' },
+    { id:17, name:'Grilled Panini',   price:750,  cat:'food' },
+    { id:18, name:'Chicken Wrap',     price:800,  cat:'food' },
+    { id:19, name:'Iced Latte',       price:600,  cat:'cold' },
+    { id:20, name:'Berry Smoothie',   price:650,  cat:'cold' },
+    { id:21, name:'Lemonade',         price:450,  cat:'cold' },
+    { id:22, name:'Cold Brew',        price:500,  cat:'cold' },
+  ];
+
+  state = {
+    cart: [], cat: 'all', query: '', held: [], orderNo: 42,
+    payOpen: false, method: null, cashInput: '', cardStage: null,
+    receipt: null, heldOpen: false, toast: null, now: Date.now(),
+  };
+
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState({ now: Date.now() }), 1000);
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+    [this.toastTimer, this.cardTimer, this.cardTimer2].forEach(t => t && clearTimeout(t));
+  }
+
+  taxRate() { return this.props.taxRate ?? 8; }
+  money(c) {
+    const s = (c / 100).toFixed(2).split('.');
+    return '$' + s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + s[1];
+  }
+  cat(id) { return this.CATS.find(c => c.id === id) || this.CATS[0]; }
+  initials(name) { return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+  subtotal() { return this.state.cart.reduce((s, l) => s + l.price * l.qty, 0); }
+  tax() { return Math.round(this.subtotal() * this.taxRate() / 100); }
+  total() { return this.subtotal() + this.tax(); }
+
+  toast(text, undoFn) {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.setState({ toast: { text, fn: undoFn || null } });
+    this.toastTimer = setTimeout(() => this.setState({ toast: null }), 5000);
+  }
+
+  add(id) {
+    return () => this.setState(s => {
+      const cart = s.cart.slice();
+      const i = cart.findIndex(l => l.id === id);
+      if (i >= 0) cart[i] = { ...cart[i], qty: cart[i].qty + 1 };
+      else { const p = this.PRODUCTS.find(x => x.id === id); cart.push({ ...p, qty: 1 }); }
+      return { cart };
+    });
+  }
+  bump(id, d) {
+    return () => this.setState(s => {
+      let cart = s.cart.slice();
+      const i = cart.findIndex(l => l.id === id);
+      if (i < 0) return {};
+      const q = cart[i].qty + d;
+      if (q <= 0) cart.splice(i, 1); else cart[i] = { ...cart[i], qty: q };
+      return { cart };
+    });
+  }
+
+  completeOrder(method) {
+    const cart = this.state.cart, sub = this.subtotal(), tax = this.tax(), total = this.total();
+    const cash = method === 'Cash' ? Math.round(parseFloat(this.state.cashInput || '0') * 100) : 0;
+    const d = new Date();
+    const orderNo = this.state.orderNo + 1;
+    this.setState({
+      orderNo, payOpen: false, method: null, cashInput: '', cardStage: null, cart: [],
+      receipt: {
+        orderNo: '#' + String(orderNo).padStart(4, '0'),
+        stamp: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '  ' +
+               d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        lines: cart.map(l => ({ label: l.qty + '× ' + l.name, amount: this.money(l.price * l.qty) })),
+        totals: [
+          { label: 'Subtotal', amount: this.money(sub) },
+          { label: 'Tax (' + this.taxRate() + '%)', amount: this.money(tax) },
+        ],
+        total: this.money(total),
+        tender: method === 'Cash'
+          ? [{ label: 'Cash', amount: this.money(cash) }, { label: 'Change', amount: this.money(Math.max(0, cash - total)) }]
+          : [{ label: 'Payment', amount: 'Card' }],
+      },
+    });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const q = s.query.trim().toLowerCase();
+    const items = this.PRODUCTS.filter(p =>
+      (s.cat === 'all' || p.cat === s.cat) && (!q || p.name.toLowerCase().includes(q)));
+    const total = this.total(), sub = this.subtotal();
+    const count = s.cart.reduce((a, l) => a + l.qty, 0);
+    const cashCents = s.cashInput ? Math.round(parseFloat(s.cashInput) * 100) : 0;
+    const change = cashCents - total;
+    const ok = !!s.cashInput && change >= 0;
+
+    const exact = Math.ceil(total / 100);
+    const quick = [exact, ...[10, 20, 50, 100].filter(b => b > exact)].slice(0, 4);
+
+    const d = new Date(s.now);
+
+    return {
+      shopName: this.props.shopName ?? 'The Brew House',
+      shopNameUpper: (this.props.shopName ?? 'The Brew House').toUpperCase(),
+      clock: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + '   ' +
+             d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+
+      query: s.query, hasQuery: !!s.query,
+      setQuery: e => this.setState({ query: e.target.value }),
+      clearQuery: () => this.setState({ query: '' }),
+
+      cats: this.CATS.map(c => ({
+        label: c.name, pick: () => this.setState({ cat: c.id }),
+        bg: s.cat === c.id ? '#16181c' : '#ffffff',
+        border: s.cat === c.id ? '#16181c' : '#d2d0c8',
+        fg: s.cat === c.id ? '#f7f6f2' : '#4a4d54',
+      })),
+
+      products: items.map(p => {
+        const line = s.cart.find(l => l.id === p.id);
+        const c = this.cat(p.cat);
+        return {
+          name: p.name, priceText: this.money(p.price), add: this.add(p.id),
+          accent: c.accent, chipBg: c.chip, initials: this.initials(p.name),
+          qtyBadge: line ? '× ' + line.qty : '',
+        };
+      }),
+      noResults: items.length === 0,
+
+      cartEmpty: !s.cart.length,
+      cartLines: s.cart.map(l => ({
+        name: l.name, qty: String(l.qty),
+        eachText: this.money(l.price) + ' each',
+        lineText: this.money(l.price * l.qty),
+        inc: this.bump(l.id, 1), dec: this.bump(l.id, -1),
+      })),
+      clearFg: s.cart.length ? '#b4231d' : '#a9aab0',
+      clearCart: () => {
+        if (!s.cart.length) return;
+        const keep = s.cart;
+        this.setState({ cart: [] });
+        this.toast('Cart cleared', () => this.setState({ cart: keep, toast: null }));
+      },
+
+      totalsRows: [
+        { label: 'Subtotal', value: this.money(sub) },
+        { label: 'Tax (' + this.taxRate() + '%)', value: this.money(this.tax()) },
+      ],
+      totalText: this.money(total),
+      payLabel: s.cart.length ? 'Pay  ' + this.money(total) : 'Add items to pay',
+      payBg: s.cart.length ? '#1d5c48' : '#cfccc2',
+      payFg: s.cart.length ? '#f2f7f4' : '#7a7d84',
+      openPay: () => { if (s.cart.length) this.setState({ payOpen: true, method: null, cashInput: '', cardStage: null }); },
+      closePay: () => this.setState({ payOpen: false, method: null, cardStage: null }),
+      payOpen: s.payOpen,
+
+      methods: [['cash', 'Cash'], ['card', 'Card']].map(([k, label]) => ({
+        label,
+        bg: s.method === k ? '#e8f2ee' : '#ffffff',
+        border: s.method === k ? '#1d5c48' : '#d2d0c8',
+        fg: '#16181c',
+        pick: () => {
+          if (k === 'card') {
+            this.setState({ method: 'card', cardStage: 'pending' });
+            this.cardTimer = setTimeout(() => {
+              this.setState({ cardStage: 'approved' });
+              this.cardTimer2 = setTimeout(() => this.completeOrder('Card'), 700);
+            }, 1500);
+          } else this.setState({ method: 'cash', cardStage: null });
+        },
+      })),
+
+      cashMode: s.method === 'cash', cardMode: s.method === 'card',
+      cardPending: s.cardStage === 'pending', cardApproved: s.cardStage === 'approved',
+      cardStatus: s.cardStage === 'approved' ? 'Payment approved' : 'Tap or insert card…',
+      cardFg: s.cardStage === 'approved' ? '#1d5c48' : '#6a6d74',
+
+      quickAmounts: quick.map(a => {
+        const active = s.cashInput === String(a);
+        return {
+          label: '$' + a, pick: () => this.setState({ cashInput: String(a) }),
+          bg: active ? '#e8f2ee' : '#ffffff',
+          border: active ? '#1d5c48' : '#d2d0c8',
+          fg: active ? '#1d5c48' : '#16181c',
+        };
+      }),
+      cashInput: s.cashInput,
+      setCash: e => this.setState({ cashInput: e.target.value.replace(/[^\d.]/g, '') }),
+      changeLabel: !s.cashInput ? 'Change' : change < 0 ? 'Short by' : 'Change',
+      changeText: !s.cashInput ? this.money(0) : this.money(Math.abs(change)),
+      changeBg: !s.cashInput ? '#e4e2da' : change < 0 ? '#b4231d' : '#1d5c48',
+      changeFg: !s.cashInput ? '#7a7d84' : '#ffffff',
+      confirmBg: ok ? '#1d5c48' : '#cfccc2',
+      confirmFg: ok ? '#f2f7f4' : '#7a7d84',
+      confirmCash: () => { if (ok) this.completeOrder('Cash'); },
+
+      receiptOpen: !!s.receipt, receipt: s.receipt,
+      printReceipt: () => window.print(),
+      newOrder: () => this.setState({ receipt: null }),
+
+      heldCount: String(s.held.length),
+      heldBadgeBg: s.held.length ? '#f0b429' : '#e4e2da',
+      heldBadgeFg: s.held.length ? '#22190a' : '#7a7d84',
+      holdOrder: () => {
+        if (!s.cart.length) { this.toast('Nothing to hold'); return; }
+        const parked = s.cart;
+        this.setState(st => ({ held: st.held.concat([{ items: parked, at: Date.now() }]), cart: [] }));
+        this.toast('Order held', () => this.setState(st => ({ cart: parked, held: st.held.slice(0, -1), toast: null })));
+      },
+      heldOpen: s.heldOpen, heldEmpty: !s.held.length,
+      heldTitle: s.held.length ? 'Held orders (' + s.held.length + ')' : 'Held orders',
+      openHeld: () => this.setState({ heldOpen: true }),
+      closeHeld: () => this.setState({ heldOpen: false }),
+      heldList: s.held.map((h, i) => {
+        const n = h.items.reduce((a, l) => a + l.qty, 0);
+        const t = h.items.reduce((a, l) => a + l.price * l.qty, 0);
+        return {
+          summary: n + (n === 1 ? ' item' : ' items') + ' · ' + h.items.map(l => l.name).slice(0, 2).join(', ') + (h.items.length > 2 ? '…' : ''),
+          time: new Date(h.at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          total: this.money(t),
+          restore: () => this.setState(st => ({
+            cart: st.cart.concat(h.items.filter(x => !st.cart.some(c => c.id === x.id))),
+            held: st.held.filter((_, j) => j !== i), heldOpen: false,
+          })),
+          remove: () => this.setState(st => ({ held: st.held.filter((_, j) => j !== i) })),
+        };
+      }),
+
+      hasToast: !!s.toast,
+      toastText: s.toast ? s.toast.text : '',
+      toastUndoable: !!(s.toast && s.toast.fn),
+      undo: () => { if (s.toast && s.toast.fn) s.toast.fn(); },
+      cardCount: count,
+    };
+  }
+}
+</script>
+</body>
+</html>
