@@ -47,6 +47,7 @@ en:
     admin_dashboard: "Admin"
     offline_banner: "Offline — work is being saved and will send automatically"
     pending_sync: "pending"
+    retry: "Retry"
     invoice_authority_held: "The takeaway counter (%{device}) is issuing bills offline since %{since}. Bring it back online, or release it from Settings, before billing this table."
     invoice_authority_held_title: "Takeaway counter is billing offline"
     invoice_authority_held_help: "The takeaway counter currently holds sole authority to issue bill numbers while it's offline. This table can't be billed until it reconnects, or an admin releases it from Settings."
@@ -264,6 +265,7 @@ en:
         granted: "Granted"
         released: "Released"
         still_live: "Still held"
+        stale_warning: "This device hasn't checked in since %{time} — it may be offline, lost, or off. Every other bill in the shop is blocked until it reconnects or you force-release."
         invoices_reported_col: "Invoices"
     settings:
       edit:

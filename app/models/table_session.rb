@@ -1,6 +1,8 @@
 class TableSession < ApplicationRecord
   include ShopScoped
 
+  NoTakeawayCounter = Class.new(StandardError)
+
   STATUSES = %w[open billed paid closed].freeze
 
   belongs_to :dining_table
@@ -28,5 +30,28 @@ class TableSession < ApplicationRecord
 
   def apply_discount!(amount_paise:, reason:, approved_by:)
     update!(discount_paise: amount_paise, discount_reason: reason, discount_approved_by: approved_by)
+  end
+
+  # A cold-started offline sale (the offline shell) has no real session id
+  # to submit against — only a client-generated token. Finds the session
+  # that token already resolved to, or creates one against the shop's
+  # takeaway counter. Safe under replay/concurrent sync: relies on the
+  # unique index on [shop_id, client_session_token], not a check-then-create
+  # race, mirroring how Ticket.submit! handles client_token collisions.
+  def self.resolve_for_takeaway!(shop:, client_session_token:, opened_by:)
+    existing = shop.table_sessions.find_by(client_session_token: client_session_token)
+    return existing if existing
+
+    counter = shop.dining_tables.takeaway_counters.first
+    raise NoTakeawayCounter, "no takeaway counter configured for this shop" unless counter
+
+    counter.table_sessions.create!(
+      client_session_token: client_session_token,
+      opened_by: opened_by,
+      opened_at: Time.current,
+      status: "open"
+    )
+  rescue ActiveRecord::RecordNotUnique
+    shop.table_sessions.find_by!(client_session_token: client_session_token)
   end
 end

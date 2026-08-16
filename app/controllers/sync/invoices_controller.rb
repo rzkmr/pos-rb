@@ -10,11 +10,13 @@ class Sync::InvoicesController < ApplicationController
     return render json: { error: "no live grant for this device" }, status: :unprocessable_entity unless grant
 
     results = Sync::OfflineInvoiceIngest.call(
-      shop: Current.shop, device: Current.device, grant: grant, records: records_params
+      shop: Current.shop, device: Current.device, grant: grant, records: records_params, current_user: Current.user
     )
 
     render json: { results: results }
-  rescue Sync::OfflineInvoiceIngest::ContiguityGap, Sync::OfflineInvoiceIngest::TaxMismatch, Sync::OfflineInvoiceIngest::AuthorityMismatch => e
+  rescue Sync::OfflineInvoiceIngest::ContiguityGap, Sync::OfflineInvoiceIngest::TaxMismatch,
+         Sync::OfflineInvoiceIngest::AuthorityMismatch, ActiveRecord::RecordNotFound,
+         TableSession::NoTakeawayCounter, Sync::ActingUser::Unresolved => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
 

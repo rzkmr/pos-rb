@@ -28,6 +28,16 @@
   <% body_controllers << "pwa-install" if show_connectivity %>
   <body class="bg-shell text-ink" data-controller="<%= body_controllers.join(' ') %>">
     <% if show_connectivity %>
+      <div data-controller="priming-overlay" hidden
+           class="fixed inset-0 z-[100] bg-shell flex flex-col items-center justify-center gap-3 p-6 text-center">
+        <div class="w-8 h-8 border-[3px] border-line-2 border-t-go rounded-full animate-spin" data-priming-overlay-target="spinner"></div>
+        <p class="text-[16px] text-ink-3" data-priming-overlay-target="status"></p>
+        <button type="button" data-action="priming-overlay#retry" hidden
+                data-priming-overlay-target="retryButton"
+                class="mt-2 min-h-[48px] px-4 rounded-ctl border-2 border-line-2 text-[14px] font-bold">
+          <%= t("shared.retry") %>
+        </button>
+      </div>
       <div data-controller="offline-banner" hidden
            class="flex items-center justify-center gap-2 px-4 py-2 bg-warn text-warn-900 text-[14px] font-bold text-center">
         <%= t("shared.offline_banner") %>

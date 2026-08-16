@@ -15,6 +15,11 @@
             &middot;
             <%= t(".invoices_reported", count: (@live_grant.last_reported_sequence || @live_grant.granted_sequence) - @live_grant.granted_sequence) %>
           </p>
+          <% if @live_grant.expires_at < Time.current %>
+            <p class="text-[13px] font-semibold text-stop mt-1">
+              <%= t(".stale_warning", time: l(@live_grant.expires_at, format: :short)) %>
+            </p>
+          <% end %>
         </div>
         <%= form_with url: force_release_admin_invoice_authority_grant_path(@live_grant), method: :post,
               data: { turbo_confirm: t(".force_release_confirm") }, class: "flex items-center gap-2" %>

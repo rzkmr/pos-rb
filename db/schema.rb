@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_16_021500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -217,6 +217,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
   end
 
   create_table "table_sessions", force: :cascade do |t|
+    t.string "client_session_token"
     t.datetime "closed_at"
     t.datetime "created_at", null: false
     t.integer "dining_table_id", null: false
@@ -231,6 +232,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_114600) do
     t.index ["dining_table_id"], name: "index_table_sessions_on_dining_table_id"
     t.index ["discount_approved_by_id"], name: "index_table_sessions_on_discount_approved_by_id"
     t.index ["opened_by_id"], name: "index_table_sessions_on_opened_by_id"
+    t.index ["shop_id", "client_session_token"], name: "idx_table_sessions_on_shop_and_client_token", unique: true, where: "(client_session_token IS NOT NULL)"
     t.index ["shop_id", "status"], name: "index_table_sessions_on_shop_id_and_status"
     t.index ["shop_id"], name: "index_table_sessions_on_shop_id"
   end

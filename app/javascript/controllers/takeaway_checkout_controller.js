@@ -1,9 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
-import { enqueue, all as allOutboxEntries, entryStatus, cancel as cancelOutboxEntry } from "lib/outbox"
-import { drain } from "lib/sync"
+import { all as allOutboxEntries } from "lib/outbox"
 import { computeBilling as computeBillingShared } from "lib/billing"
-import { issueLocal, FyRolledOver, unreportedInvoices as unreportedOfflineInvoices } from "lib/offline_invoice"
+import { unreportedInvoices as unreportedOfflineInvoices } from "lib/offline_invoice"
 import { acquire as acquireAuthority, resume as resumeAuthority, release as releaseAuthority } from "lib/invoice_authority_client"
+import * as cart from "lib/cart"
+import { receiptHtml } from "lib/receipt"
+import { enqueueCheckout, attemptCheckout as runCheckoutFlow } from "lib/checkout_flow"
 
 // Counter checkout: build a cart, pick a payment method, confirm. That
 // single request submits the ticket (which fires to the kitchen immediately
@@ -96,38 +98,26 @@ export default class extends Controller {
   // --- cart ---
   add(event) {
     const { menuItemId, menuItemName, menuItemPrice } = event.params
-    const existing = this.cart.get(menuItemId)
-
-    this.cart.set(menuItemId, {
-      menuItemId,
-      name: menuItemName,
-      unitPricePaise: menuItemPrice,
-      quantity: (existing?.quantity ?? 0) + 1
-    })
-
+    this.cart = cart.addItem(this.cart, { menuItemId, name: menuItemName, unitPricePaise: menuItemPrice })
     this.flashRow(menuItemId)
     this.render()
   }
 
   updateQty(event) {
     const { menuItemId, delta } = event.params
-    const item = this.cart.get(menuItemId)
-    if (!item) return
-
-    item.quantity += delta
-    if (item.quantity <= 0) this.cart.delete(menuItemId)
+    this.cart = cart.updateQuantity(this.cart, menuItemId, delta)
     this.render()
   }
 
   removeItem(event) {
     const { menuItemId } = event.params
-    this.cart.delete(menuItemId)
+    this.cart = cart.removeItem(this.cart, menuItemId)
     this.render()
   }
 
   clearCart() {
     if (this.cart.size === 0) return
-    this.cart.clear()
+    this.cart = cart.clear()
     this.render()
   }
 
@@ -491,7 +481,7 @@ export default class extends Controller {
 
     const items = Array.from(this.cart.values())
 
-    const entry = await enqueue({
+    const entry = await enqueueCheckout({
       kind: "takeaway_checkout",
       payload: {
         table_session_id: this.tableSessionIdValue,
@@ -510,10 +500,10 @@ export default class extends Controller {
       }
     })
 
-    this.cart.clear()
+    this.cart = cart.clear()
     this.render()
     setTimeout(() => this.closePayment(), method === "cash" || method === "other" ? 250 : 0)
-    this.attemptCheckout(entry.id, this.receiptPayloadFrom(entry.payload), items, method)
+    this.runCheckout(entry.id, this.receiptPayloadFrom(entry.payload), items, method)
   }
 
   receiptPayloadFrom(payload) {
@@ -546,78 +536,40 @@ export default class extends Controller {
     const items = pendingEntry.payload.items.map((item) => ({
       menuItemId: item.menu_item_id, quantity: item.quantity, name: item.name, unitPricePaise: item.unit_price_paise
     }))
-    this.attemptCheckout(pendingEntry.id, receiptPayload, items, pendingEntry.payload.method, true)
+    this.runCheckout(pendingEntry.id, receiptPayload, items, pendingEntry.payload.method, true)
   }
 
-  // First attempt always tries the normal online path (enqueue + drain).
-  // Only once that's confirmed NOT to be working — not just slow — does
-  // this fall back to issuing a real invoice locally (see lib/offline_invoice.js),
-  // which requires holding InvoiceAuthority. That's a deliberate escalation,
-  // not a race: two different mechanisms racing to record the same sale is
-  // exactly the double-write this whole design exists to prevent.
-  async attemptCheckout(entryId, receiptPayload, items, method, isRetry = false) {
-    this.chargingTarget.hidden = false
-    this.chargingTarget.querySelector("[data-charging-label]").textContent =
-      this.t(isRetry ? "charging_offline" : "charging")
-
-    await drain()
-    const status = await entryStatus(entryId)
-
-    if (status === "applied") {
-      window.location.reload()
-      return
+  // Thin wrapper over lib/checkout_flow.js's attemptCheckout — that module
+  // owns the actual online-then-offline escalation logic (CLAUDE.md
+  // invariant #2); this controller only supplies shop/tableSession context
+  // and renders whichever callback fires.
+  async runCheckout(entryId, receiptPayload, items, method, isRetry = false) {
+    const shop = {
+      gstRateBp: this.gstRateBpValue, compositionScheme: this.compositionSchemeValue,
+      invoicePrefix: this.shopInvoicePrefixValue
     }
+    const tableSession = { id: this.tableSessionIdValue }
 
-    if (status === "rejected") {
-      this.chargingTarget.hidden = true
-      this.showToast(this.t("checkout_failed"))
-      return
-    }
-
-    // Still pending/failed_retryable/sending after a drain attempt means
-    // the server genuinely isn't reachable right now — only then attempt
-    // to issue offline.
-    const issued = await this.tryIssueOffline(entryId, items, method)
-    if (issued) {
-      this.showIssuedReceipt(issued)
-      return
-    }
-
-    this.showPendingReceipt(receiptPayload)
-    this.scheduleRetry(entryId, receiptPayload, items, method)
-  }
-
-  // Returns the issued invoice record on success, or null to fall back to
-  // the plain outbox-queue retry — null covers every case where issuing
-  // offline isn't safe or possible right now: no grant could be acquired
-  // (Billing.issue_invoice!'s guard, or another device already holds one),
-  // or the device's clock has crossed a financial-year boundary since the
-  // grant was seeded (lib/offline_invoice.js refuses outright rather than
-  // guess how the new FY's sequence should start — that decision belongs
-  // to the server).
-  async tryIssueOffline(entryId, items, method) {
-    let grant = await resumeAuthority()
-    if (!grant) grant = await acquireAuthority()
-    if (!grant) return null
-
-    try {
-      const shop = {
-        gstRateBp: this.gstRateBpValue, compositionScheme: this.compositionSchemeValue,
-        invoicePrefix: this.shopInvoicePrefixValue
+    await runCheckoutFlow({
+      entryId, items, method, shop, tableSession, isRetry,
+      callbacks: {
+        onCharging: (retry) => {
+          this.chargingTarget.hidden = false
+          this.chargingTarget.querySelector("[data-charging-label]").textContent =
+            this.t(retry ? "charging_offline" : "charging")
+        },
+        onApplied: () => window.location.reload(),
+        onRejected: () => {
+          this.chargingTarget.hidden = true
+          this.showToast(this.t("checkout_failed"))
+        },
+        onIssuedOffline: (invoice) => this.showIssuedReceipt(invoice),
+        onPendingOffline: () => {
+          this.showPendingReceipt(receiptPayload)
+          this.retryTimeout = setTimeout(() => this.runCheckout(entryId, receiptPayload, items, method, true), 5000)
+        }
       }
-      const invoice = await issueLocal({
-        shop, tableSession: { id: this.tableSessionIdValue }, items, method
-      })
-      await cancelOutboxEntry(entryId)
-      return invoice
-    } catch (error) {
-      if (error instanceof FyRolledOver) return null
-      return null
-    }
-  }
-
-  scheduleRetry(entryId, receiptPayload, items, method) {
-    this.retryTimeout = setTimeout(() => this.attemptCheckout(entryId, receiptPayload, items, method, true), 5000)
+    })
   }
 
   // --- offline pending receipt ---
@@ -634,7 +586,7 @@ export default class extends Controller {
   }
 
   // Real, fully-numbered invoice issued locally via lib/offline_invoice.js
-  // while this device holds InvoiceAuthority — see tryIssueOffline. Unlike
+  // while this device holds InvoiceAuthority — see runCheckout. Unlike
   // showPendingReceipt, this has a genuine invoice number and genuine tax
   // figures (already computed by issueLocal using the exact same math as
   // Billing.compute, see lib/billing.js), because the sale is fully
@@ -650,58 +602,25 @@ export default class extends Controller {
   }
 
   renderReceipt({ items, billing, invoiceNumber, issuedAt }) {
-    const dateStr = `${String(issuedAt.getDate()).padStart(2, "0")}-${issuedAt.toLocaleString("en", { month: "short" })}-${issuedAt.getFullYear()} ${String(issuedAt.getHours()).padStart(2, "0")}:${String(issuedAt.getMinutes()).padStart(2, "0")}`
-
-    const itemRows = items.map((item) => `
-      <div class="flex justify-between gap-3 text-[13px] py-0.5">
-        <span class="flex-1">${item.quantity} x ${item.name}</span>
-        <span>${this.formatInr(item.quantity * Number(item.unitPricePaise))}</span>
-      </div>`).join("")
-
-    const taxRows = this.compositionSchemeValue
-      ? `<p class="text-[12px] mt-1">${this.t("composition_declaration")}</p>`
-      : `<div class="flex justify-between text-[13px]"><span>${this.t("cgst")}</span><span>${this.formatInr(billing.cgstPaise)}</span></div>
-         <div class="flex justify-between text-[13px]"><span>${this.t("sgst")}</span><span>${this.formatInr(billing.sgstPaise)}</span></div>`
-
-    this.pendingReceiptTarget.innerHTML = `
-      <header class="flex items-center gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
-        <h1 class="text-[19px] font-bold flex-1">${this.tableLabelValue}</h1>
-      </header>
-      <div class="p-4 flex flex-col items-center gap-4 w-full">
-        <div class="receipt-print-root">
-          <div class="receipt-preview rounded-ctl border border-line-2 shadow-sm p-4">
-            <div class="text-center">
-              <p class="font-bold text-[16px]">${this.shopNameValue}</p>
-              ${this.shopAddressValue ? `<p class="text-[12px]">${this.shopAddressValue}</p>` : ""}
-              ${this.shopGstinValue ? `<p class="text-[12px]">GSTIN: ${this.shopGstinValue}</p>` : ""}
-              ${this.shopFssaiValue ? `<p class="text-[12px]">FSSAI: ${this.shopFssaiValue}</p>` : ""}
-            </div>
-            <div class="receipt-rule my-2"></div>
-            ${invoiceNumber ? `<p class="text-[13px]">${this.t("invoice_number")} ${invoiceNumber}</p>` : ""}
-            <p class="text-[13px]">${dateStr}</p>
-            <p class="text-[13px]">${this.tableLabelValue}</p>
-            <div class="receipt-rule my-2"></div>
-            ${itemRows}
-            <div class="receipt-rule my-2"></div>
-            <div class="flex justify-between text-[13px]"><span>${this.t("subtotal")}</span><span>${this.formatInr(billing.taxablePaise)}</span></div>
-            ${taxRows}
-            <div class="receipt-rule my-2"></div>
-            <div class="flex justify-between text-[16px] font-bold"><span>${this.t("total")}</span><span>${this.formatInr(billing.totalPaise)}</span></div>
-            <div class="receipt-rule my-2"></div>
-            ${this.shopFooterValue ? `<p class="text-center text-[12px] mt-1">${this.shopFooterValue}</p>` : ""}
-          </div>
-        </div>
-        <div class="w-full max-w-[340px] flex flex-col gap-2.5">
-          <button type="button" onclick="window.print()"
-                  class="w-full min-h-[64px] rounded-tile text-[18px] font-bold bg-go text-surface active:bg-go-700">
-            ${this.t("print_receipt")}
-          </button>
-          <a href="/takeaway"
-             class="text-center min-h-[56px] flex items-center justify-center rounded-tile text-[15px] font-bold bg-key text-ink active:bg-key-2">
-            ${this.t("new_order")}
-          </a>
-        </div>
-      </div>`
+    this.pendingReceiptTarget.innerHTML = receiptHtml({
+      tableLabel: this.tableLabelValue,
+      shopName: this.shopNameValue, shopAddress: this.shopAddressValue,
+      shopGstin: this.shopGstinValue, shopFssai: this.shopFssaiValue, shopFooter: this.shopFooterValue,
+      items, billing, invoiceNumber, issuedAt,
+      compositionScheme: this.compositionSchemeValue,
+      formatInr: (paise) => this.formatInr(paise),
+      newOrderHref: "/takeaway",
+      strings: {
+        printReceipt: this.t("print_receipt"),
+        newOrder: this.t("new_order"),
+        invoiceNumber: this.t("invoice_number"),
+        subtotal: this.t("subtotal"),
+        cgst: this.t("cgst"),
+        sgst: this.t("sgst"),
+        total: this.t("total"),
+        compositionDeclaration: this.t("composition_declaration")
+      }
+    })
 
     this.pendingReceiptTarget.hidden = false
     this.chargingTarget.hidden = true
@@ -736,7 +655,7 @@ export default class extends Controller {
       })
       if (!response.ok) throw new Error(`hold failed: ${response.status}`)
 
-      this.cart.clear()
+      this.cart = cart.clear()
       this.render()
       this.refreshHeldCount()
       this.showToast(this.t("cart_held"))
@@ -791,20 +710,20 @@ export default class extends Controller {
       return
     }
 
-    this.heldListTarget.innerHTML = carts.map((cart) => {
-      const time = new Date(cart.held_at).toLocaleTimeString(document.documentElement.lang === "ne" ? "ne-NP" : "en-IN", { hour: "2-digit", minute: "2-digit" })
+    this.heldListTarget.innerHTML = carts.map((heldCart) => {
+      const time = new Date(heldCart.held_at).toLocaleTimeString(document.documentElement.lang === "ne" ? "ne-NP" : "en-IN", { hour: "2-digit", minute: "2-digit" })
       return `
         <div class="flex items-center gap-3 p-3.5 rounded-tile bg-card border-l-[6px] border-warn border-y border-r border-line">
           <div class="flex-1 min-w-0">
-            <div class="text-[16px] font-semibold">${this.pluralizeCount(cart.item_count)}</div>
+            <div class="text-[16px] font-semibold">${this.pluralizeCount(heldCart.item_count)}</div>
             <div class="text-[13px] text-ink-3">${this.t("held_at").replace("%{time}", time)}</div>
           </div>
-          <div class="font-mono font-bold text-[17px]">${this.formatInr(cart.total_paise)}</div>
-          <button type="button" data-action="takeaway-checkout#restoreHeld" data-held-cart-id="${cart.id}"
+          <div class="font-mono font-bold text-[17px]">${this.formatInr(heldCart.total_paise)}</div>
+          <button type="button" data-action="takeaway-checkout#restoreHeld" data-held-cart-id="${heldCart.id}"
                   class="shrink-0 min-h-[44px] px-4 rounded-key bg-go text-surface text-[15px] font-bold active:bg-go-700">
             ${this.t("restore")}
           </button>
-          <button type="button" data-action="takeaway-checkout#deleteHeld" data-held-cart-id="${cart.id}"
+          <button type="button" data-action="takeaway-checkout#deleteHeld" data-held-cart-id="${heldCart.id}"
                   class="shrink-0 min-h-[44px] w-[44px] rounded-key border-2 border-line-2 text-ink-3 text-[15px] font-bold">✕</button>
         </div>`
     }).join("")
@@ -813,20 +732,18 @@ export default class extends Controller {
   async restoreHeld(event) {
     const heldCartId = event.currentTarget.dataset.heldCartId
     const carts = await this.fetchHeldCarts()
-    const cart = (carts || []).find((c) => String(c.id) === heldCartId)
-    if (!cart) return
+    const heldCart = (carts || []).find((c) => String(c.id) === heldCartId)
+    if (!heldCart) return
 
-    if (this.cart.size > 0) this.cart.clear()
-    cart.items.forEach((item) => {
-      this.cart.set(item.menu_item_id, {
-        menuItemId: item.menu_item_id,
-        name: item.name_snapshot,
-        unitPricePaise: item.unit_price_paise,
-        quantity: item.quantity
-      })
-    })
+    // A held cart already carries an exact quantity per line, unlike
+    // addItem's "increment by one" semantics — build the restored Map
+    // directly rather than replaying additions.
+    this.cart = new Map(heldCart.items.map((item) => [
+      item.menu_item_id,
+      { menuItemId: item.menu_item_id, name: item.name_snapshot, unitPricePaise: item.unit_price_paise, quantity: item.quantity }
+    ]))
 
-    await this.deleteHeldCart(cart.id)
+    await this.deleteHeldCart(heldCart.id)
     this.render()
     this.refreshHeldCount()
     this.closeHeld()

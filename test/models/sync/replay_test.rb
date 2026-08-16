@@ -82,4 +82,42 @@ class Sync::ReplayTest < ActiveSupport::TestCase
 
     assert_equal "rejected", result[:status]
   end
+
+  test "takeaway_checkout works from a cold start: no existing session, no signed-in user" do
+    shop = shops(:alpha)
+    shop.dining_tables.create!(label: "Takeaway", seats: 1, takeaway: true)
+    dosa = menu_items(:alpha_dosa)
+    token = SecureRandom.uuid
+
+    result = Sync::Replay.call(
+      shop: shop, device: nil, user: nil, client_action_id: "cold-1", kind: "takeaway_checkout",
+      payload: {
+        "client_session_token" => token, "acting_user_id" => users(:alpha_waiter).id,
+        "method" => "cash", "client_token" => "cold-1",
+        "items" => [ { "menu_item_id" => dosa.id, "quantity" => 2 } ]
+      }
+    )
+
+    assert_equal "applied", result[:status]
+    session = TableSession.find_by(client_session_token: token)
+    assert session.present?
+    assert_equal users(:alpha_waiter), session.opened_by
+    assert_equal 1, session.payments.count
+  end
+
+  test "takeaway_checkout is rejected when there's no signed-in user and no acting_user_id" do
+    shop = shops(:alpha)
+    shop.dining_tables.create!(label: "Takeaway", seats: 1, takeaway: true)
+    dosa = menu_items(:alpha_dosa)
+
+    result = Sync::Replay.call(
+      shop: shop, device: nil, user: nil, client_action_id: "cold-2", kind: "takeaway_checkout",
+      payload: {
+        "client_session_token" => SecureRandom.uuid, "method" => "cash", "client_token" => "cold-2",
+        "items" => [ { "menu_item_id" => dosa.id, "quantity" => 1 } ]
+      }
+    )
+
+    assert_equal "rejected", result[:status]
+  end
 end

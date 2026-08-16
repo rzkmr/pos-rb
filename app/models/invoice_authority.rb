@@ -10,7 +10,13 @@ class InvoiceAuthority
   # Takes the live grant for shop if none exists — raises AlreadyGranted
   # (never silently returns the other grant) if one does, since the caller
   # must know it did NOT get authority rather than assume it did.
-  def self.acquire!(shop:, device:)
+  #
+  # user: defaults to Current.user for the common case (a real signed-in
+  # session acquiring the grant) but accepts an explicit override — needed
+  # when release! is called from Sync::OfflineInvoiceIngest, where the
+  # session doing the syncing may differ from (or not exist alongside) the
+  # acting_user_id attribution on the offline sale itself.
+  def self.acquire!(shop:, device:, user: Current.user)
     shop.with_lock do
       raise AlreadyGranted if InvoiceAuthorityGrant.live.exists?(shop: shop)
 
@@ -22,7 +28,7 @@ class InvoiceAuthority
       )
 
       AuditEvent.record!(
-        action: "invoice_authority_granted", subject: grant, device: device, user: Current.user,
+        action: "invoice_authority_granted", subject: grant, device: device, user: user,
         payload: { financial_year: financial_year, granted_sequence: grant.granted_sequence }
       )
 
@@ -39,12 +45,12 @@ class InvoiceAuthority
     grant.update!(expires_at: GRANT_DURATION.from_now)
   end
 
-  def self.release!(grant)
+  def self.release!(grant, user: Current.user)
     return if grant.released_at
 
     grant.update!(released_at: Time.current)
     AuditEvent.record!(
-      action: "invoice_authority_released", subject: grant, device: grant.device, user: Current.user,
+      action: "invoice_authority_released", subject: grant, device: grant.device, user: user,
       payload: { last_reported_sequence: grant.last_reported_sequence }
     )
   end
