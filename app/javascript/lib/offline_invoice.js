@@ -39,7 +39,13 @@ export const FyRolledOver = class extends Error {}
 // reload_invoice_fy_if_rolled_over!), not to a client that's been offline
 // across the boundary. Callers must catch FyRolledOver and fall back to
 // queuing an ordinary online checkout instead.
-export async function issueLocal({ shop, tableSession, items, method }) {
+// tableSession is either { id } — the normal online screen, a real
+// server-known TableSession — or { clientSessionToken } — the offline
+// shell, which has never talked to the server and can only supply the
+// same client-generated token Sync::OfflineInvoiceIngest resolves via
+// TableSession.resolve_for_takeaway!. Exactly one is expected to be set;
+// offline_invoice_sync.js reports whichever is present.
+export async function issueLocal({ shop, tableSession, items, method, actingUserId = null }) {
   const counter = await readCounter()
   if (!counter) throw new Error("no local invoice counter — device does not hold offline invoice authority")
 
@@ -60,7 +66,9 @@ export async function issueLocal({ shop, tableSession, items, method }) {
     sequence: nextSequence,
     financialYear: counter.financialYear,
     issuedAt,
-    tableSessionId: tableSession.id,
+    tableSessionId: tableSession.id ?? null,
+    clientSessionToken: tableSession.clientSessionToken ?? null,
+    actingUserId,
     method,
     items,
     taxablePaise: billing.taxablePaise,

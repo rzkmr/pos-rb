@@ -42,12 +42,18 @@
            class="flex items-center justify-center gap-2 px-4 py-2 bg-warn text-warn-900 text-[14px] font-bold text-center">
         <%= t("shared.offline_banner") %>
       </div>
-      <div data-controller="pending-badge" hidden
-           class="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full bg-warn text-warn-900 text-[13px] font-bold shadow-lg">
-        <span data-pending-badge-target="count"></span>
-        <span><%= t("shared.pending_sync") %></span>
-      </div>
     <% end %>
+    <%# Not gated behind show_connectivity — the offline shell is reachable
+        with no signed-in session at all (OfflineShellsController skips
+        require_user), and it's exactly the screen most likely to
+        accumulate unsent completed orders while nobody's signed in. The
+        badge itself only reads IndexedDB, so it needs no auth to be
+        useful. %>
+    <div data-controller="pending-badge" hidden
+         class="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full bg-warn text-warn-900 text-[13px] font-bold shadow-lg">
+      <span data-pending-badge-target="count"></span>
+      <span><%= t("shared.pending_sync") %></span>
+    </div>
     <%= render "shared/flash" unless content_for?(:flash_in_card) %>
     <%= yield %>
   </body>

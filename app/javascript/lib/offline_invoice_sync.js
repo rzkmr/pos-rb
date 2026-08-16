@@ -12,7 +12,14 @@ export async function reportPending() {
   const records = pending.map((invoice) => ({
     id: invoice.id,
     sequence: invoice.sequence,
+    // Exactly one of these two is ever set (see lib/offline_invoice.js's
+    // issueLocal) — table_session_id for the online screen's offline
+    // fallback (a real session already existed), client_session_token for
+    // the offline shell (never talked to the server; Sync::OfflineInvoiceIngest
+    // resolves/creates the session from the token).
     table_session_id: invoice.tableSessionId,
+    client_session_token: invoice.clientSessionToken,
+    acting_user_id: invoice.actingUserId,
     method: invoice.method,
     client_token: invoice.id,
     items: invoice.items.map((item) => ({ menu_item_id: item.menuItemId, quantity: item.quantity })),

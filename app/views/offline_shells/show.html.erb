@@ -1,19 +1,79 @@
-<%# Chrome only — no @dining_tables, no session, no cart, no invoice. Every
-    dynamic value below is filled in by offline-shell_controller.js from
-    IndexedDB. This is the one HTML page the Service Worker may cache
-    (CLAUDE.md invariant #4); keeping it structurally free of transactional
-    data is what makes that safe — there is nothing here that can go stale
-    in a way that matters. %>
-<div class="min-h-screen bg-shell" data-controller="offline-shell">
-  <header class="bg-ink text-surface px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
-    <div class="text-[22px] font-bold"><%= t(".title") %></div>
-    <div class="px-3 py-1.5 rounded-key bg-warn text-warn-900 text-[14px] font-bold">
+<%# Chrome only — every dynamic value below is filled in client-side by
+    offline_shell_controller.js from IndexedDB (catalog, cart, identity,
+    outbox, ledger). This is the one HTML route the Service Worker may
+    cache (CLAUDE.md invariant #4); keeping it structurally free of
+    transactional data is what makes that safe — there is nothing here
+    that can go stale in a way that matters, because there is no money,
+    no session, and no user name anywhere in this markup. %>
+<div class="min-h-screen bg-shell flex flex-col" data-controller="offline-shell connectivity">
+  <header class="bg-ink text-surface px-4 py-3 flex items-center justify-between gap-3 flex-wrap shrink-0">
+    <div class="min-w-0">
+      <div class="text-[19px] font-bold truncate"><%= t(".title") %></div>
+      <button type="button" data-action="offline-shell#openIdentityPicker"
+              class="text-[13px] text-surface/80 underline" data-offline-shell-target="identityLabel">
+        <%= t(".choose_who") %>
+      </button>
+    </div>
+    <div class="px-3 py-1.5 rounded-key bg-warn text-warn-900 text-[14px] font-bold shrink-0">
       <%= t(".offline") %>
     </div>
   </header>
 
-  <div class="p-4">
-    <p class="text-[16px] text-ink-3" data-offline-shell-target="status"><%= t(".loading") %></p>
-    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5" data-offline-shell-target="menu"></div>
+  <%# Blocking states — at most one of these is visible at a time; the
+      ordering UI below only renders once none of them apply. %>
+  <div class="p-6 flex-1 flex flex-col items-center justify-center text-center gap-3" data-offline-shell-target="noCatalogState" hidden>
+    <p class="text-[16px] text-ink-3"><%= t(".no_local_data") %></p>
   </div>
+
+  <div class="p-6 flex-1 flex flex-col items-center justify-center text-center gap-3" data-offline-shell-target="noAuthorityState" hidden>
+    <p class="text-[16px] font-semibold"><%= t(".no_authority_title") %></p>
+    <p class="text-[14px] text-ink-3 max-w-sm"><%= t(".no_authority_help") %></p>
+  </div>
+
+  <%# Identity picker — shown once (or whenever reopened via the header
+      button); attribution only, no PIN entry (see lib/identity.js). %>
+  <div class="fixed inset-0 z-50 bg-shell flex flex-col items-center justify-center gap-4 p-6" data-offline-shell-target="identityPicker" hidden>
+    <p class="text-[18px] font-bold"><%= t(".who_is_working") %></p>
+    <div class="w-full max-w-sm flex flex-col gap-2.5" data-offline-shell-target="identityList"></div>
+  </div>
+
+  <%# Main ordering UI %>
+  <div class="flex-1 flex flex-col min-h-0" data-offline-shell-target="orderingUi" hidden>
+    <div class="p-4 flex-1 overflow-y-auto">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5" data-offline-shell-target="menu"></div>
+    </div>
+
+    <div class="shrink-0 border-t border-line bg-card p-4" data-offline-shell-target="cartFooter" hidden>
+      <button type="button" data-action="offline-shell#openPayment"
+              class="w-full min-h-[56px] rounded-tile text-[16px] font-bold bg-go text-surface active:bg-go-700"
+              data-offline-shell-target="payButton">
+      </button>
+    </div>
+  </div>
+
+  <%# Payment sheet %>
+  <div data-offline-shell-target="payBackdrop" data-action="click->offline-shell#closePayment"
+       class="fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none transition-opacity duration-300" hidden></div>
+  <div data-offline-shell-target="payPanel"
+       class="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] flex flex-col bg-surface rounded-t-[24px] shadow-2xl translate-y-full transition-transform duration-300 ease-out"
+       hidden>
+    <div class="shrink-0 pt-3 pb-2 flex justify-center">
+      <span class="w-10 h-1.5 rounded-full bg-line-2"></span>
+    </div>
+    <div class="px-5 pb-5 overflow-y-auto" data-offline-shell-target="payContent"></div>
+  </div>
+
+  <%# Charging / issuing state %>
+  <div data-offline-shell-target="charging" hidden
+       class="fixed inset-0 z-[70] bg-shell flex flex-col items-center justify-center gap-3 p-6 text-center">
+    <div class="w-9 h-9 border-[3px] border-line-2 border-t-go rounded-full animate-spin"></div>
+    <p class="text-[15px] text-ink-3" data-charging-label></p>
+  </div>
+
+  <%# Receipt %>
+  <div data-offline-shell-target="pendingReceipt" hidden class="fixed inset-0 z-[70] bg-shell overflow-y-auto"></div>
+
+  <div data-offline-shell-target="toast"
+       class="fixed left-1/2 -translate-x-1/2 top-4 z-[80] px-4 py-3 rounded-tile bg-ink text-surface
+              text-[15px] font-semibold shadow-lg transition-opacity duration-200 opacity-0" hidden></div>
 </div>

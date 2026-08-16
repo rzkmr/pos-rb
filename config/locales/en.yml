@@ -54,9 +54,14 @@ en:
 
   offline_shells:
     show:
-      title: "Offline"
+      title: "Takeaway"
       offline: "Offline"
       loading: "Loading local data..."
+      no_local_data: "No local data yet — connect once, then this page works offline."
+      no_authority_title: "Not set up for offline billing yet"
+      no_authority_help: "This device needs to connect once so it can be trusted to issue bills on its own while offline. Connect to the internet, then reopen this page."
+      choose_who: "Choose who's working"
+      who_is_working: "Who's working the counter?"
 
   dining_tables:
     index:

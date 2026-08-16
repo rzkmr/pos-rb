@@ -1,11 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 import { all as allOutboxEntries } from "lib/outbox"
 import { computeBilling as computeBillingShared } from "lib/billing"
-import { unreportedInvoices as unreportedOfflineInvoices } from "lib/offline_invoice"
-import { acquire as acquireAuthority, resume as resumeAuthority, release as releaseAuthority } from "lib/invoice_authority_client"
 import * as cart from "lib/cart"
 import { receiptHtml } from "lib/receipt"
-import { enqueueCheckout, attemptCheckout as runCheckoutFlow } from "lib/checkout_flow"
+import {
+  enqueueCheckout, attemptCheckout as runCheckoutFlow,
+  ensureAuthorityQuietly, releaseAuthorityIfClean
+} from "lib/checkout_flow"
 
 // Counter checkout: build a cart, pick a payment method, confirm. That
 // single request submits the ticket (which fires to the kitchen immediately
@@ -47,8 +48,8 @@ export default class extends Controller {
     this.refreshHeldCount()
     this.updateClock()
     this.clockTimer = setInterval(() => this.updateClock(), 1000)
-    this.ensureAuthorityQuietly()
-    this.authorityTimer = setInterval(() => this.ensureAuthorityQuietly(), 60000)
+    ensureAuthorityQuietly()
+    this.authorityTimer = setInterval(() => ensureAuthorityQuietly(), 60000)
   }
 
   disconnect() {
@@ -57,34 +58,7 @@ export default class extends Controller {
     if (this.clockTimer) clearInterval(this.clockTimer)
     if (this.cardTimeout) clearTimeout(this.cardTimeout)
     if (this.authorityTimer) clearInterval(this.authorityTimer)
-    this.releaseAuthorityIfClean()
-  }
-
-  // Only releases if there's nothing left for this grant to be responsible
-  // for — releasing while offline-issued invoices are still unreported
-  // would let another device or admin acquire a fresh grant immediately,
-  // which is exactly the two-writer situation the whole scheme exists to
-  // prevent. If invoices are still pending, the grant stays held; the next
-  // successful /heartbeat or reportPendingOfflineInvoices() call will
-  // either extend it or release it once genuinely clear.
-  async releaseAuthorityIfClean() {
-    const pending = await unreportedOfflineInvoices()
-    if (pending.length > 0) return
-    await releaseAuthority().catch(() => {})
-  }
-
-  // Acquires InvoiceAuthority in the background whenever this screen is
-  // open and online, so it's already cached locally the instant a
-  // checkout genuinely fails offline — acquiring AT that moment is too
-  // late, since the request to acquire it would fail for the exact same
-  // reason the checkout did. /heartbeat's own poll (connectivity_controller.js)
-  // extends an already-held grant; this only needs to acquire a fresh one.
-  // Best-effort and silent: failing here just means the next offline
-  // checkout falls back to the plain queued-retry receipt, same as today.
-  async ensureAuthorityQuietly() {
-    const existing = await resumeAuthority()
-    if (existing) return
-    await acquireAuthority().catch(() => {})
+    releaseAuthorityIfClean()
   }
 
   updateClock() {
