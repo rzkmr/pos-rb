@@ -29,3 +29,16 @@ module SignsInAsUser
 end
 
 ActionDispatch::IntegrationTest.include SignsInAsUser
+
+module ApiAuthentication
+  # Pairs a fresh device and returns the Bearer header hash for
+  # Api::V1::BaseController — the token-authenticated API has no cookie
+  # session (see Api::V1::BaseController), so every request needs this
+  # explicitly rather than a one-time sign_in.
+  def api_headers_for(shop:, label: "API Test Device")
+    _device, token = Device.pair!(shop: shop, label: label)
+    { "Authorization" => "Bearer #{token}" }
+  end
+end
+
+ActionDispatch::IntegrationTest.include ApiAuthentication

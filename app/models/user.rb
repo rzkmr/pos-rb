@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   include ShopScoped
+  include ApiSyncEmitting
 
   ROLES = %w[waiter cashier kitchen].freeze
   LOCALES = %w[en ne].freeze
@@ -23,5 +24,13 @@ class User < ApplicationRecord
 
   def authenticate_pin(candidate)
     pin.present? && ActiveSupport::SecurityUtils.secure_compare(pin, candidate.to_s)
+  end
+
+  private
+
+  # PIN never leaves the server in an API payload — see
+  # CatalogSnapshotsController's identical omission.
+  def api_sync_record
+    { id: id, name: name, role: role, active: active }
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_16_021500) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_104738) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,6 +24,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_021500) do
     t.string "username", null: false
     t.index ["shop_id", "username"], name: "index_admin_users_on_shop_id_and_username", unique: true
     t.index ["shop_id"], name: "index_admin_users_on_shop_id"
+  end
+
+  create_table "api_sync_events", force: :cascade do |t|
+    t.string "action", null: false
+    t.datetime "created_at", null: false
+    t.string "entity", null: false
+    t.jsonb "record", default: {}, null: false
+    t.bigint "record_id", null: false
+    t.bigint "seq", null: false
+    t.bigint "shop_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["shop_id", "seq"], name: "index_api_sync_events_on_shop_id_and_seq", unique: true
+    t.index ["shop_id"], name: "index_api_sync_events_on_shop_id"
   end
 
   create_table "audit_events", force: :cascade do |t|
@@ -198,6 +211,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_021500) do
 
   create_table "shops", force: :cascade do |t|
     t.string "address"
+    t.bigint "api_sync_cursor", default: 0, null: false
     t.boolean "composition_scheme", default: false, null: false
     t.datetime "created_at", null: false
     t.string "fssai_licence"
@@ -288,6 +302,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_021500) do
   end
 
   add_foreign_key "admin_users", "shops"
+  add_foreign_key "api_sync_events", "shops"
   add_foreign_key "audit_events", "admin_users"
   add_foreign_key "audit_events", "devices"
   add_foreign_key "audit_events", "shops"

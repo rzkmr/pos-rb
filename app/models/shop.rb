@@ -32,6 +32,7 @@ class Shop < ApplicationRecord
   has_many :held_carts, dependent: :destroy
   has_many :client_actions, dependent: :restrict_with_error
   has_many :invoice_authority_grants, dependent: :restrict_with_error
+  has_many :api_sync_events, dependent: :restrict_with_error
 
   validates :name, presence: true
   validates :state_code, presence: true

@@ -12,7 +12,10 @@ module Sync
       "apply_discount" => Sync::Handlers::ApplyDiscount,
       "record_payment" => Sync::Handlers::RecordPayment,
       "reprint_invoice" => Sync::Handlers::ReprintInvoice,
-      "update_ticket_status" => Sync::Handlers::UpdateTicketStatus
+      "update_ticket_status" => Sync::Handlers::UpdateTicketStatus,
+      "open_table_session" => Sync::Handlers::OpenTableSession,
+      "close_table_session" => Sync::Handlers::CloseTableSession,
+      "issue_invoice" => Sync::Handlers::IssueInvoice
     }.freeze
 
     def self.call(shop:, device:, user:, client_action_id:, kind:, payload:)

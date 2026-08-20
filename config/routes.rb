@@ -50,6 +50,21 @@ Rails.application.routes.draw do
     resource :invoice_authority, only: [ :create, :destroy ], controller: "invoice_authority"
   end
 
+  # Token-authenticated API for an external client — see API-SPEC.md.
+  # Deliberately separate from the cookie/session-based routes above,
+  # which serve the in-browser PWA.
+  namespace :api do
+    namespace :v1 do
+      get "health" => "health#show"
+      get "bootstrap" => "bootstrap#show"
+      get "delta" => "delta#show"
+      get "updates" => "updates#show"
+      namespace :sync do
+        post "batch" => "batch#create"
+      end
+    end
+  end
+
   namespace :admin do
     resource :session, only: [ :new, :create, :destroy ]
     root "root#show"

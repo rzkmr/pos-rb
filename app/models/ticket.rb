@@ -16,6 +16,8 @@ class Ticket < ApplicationRecord
 
   broadcasts_refreshes_to ->(ticket) { [ ticket.shop, :kitchen ] }
 
+  after_update_commit :emit_api_status_event, if: :saved_change_to_status?
+
   # Idempotent submission: retried client_tokens return the existing ticket
   # instead of raising. See CLAUDE.md invariant #2 — do not remove this.
   #
@@ -38,5 +40,16 @@ class Ticket < ApplicationRecord
     end
   rescue ActiveRecord::RecordNotUnique
     find_by!(client_token: client_token)
+  end
+
+  private
+
+  # Flows back to the API client via Api::V1::UpdatesController — see
+  # API-SPEC.md §8. Reuses the same ApiSyncEvent ledger DeltaController
+  # reads, distinguished by entity: "ticket" so a client polling /delta
+  # for reference data and /updates for transactional changes never
+  # confuses the two streams.
+  def emit_api_status_event
+    ApiSyncEvent.record!(shop: shop, entity: "ticket", action: "status", record_id: id, record: { id: id, status: status })
   end
 end

@@ -1,5 +1,6 @@
 class MenuItem < ApplicationRecord
   include ShopScoped
+  include ApiSyncEmitting
 
   CATEGORIES = %w[main beverage side].freeze
 
@@ -12,4 +13,11 @@ class MenuItem < ApplicationRecord
 
   scope :active, -> { where(active: true) }
   scope :ordered, -> { order(:position) }
+
+  private
+
+  def api_sync_record
+    { id: id, name: name, category: category, price_paise: price_paise, hsn_sac: hsn_sac,
+      variants: variants, active: active, position: position }
+  end
 end
