@@ -59,6 +59,12 @@ Rails.application.routes.draw do
       get "bootstrap" => "bootstrap#show"
       get "delta" => "delta#show"
       get "updates" => "updates#show"
+      namespace :owner do
+        post "login" => "sessions#create"
+      end
+      namespace :devices do
+        post "pair" => "pairings#create"
+      end
       namespace :sync do
         post "batch" => "batch#create"
       end
