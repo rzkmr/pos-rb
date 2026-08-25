@@ -4,12 +4,11 @@
 # — timestamp pagination drops same-millisecond writes and breaks under
 # clock skew).
 #
-# ApiSyncEvent.record! row-locks the shop and increments its
-# api_sync_cursor counter — an update, which itself runs through Shop's
-# own after_commit chain. Shop does NOT include this concern (its
-# api_sync_cursor bump is bookkeeping, not an API-visible entity change),
-# so there is no re-entrant loop here; this concern only ever touches
-# menu_item / dining_table / user, none of which write to `shops`.
+# ApiSyncEvent.record! hands out the next seq via ShopSyncCursor, a
+# separate row-locked table — not a write to `shops` itself — which is
+# what lets Shop include this concern safely (shop-setting changes like
+# service_charge_enabled flipping need to reach clients via /delta too).
+# See db/migrate/*_create_shop_sync_cursors for why that matters.
 module ApiSyncEmitting
   extend ActiveSupport::Concern
 
@@ -24,7 +23,7 @@ module ApiSyncEmitting
 
     action = destroyed? ? "delete" : "upsert"
     ApiSyncEvent.record!(
-      shop: shop,
+      shop: is_a?(Shop) ? self : shop,
       entity: model_name.element,
       action: action,
       record_id: id,

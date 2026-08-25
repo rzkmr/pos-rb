@@ -6,6 +6,9 @@ class ApiSyncEvent < ApplicationRecord
   include ShopScoped
 
   ENTITIES = %w[shop menu_item dining_table user ticket].freeze
+  # "shop" was already listed above in anticipation of this — Shop did not
+  # actually include ApiSyncEmitting until the cursor moved off its own
+  # row (see db/migrate/*_create_shop_sync_cursors and Shop#api_sync_record).
   ACTIONS = %w[upsert delete status].freeze
 
   validates :entity, inclusion: { in: ENTITIES }
@@ -17,13 +20,14 @@ class ApiSyncEvent < ApplicationRecord
     persisted?
   end
 
-  # Row-locks the shop to hand out a gapless seq, exactly like
-  # Shop#next_invoice_sequence! does for invoice numbers — same reasoning:
-  # two concurrent writes must never receive the same cursor value.
+  # Hands out a gapless seq via ShopSyncCursor's row lock — same reasoning
+  # as Shop#next_invoice_sequence! for invoice numbers: two concurrent
+  # writes must never receive the same cursor value. The counter lives off
+  # the shops row precisely so this can run without Shop itself needing to
+  # emit an ApiSyncEvent for its own bookkeeping write (see
+  # db/migrate/*_create_shop_sync_cursors).
   def self.record!(shop:, entity:, action:, record_id:, record: {})
-    shop.with_lock do
-      seq = shop.increment!(:api_sync_cursor).api_sync_cursor
-      create!(shop: shop, seq: seq, entity: entity, action: action, record_id: record_id, record: record)
-    end
+    seq = ShopSyncCursor.increment_for!(shop)
+    create!(shop: shop, seq: seq, entity: entity, action: action, record_id: record_id, record: record)
   end
 end

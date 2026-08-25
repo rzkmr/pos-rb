@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_104738) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_25_090500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -57,10 +57,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_104738) do
   end
 
   create_table "client_actions", force: :cascade do |t|
-    t.datetime "applied_at", null: false
+    t.datetime "applied_at"
     t.string "client_action_id", null: false
     t.datetime "created_at", null: false
     t.bigint "device_id"
+    t.string "error_message"
     t.string "kind", null: false
     t.jsonb "result", default: {}, null: false
     t.bigint "shop_id", null: false
@@ -209,9 +210,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_104738) do
     t.index ["shop_id"], name: "index_print_jobs_on_shop_id"
   end
 
+  create_table "shop_sync_cursors", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "shop_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "value", default: 0, null: false
+    t.index ["shop_id"], name: "index_shop_sync_cursors_on_shop_id", unique: true
+  end
+
   create_table "shops", force: :cascade do |t|
     t.string "address"
-    t.bigint "api_sync_cursor", default: 0, null: false
     t.boolean "composition_scheme", default: false, null: false
     t.datetime "created_at", null: false
     t.string "fssai_licence"
@@ -325,6 +333,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_104738) do
   add_foreign_key "payments", "users", column: "received_by_id"
   add_foreign_key "print_jobs", "invoices"
   add_foreign_key "print_jobs", "shops"
+  add_foreign_key "shop_sync_cursors", "shops"
   add_foreign_key "table_sessions", "dining_tables"
   add_foreign_key "table_sessions", "shops"
   add_foreign_key "table_sessions", "users", column: "discount_approved_by_id"

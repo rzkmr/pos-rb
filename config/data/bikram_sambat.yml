@@ -1,0 +1,51 @@
+# Bikram Sambat ↔ Gregorian lookup table. CLAUDE.md invariant #8: BS↔AD
+# needs a lookup table, not a formula — BS month lengths vary year to
+# year (they follow the actual solar transit, not a fixed rule) and no
+# closed-form conversion exists that's accurate across years.
+#
+# Source data: askbuddie/bikram-sambat (github.com/askbuddie/bikram-sambat,
+# MIT, actively maintained, src/data/days-in-month-mapping.ts and
+# new-year-mapping.ts as of 2026-06-12). Cross-checked two ways:
+#   - Against sharingapples/nepali-date (github.com/sharingapples/nepali-date,
+#     src/config.js) — exact match for BS 2075-2081; that source diverges
+#     for BS 2082 onward (its data ends at 2088 and appears stale past
+#     2081), so it was NOT used past that point.
+#   - Against live spot-checks on nepalicalendar.rat32.com for BS
+#     2082/Baisakh+Ashad, 2083/Baisakh+Ashad, 2088/Baisakh, 2089/Baisakh,
+#     and 2090/Baisakh (month length + Gregorian start date) — exact
+#     match on every point checked, including the 2082/2083 years where
+#     the two library sources disagreed with each other. This also caught
+#     one internal error in askbuddie/bikram-sambat's own data: its
+#     new-year-mapping.ts lists 2089 as 2032-04-15, which is inconsistent
+#     with its own 2088 entry (2031-04-15 + 365 days = 2032-04-14) and
+#     contradicted by the live site (2032-04-14) — corrected here to
+#     2032-04-14, confirmed internally consistent by the script below.
+#
+# Each entry: the BS year, the Gregorian date its Baisakh 1 (BS new year)
+# falls on, and the day-count of each of its 12 months in order
+# (Baisakh, Jestha, Ashad, Shrawan, Bhadra, Ashwin, Kartik, Mangsir,
+# Poush, Magh, Falgun, Chaitra). Shrawan 1 (the fiscal-year start) and
+# Ashad-end (the fiscal-year end, i.e. the day before the next year's
+# Baisakh 1) are both derivable from this without any extra table.
+#
+# Range: BS 2075–2090 (~AD 2018–2034) — comfortable headroom for this
+# deployment's operating life. Extend by appending further years from
+# askbuddie/bikram-sambat's data files, re-verified the same two ways;
+# never extrapolate past the last entry.
+years:
+  2075: { baisakh_1: 2018-04-14, month_days: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30] }
+  2076: { baisakh_1: 2019-04-14, month_days: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 30] }
+  2077: { baisakh_1: 2020-04-13, month_days: [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31] }
+  2078: { baisakh_1: 2021-04-14, month_days: [31, 31, 31, 32, 31, 31, 30, 29, 30, 29, 30, 30] }
+  2079: { baisakh_1: 2022-04-14, month_days: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30] }
+  2080: { baisakh_1: 2023-04-14, month_days: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 30] }
+  2081: { baisakh_1: 2024-04-13, month_days: [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31] }
+  2082: { baisakh_1: 2025-04-14, month_days: [31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30] }
+  2083: { baisakh_1: 2026-04-14, month_days: [31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30] }
+  2084: { baisakh_1: 2027-04-14, month_days: [31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30] }
+  2085: { baisakh_1: 2028-04-13, month_days: [31, 32, 31, 32, 30, 31, 30, 30, 29, 30, 30, 30] }
+  2086: { baisakh_1: 2029-04-14, month_days: [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30] }
+  2087: { baisakh_1: 2030-04-14, month_days: [31, 31, 32, 31, 31, 31, 30, 29, 30, 30, 30, 30] }
+  2088: { baisakh_1: 2031-04-15, month_days: [30, 31, 32, 32, 30, 31, 30, 30, 29, 30, 30, 30] }
+  2089: { baisakh_1: 2032-04-14, month_days: [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30] }
+  2090: { baisakh_1: 2033-04-14, month_days: [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30] }

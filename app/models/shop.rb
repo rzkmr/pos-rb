@@ -1,4 +1,5 @@
 class Shop < ApplicationRecord
+  include ApiSyncEmitting
   # A shared operational PIN handed out verbally by admin to staff pairing
   # a new device — same trust model as a WiFi password, not a personal
   # credential. Stored in the clear so admin can look it up and read it
@@ -33,6 +34,7 @@ class Shop < ApplicationRecord
   has_many :client_actions, dependent: :restrict_with_error
   has_many :invoice_authority_grants, dependent: :restrict_with_error
   has_many :api_sync_events, dependent: :restrict_with_error
+  has_one :sync_cursor, class_name: "ShopSyncCursor", dependent: :destroy
 
   validates :name, presence: true
   validates :state_code, presence: true
@@ -43,6 +45,12 @@ class Shop < ApplicationRecord
 
   def authenticate_pairing_pin(candidate)
     pairing_pin.present? && ActiveSupport::SecurityUtils.secure_compare(pairing_pin, candidate.to_s)
+  end
+
+  # Delegates to ShopSyncCursor so incrementing it is never itself a write
+  # to this row — see db/migrate/*_create_shop_sync_cursors.
+  def api_sync_cursor
+    ShopSyncCursor.value_for(self)
   end
 
   # India's financial year runs 1 April to 31 March.
@@ -68,5 +76,18 @@ class Shop < ApplicationRecord
 
   def only_one_shop_may_exist
     errors.add(:base, "a shop already exists — this deployment is single-shop only") if Shop.exists?
+  end
+
+  # Mirrors Api::V1::BootstrapController#shop_payload's field set — the
+  # fields Nepal-facing clients need to notice changing (e.g.
+  # service_charge_enabled flipping, a fiscal-year rollover), not every
+  # column. Update alongside that payload when Phase B/C renames land.
+  def api_sync_record
+    {
+      id: id, name: name, address: address, gstin: gstin, fssai_licence: fssai_licence,
+      state_code: state_code, gst_rate_bp: gst_rate_bp, composition_scheme: composition_scheme,
+      prices_include_tax: prices_include_tax, invoice_fy: invoice_fy,
+      invoice_prefix: invoice_prefix, invoice_footer: invoice_footer
+    }
   end
 end
