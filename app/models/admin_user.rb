@@ -9,6 +9,7 @@ class AdminUser < ApplicationRecord
   has_secure_password
 
   has_many :audit_events, dependent: :restrict_with_error
+  has_many :owner_sessions, dependent: :destroy
 
   validates :username, presence: true, uniqueness: { scope: :shop_id, case_sensitive: false }
   validates :password, length: { minimum: 8 }, if: -> { password_digest.blank? || password.present? }

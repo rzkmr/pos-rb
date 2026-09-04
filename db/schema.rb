@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_25_090500) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_30_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -166,6 +166,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_090500) do
     t.json "variants", default: [], null: false
     t.index ["shop_id", "active"], name: "index_menu_items_on_shop_id_and_active"
     t.index ["shop_id"], name: "index_menu_items_on_shop_id"
+  end
+
+  create_table "owner_sessions", force: :cascade do |t|
+    t.bigint "admin_user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_used_at"
+    t.bigint "shop_id", null: false
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["admin_user_id"], name: "index_owner_sessions_on_admin_user_id"
+    t.index ["shop_id"], name: "index_owner_sessions_on_shop_id"
+    t.index ["token_digest"], name: "index_owner_sessions_on_token_digest", unique: true
   end
 
   create_table "pairing_attempts", force: :cascade do |t|
@@ -327,6 +339,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_090500) do
   add_foreign_key "invoices", "shops"
   add_foreign_key "invoices", "table_sessions"
   add_foreign_key "menu_items", "shops"
+  add_foreign_key "owner_sessions", "admin_users"
+  add_foreign_key "owner_sessions", "shops"
   add_foreign_key "pairing_attempts", "shops"
   add_foreign_key "payments", "shops"
   add_foreign_key "payments", "table_sessions"

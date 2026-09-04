@@ -61,6 +61,7 @@ Rails.application.routes.draw do
       get "updates" => "updates#show"
       namespace :owner do
         post "login" => "sessions#create"
+        delete "logout" => "sessions#destroy"
       end
       namespace :devices do
         post "pair" => "pairings#create"

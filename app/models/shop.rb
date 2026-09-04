@@ -21,6 +21,7 @@ class Shop < ApplicationRecord
   has_many :users, dependent: :restrict_with_error
   has_many :admin_users, dependent: :restrict_with_error
   has_many :devices, dependent: :restrict_with_error
+  has_many :owner_sessions, dependent: :restrict_with_error
   has_many :dining_tables, dependent: :restrict_with_error
   has_many :table_sessions, dependent: :restrict_with_error
   has_many :menu_items, dependent: :restrict_with_error
