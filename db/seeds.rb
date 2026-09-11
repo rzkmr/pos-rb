@@ -2,25 +2,20 @@
 current_fy = Shop.financial_year_for(Date.current)
 
 shop = Shop.find_or_create_by!(name: "Sample Restaurant") do |s|
-  s.gstin = "27AAAAA0000A1Z5"
-  s.address = "123 MG Road, Pune, Maharashtra"
-  s.state_code = "27"
-  s.fssai_licence = "12345678901234"
+  s.address = "Thamel, Kathmandu"
+  s.state_code = "3"
   s.prices_include_tax = true
-  s.gst_rate_bp = 500
-  s.composition_scheme = false
   s.invoice_footer = "Thank you, visit again!"
   s.invoice_prefix = "INV"
   s.invoice_fy = current_fy
   s.invoice_sequence = 0
-  s.admin_pin = "9999"
+  s.pairing_pin = "9999"
 end
 
 Current.shop = shop
 
-User.find_or_create_by!(shop: shop, name: "Admin") do |u|
-  u.role = "admin"
-  u.pin = "1234"
+AdminUser.find_or_create_by!(shop: shop, username: "admin") do |u|
+  u.password = "password123"
 end
 
 User.find_or_create_by!(shop: shop, name: "Cashier") do |u|
@@ -61,4 +56,4 @@ end
   end
 end
 
-puts "Seeded shop '#{shop.name}' with admin PIN 9999 (pairing) and users: admin/1234, cashier/1111, waiter/2222, kitchen/3333"
+puts "Seeded shop '#{shop.name}' — pairing PIN 9999, admin login admin/password123, staff PINs: cashier/1111, waiter/2222, kitchen/3333"
