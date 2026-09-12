@@ -85,6 +85,8 @@ Rails.application.routes.draw do
     end
   end
 
-  # Defines the root path route ("/")
-  root "dining_tables#index"
+  # Defines the root path route ("/") — public landing page, no auth.
+  # The in-shop POS previously lived at root; it's now reachable at
+  # /dining_tables (its normal resources route below still applies).
+  root "pages#home"
 end
