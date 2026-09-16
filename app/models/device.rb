@@ -5,12 +5,15 @@ class Device < ApplicationRecord
 
   has_many :audit_events, dependent: :nullify
 
+  KINDS = %w[waiter kitchen cashier counter admin].freeze
+
   validates :label, presence: true
+  validates :kind, inclusion: { in: KINDS }
 
   # Generates the plaintext token (returned once, never stored) and sets token_digest.
-  def self.pair!(shop:, label:)
+  def self.pair!(shop:, label:, kind: "counter")
     token = SecureRandom.urlsafe_base64(32)
-    device = create!(shop: shop, label: label, token: token)
+    device = create!(shop: shop, label: label, token: token, kind: kind)
     [ device, token ]
   end
 

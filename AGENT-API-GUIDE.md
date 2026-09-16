@@ -23,13 +23,15 @@ That's the only auth header this API reads today. `X-Device-Id` / `X-App-Version
 
 ```json
 // Request
-{ "label": "Counter 1", "pairing_pin": "9999" }
+{ "label": "Counter 1", "pairing_pin": "9999", "requested_kind": "counter" }
 
 // Response — 201
-{ "device": { "id": "...", "label": "Counter 1" }, "token": "dvt_..." }
+{ "device": { "id": "...", "label": "Counter 1", "kind": "counter" }, "token": "dvt_..." }
 ```
 
 `pairing_pin` is the **shop-wide** PIN (`Shop#pairing_pin`, plaintext, same one admin reads off the Settings screen) — not a per-device single-use code. `API-SPEC.md` §1b describes a short-lived `pairing_code` (`HB-7X2Q` format) minted per-device from the web admin instead; that flow does not exist yet. Build against the shape above until it lands.
+
+`requested_kind` is optional, one of `waiter | kitchen | cashier | counter | admin` (`Device::KINDS`); an omitted or unrecognized value defaults to `counter`. It's advisory only — the server does not restrict which endpoints a device kind can call.
 
 Rate-limited 5/15min per IP, plus a shop-wide lockout via `PairingAttempt` on repeated failures (`429 { "error": "pairing_locked" }`). The returned `token` is shown once — store it, it's not retrievable again (only `token_digest` is persisted server-side).
 
@@ -95,7 +97,69 @@ Authorization: Bearer <device_token>
 6. GET  /health                → poll (every 5s) for the connectivity indicator
 ```
 
-`GET /bootstrap`, `GET /delta`, `GET /updates`, `POST /sync/batch` all require the device token and are implemented per `API-SPEC.md` §2–§4, §8 — read those sections for exact payload shape. `GET /health` is unauthenticated (a device with a revoked token still needs to know the server is up).
+`GET /bootstrap`, `GET /delta`, `GET /updates`, `POST /sync/batch` all require the device token. Shapes below are **as implemented** (`app/controllers/api/v1/`); `API-SPEC.md` §2–§4, §8 has full field-by-field rationale. `GET /health` is unauthenticated (a device with a revoked token still needs to know the server is up).
+
+### `GET /bootstrap`
+
+```json
+// Response — 200
+{
+  "server_time": "2026-09-16T09:00:00+05:45",
+  "cursor": 4821,
+  "shop": { "id": "...", "name": "...", "address": "...", "invoice_fy": "...", "invoice_prefix": "...", "invoice_footer": "..." },
+  "device": { "id": "...", "label": "Counter 1", "kind": "counter", "last_seen_at": "..." },
+  "users": [ { "id": "...", "name": "...", "role": "..." } ],
+  "dining_tables": [ { "id": "...", "label": "...", "seats": 4, "position": 1, "takeaway": false } ],
+  "menu_items": [ { "id": "...", "name": "...", "category": "...", "price_paise": 15000, "hsn_sac": "...", "variants": [], "active": true, "position": 1 } ]
+}
+```
+
+`users[]` is id/role/name only — PIN never leaves the server. `cursor` is the starting point for step 3's `/delta?cursor=`.
+
+### `GET /delta?cursor=N`
+
+```json
+// Response — 200
+{ "cursor": 4830, "has_more": false, "server_time": "...", "changes": [ { "seq": 4830, "entity": "menu_item", "action": "update", "record": { "...": "..." } } ] }
+
+// Response — 409, cursor too far behind the retained window
+{ "error": "cursor_too_old" }
+```
+
+A tombstone is `action: "delete"` with the record's id. On `409` re-bootstrap (step 2) rather than retrying `/delta`.
+
+### `POST /sync/batch`
+
+```json
+// Request
+{
+  "device_time": "2026-09-16T09:00:00+05:45",
+  "operations": [
+    { "op_id": "uuid", "type": "ticket.create", "acting_user_id": "...", "occurred_at": "...", "payload": { "...": "..." } }
+  ]
+}
+
+// Response — always 200
+{
+  "server_time": "...",
+  "clock_skew_seconds": 2,
+  "cursor": 4831,
+  "results": [
+    { "op_id": "uuid", "status": "accepted" }
+  ]
+}
+```
+
+Per-operation `results[]` entries: `{ "op_id", "status": "accepted" }`, `{ "op_id", "status": "duplicate" }`, `{ "op_id", "status": "rejected", "retryable": false, "code": "validation_failed", "message": "..." }`, or `{ "op_id", "status": "deferred", "retryable": true, "code": "server_busy", "message": "..." }`. `type` → payload mapping (`table_session.open`, `ticket.create`, `ticket.status`, `ticket_item.void`, `table_session.discount`, `invoice.issue`, `payment.record`, `table_session.close`) is in `Api::V1::Sync::BatchController::TYPE_TO_KIND` — an unknown `type` comes back `rejected`/`validation_failed`, not a 4xx.
+
+### `GET /updates?cursor=N`
+
+```json
+// Response — 200
+{ "cursor": 4835, "changes": [ { "seq": 4835, "entity": "ticket", "action": "update", "record": { "...": "..." } } ] }
+```
+
+Same ledger as `/delta`, filtered to `entity: "ticket"` — no `has_more`/`cursor_too_old` handling here, just poll again with the returned `cursor`.
 
 ---
 

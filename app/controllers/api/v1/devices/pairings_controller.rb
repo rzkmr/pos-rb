@@ -16,6 +16,7 @@ class Api::V1::Devices::PairingsController < ActionController::API
 
   def create
     label = params[:label].to_s.strip.presence || default_device_label
+    kind = params[:requested_kind].to_s.presence_in(Device::KINDS) || "counter"
 
     unless @shop.authenticate_pairing_pin(params[:pairing_pin])
       record_pairing_attempt!(success: false)
@@ -23,8 +24,8 @@ class Api::V1::Devices::PairingsController < ActionController::API
     end
 
     record_pairing_attempt!(success: true)
-    device, token = Device.pair!(shop: @shop, label: label)
-    render json: { device: { id: device.id, label: device.label }, token: token }, status: :created
+    device, token = Device.pair!(shop: @shop, label: label, kind: kind)
+    render json: { device: { id: device.id, label: device.label, kind: device.kind }, token: token }, status: :created
   end
 
   private

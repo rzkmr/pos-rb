@@ -38,7 +38,7 @@ class Api::V1::BootstrapController < Api::V1::BaseController
   end
 
   def device_payload(device)
-    { id: device.id, label: device.label, last_seen_at: device.last_seen_at&.iso8601 }
+    { id: device.id, label: device.label, kind: device.kind, last_seen_at: device.last_seen_at&.iso8601 }
   end
 
   # id/role/name ONLY — never pin. See CatalogSnapshotsController's
