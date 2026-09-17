@@ -22,7 +22,12 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <% show_connectivity = Current.user || Current.admin %>
+  <%# Offline priming/connectivity is for the shop-floor PWA (Current.user,
+      a staff PIN session on a paired device) — admin is the office/backend
+      surface (menu, tables, settings) and is explicitly device-independent
+      (see Admin::BaseController), so it must never trigger device-gated
+      priming against /catalog_snapshot. %>
+  <% show_connectivity = Current.user %>
   <% body_controllers = [] %>
   <% body_controllers << "connectivity" if show_connectivity %>
   <% body_controllers << "pwa-install" if show_connectivity %>
