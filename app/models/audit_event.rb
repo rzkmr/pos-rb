@@ -1,5 +1,8 @@
 class AuditEvent < ApplicationRecord
   include ShopScoped
+  include BikramSambatDated
+
+  bs_dates_for :created_at
 
   belongs_to :user, optional: true
   belongs_to :admin_user, optional: true

@@ -1,5 +1,8 @@
 class Invoice < ApplicationRecord
   include ShopScoped
+  include BikramSambatDated
+
+  bs_dates_for :issued_at
 
   belongs_to :table_session
 

@@ -1,5 +1,8 @@
 class Payment < ApplicationRecord
   include ShopScoped
+  include BikramSambatDated
+
+  bs_dates_for :created_at
 
   METHODS = %w[cash upi card other].freeze
 

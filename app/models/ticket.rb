@@ -1,5 +1,8 @@
 class Ticket < ApplicationRecord
   include ShopScoped
+  include BikramSambatDated
+
+  bs_dates_for :placed_at
 
   STATUSES = %w[pending preparing ready served].freeze
 

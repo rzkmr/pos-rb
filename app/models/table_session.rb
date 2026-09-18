@@ -1,5 +1,8 @@
 class TableSession < ApplicationRecord
   include ShopScoped
+  include BikramSambatDated
+
+  bs_dates_for :opened_at, :closed_at
 
   NoTakeawayCounter = Class.new(StandardError)
 

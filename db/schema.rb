@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,6 +43,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.string "action", null: false
     t.bigint "admin_user_id"
     t.datetime "created_at", null: false
+    t.integer "created_at_bs_day"
+    t.integer "created_at_bs_month"
+    t.integer "created_at_bs_year"
     t.integer "device_id"
     t.json "payload", default: {}, null: false
     t.integer "shop_id", null: false
@@ -50,6 +53,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.string "subject_type", null: false
     t.integer "user_id"
     t.index ["admin_user_id"], name: "index_audit_events_on_admin_user_id"
+    t.index ["created_at_bs_year", "created_at_bs_month", "created_at_bs_day"], name: "index_audit_events_on_created_at_bs_date"
     t.index ["device_id"], name: "index_audit_events_on_device_id"
     t.index ["shop_id", "subject_type", "subject_id"], name: "index_audit_events_on_shop_id_and_subject_type_and_subject_id"
     t.index ["shop_id"], name: "index_audit_events_on_shop_id"
@@ -137,6 +141,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.string "financial_year", null: false
     t.string "gstin_snapshot"
     t.datetime "issued_at", null: false
+    t.integer "issued_at_bs_day"
+    t.integer "issued_at_bs_month"
+    t.integer "issued_at_bs_year"
     t.string "number", null: false
     t.integer "print_count", default: 0, null: false
     t.datetime "printed_at"
@@ -148,6 +155,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.integer "taxable_paise", null: false
     t.integer "total_paise", null: false
     t.datetime "updated_at", null: false
+    t.index ["issued_at_bs_year", "issued_at_bs_month", "issued_at_bs_day"], name: "index_invoices_on_issued_at_bs_date"
     t.index ["number"], name: "index_invoices_on_number", unique: true
     t.index ["shop_id", "financial_year", "sequence"], name: "index_invoices_on_shop_id_and_financial_year_and_sequence", unique: true
     t.index ["shop_id"], name: "index_invoices_on_shop_id"
@@ -195,6 +203,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.integer "amount_paise", null: false
     t.string "client_token"
     t.datetime "created_at", null: false
+    t.integer "created_at_bs_day"
+    t.integer "created_at_bs_month"
+    t.integer "created_at_bs_year"
     t.string "method", null: false
     t.integer "received_by_id", null: false
     t.string "reference"
@@ -202,6 +213,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.integer "table_session_id", null: false
     t.datetime "updated_at", null: false
     t.index ["client_token"], name: "index_payments_on_client_token", unique: true, where: "(client_token IS NOT NULL)"
+    t.index ["created_at_bs_year", "created_at_bs_month", "created_at_bs_day"], name: "index_payments_on_created_at_bs_date"
     t.index ["received_by_id"], name: "index_payments_on_received_by_id"
     t.index ["shop_id", "table_session_id"], name: "index_payments_on_shop_id_and_table_session_id"
     t.index ["shop_id"], name: "index_payments_on_shop_id"
@@ -211,6 +223,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
   create_table "print_jobs", force: :cascade do |t|
     t.integer "attempts", default: 0, null: false
     t.datetime "created_at", null: false
+    t.integer "created_at_bs_day"
+    t.integer "created_at_bs_month"
+    t.integer "created_at_bs_year"
     t.integer "invoice_id", null: false
     t.string "kind", null: false
     t.text "last_error"
@@ -218,6 +233,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.integer "shop_id", null: false
     t.string "status", default: "queued", null: false
     t.datetime "updated_at", null: false
+    t.index ["created_at_bs_year", "created_at_bs_month", "created_at_bs_day"], name: "index_print_jobs_on_created_at_bs_date"
     t.index ["invoice_id"], name: "index_print_jobs_on_invoice_id"
     t.index ["shop_id", "status"], name: "index_print_jobs_on_shop_id_and_status"
     t.index ["shop_id"], name: "index_print_jobs_on_shop_id"
@@ -254,18 +270,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
   create_table "table_sessions", force: :cascade do |t|
     t.string "client_session_token"
     t.datetime "closed_at"
+    t.integer "closed_at_bs_day"
+    t.integer "closed_at_bs_month"
+    t.integer "closed_at_bs_year"
     t.datetime "created_at", null: false
     t.integer "dining_table_id", null: false
     t.integer "discount_approved_by_id"
     t.integer "discount_paise", default: 0, null: false
     t.string "discount_reason"
     t.datetime "opened_at", null: false
+    t.integer "opened_at_bs_day"
+    t.integer "opened_at_bs_month"
+    t.integer "opened_at_bs_year"
     t.integer "opened_by_id", null: false
     t.integer "shop_id", null: false
     t.string "status", default: "open", null: false
     t.datetime "updated_at", null: false
+    t.index ["closed_at_bs_year", "closed_at_bs_month", "closed_at_bs_day"], name: "index_table_sessions_on_closed_at_bs_date"
     t.index ["dining_table_id"], name: "index_table_sessions_on_dining_table_id"
     t.index ["discount_approved_by_id"], name: "index_table_sessions_on_discount_approved_by_id"
+    t.index ["opened_at_bs_year", "opened_at_bs_month", "opened_at_bs_day"], name: "index_table_sessions_on_opened_at_bs_date"
     t.index ["opened_by_id"], name: "index_table_sessions_on_opened_by_id"
     t.index ["shop_id", "client_session_token"], name: "idx_table_sessions_on_shop_and_client_token", unique: true, where: "(client_session_token IS NOT NULL)"
     t.index ["shop_id", "status"], name: "index_table_sessions_on_shop_id_and_status"
@@ -285,9 +309,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.string "variant_name"
     t.string "void_reason"
     t.datetime "voided_at"
+    t.integer "voided_at_bs_day"
+    t.integer "voided_at_bs_month"
+    t.integer "voided_at_bs_year"
     t.integer "voided_by_id"
     t.index ["menu_item_id"], name: "index_ticket_items_on_menu_item_id"
     t.index ["ticket_id"], name: "index_ticket_items_on_ticket_id"
+    t.index ["voided_at_bs_year", "voided_at_bs_month", "voided_at_bs_day"], name: "index_ticket_items_on_voided_at_bs_date"
     t.index ["voided_by_id"], name: "index_ticket_items_on_voided_by_id"
   end
 
@@ -296,12 +324,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_104433) do
     t.datetime "created_at", null: false
     t.integer "number", null: false
     t.datetime "placed_at", null: false
+    t.integer "placed_at_bs_day"
+    t.integer "placed_at_bs_month"
+    t.integer "placed_at_bs_year"
     t.integer "placed_by_id", null: false
     t.integer "shop_id", null: false
     t.string "status", default: "pending", null: false
     t.integer "table_session_id", null: false
     t.datetime "updated_at", null: false
     t.index ["client_token"], name: "index_tickets_on_client_token", unique: true
+    t.index ["placed_at_bs_year", "placed_at_bs_month", "placed_at_bs_day"], name: "index_tickets_on_placed_at_bs_date"
     t.index ["placed_by_id"], name: "index_tickets_on_placed_by_id"
     t.index ["shop_id", "status"], name: "index_tickets_on_shop_id_and_status"
     t.index ["shop_id"], name: "index_tickets_on_shop_id"

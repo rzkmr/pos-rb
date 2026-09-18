@@ -1,5 +1,8 @@
 class PrintJob < ApplicationRecord
   include ShopScoped
+  include BikramSambatDated
+
+  bs_dates_for :created_at
 
   KINDS = %w[invoice kot duplicate].freeze
   STATUSES = %w[queued sent failed].freeze

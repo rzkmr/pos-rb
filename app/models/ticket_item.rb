@@ -1,4 +1,8 @@
 class TicketItem < ApplicationRecord
+  include BikramSambatDated
+
+  bs_dates_for :voided_at
+
   belongs_to :ticket
   belongs_to :menu_item
   belongs_to :voided_by, class_name: "User", optional: true
