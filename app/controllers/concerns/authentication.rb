@@ -16,10 +16,13 @@ module Authentication
 
   private
 
-  # Staff and admin each carry their own saved language preference. Reset
-  # after each request — Rails reuses threads, so I18n.locale must not leak.
+  # Staff and admin each carry their own saved language preference. Before
+  # sign-in (e.g. the login screen's own locale toggle) there's no actor to
+  # persist a preference on yet, so LocalesController falls back to
+  # session[:locale] for that request. Reset after each request — Rails
+  # reuses threads, so I18n.locale must not leak.
   def with_locale(&block)
-    I18n.with_locale(Current.user&.locale || Current.admin&.locale || I18n.default_locale, &block)
+    I18n.with_locale(Current.user&.locale || Current.admin&.locale || session[:locale] || I18n.default_locale, &block)
   end
 
   # No shop exists yet on a fresh install — send every request to the
