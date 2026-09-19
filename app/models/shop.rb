@@ -38,10 +38,10 @@ class Shop < ApplicationRecord
   has_one :sync_cursor, class_name: "ShopSyncCursor", dependent: :destroy
 
   validates :name, presence: true
-  validates :state_code, presence: true
   validates :invoice_prefix, presence: true
   validates :invoice_fy, presence: true
-  validates :gst_rate_bp, numericality: { greater_than_or_equal_to: 0 }
+  validates :vat_rate_bp, numericality: { greater_than_or_equal_to: 0 }
+  validates :service_charge_rate_bp, numericality: { greater_than_or_equal_to: 0 }
   validates :invoice_sequence, numericality: { greater_than_or_equal_to: 0 }
 
   def authenticate_pairing_pin(candidate)
@@ -54,13 +54,10 @@ class Shop < ApplicationRecord
     ShopSyncCursor.value_for(self)
   end
 
-  # India's financial year runs 1 April to 31 March.
-  def self.financial_year_for(date)
-    date.month >= 4 ? "#{date.year}-#{(date.year + 1) % 100}" : "#{date.year - 1}-#{date.year % 100}"
-  end
-
-  # Row-locks the shop and increments the gapless per-FY invoice counter.
-  # Must be called inside the invoice-creating transaction.
+  # Row-locks the shop and increments the gapless per-BS-fiscal-year
+  # counter (CLAUDE.md invariant #9). Must be called inside the
+  # invoice-creating transaction. financial_year is a BS string
+  # ("2082/83") from BikramSambat.fiscal_year_for — never Gregorian.
   def next_invoice_sequence!(financial_year)
     reload_invoice_fy_if_rolled_over!(financial_year)
     increment!(:invoice_sequence)
@@ -80,15 +77,13 @@ class Shop < ApplicationRecord
   end
 
   # Mirrors Api::V1::BootstrapController#shop_payload's field set — the
-  # fields Nepal-facing clients need to notice changing (e.g.
-  # service_charge_enabled flipping, a fiscal-year rollover), not every
-  # column. Update alongside that payload when Phase B/C renames land.
+  # fields clients need to notice changing (e.g. a VAT/service-charge
+  # rate change, a fiscal-year rollover), not every column.
   def api_sync_record
     {
-      id: id, name: name, address: address, gstin: gstin, fssai_licence: fssai_licence,
-      state_code: state_code, gst_rate_bp: gst_rate_bp, composition_scheme: composition_scheme,
-      prices_include_tax: prices_include_tax, invoice_fy: invoice_fy,
-      invoice_prefix: invoice_prefix, invoice_footer: invoice_footer
+      id: id, name: name, address: address, pan: pan,
+      vat_rate_bp: vat_rate_bp, service_charge_rate_bp: service_charge_rate_bp,
+      invoice_fy: invoice_fy, invoice_prefix: invoice_prefix, invoice_footer: invoice_footer
     }
   end
 end

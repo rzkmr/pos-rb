@@ -9,8 +9,8 @@
 // module needs — passed in rather than imported so this stays framework-
 // and locale-source agnostic.
 export function receiptHtml({
-  tableLabel, shopName, shopAddress, shopGstin, shopFssai, shopFooter,
-  items, billing, invoiceNumber, issuedAt, compositionScheme, formatInr, strings,
+  tableLabel, shopName, shopAddress, shopPan, shopFooter,
+  items, billing, invoiceNumber, issuedAt, formatNpr, strings,
   provisional = false, newOrderHref = null
 }) {
   const dateStr = formatReceiptDate(issuedAt)
@@ -18,13 +18,12 @@ export function receiptHtml({
   const itemRows = items.map((item) => `
     <div class="flex justify-between gap-3 text-[13px] py-0.5">
       <span class="flex-1">${item.quantity} x ${item.name}</span>
-      <span>${formatInr(item.quantity * Number(item.unitPricePaise))}</span>
+      <span>${formatNpr(item.quantity * Number(item.unitPricePaisa))}</span>
     </div>`).join("")
 
-  const taxRows = compositionScheme
-    ? `<p class="text-[12px] mt-1">${strings.compositionDeclaration}</p>`
-    : `<div class="flex justify-between text-[13px]"><span>${strings.cgst}</span><span>${formatInr(billing.cgstPaise)}</span></div>
-       <div class="flex justify-between text-[13px]"><span>${strings.sgst}</span><span>${formatInr(billing.sgstPaise)}</span></div>`
+  const taxRows = `
+    <div class="flex justify-between text-[13px]"><span>${strings.serviceCharge}</span><span>${formatNpr(billing.serviceChargePaisa)}</span></div>
+    <div class="flex justify-between text-[13px]"><span>${strings.vat}</span><span>${formatNpr(billing.vatPaisa)}</span></div>`
 
   return `
     <header class="flex items-center gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
@@ -37,8 +36,7 @@ export function receiptHtml({
           <div class="text-center">
             <p class="font-bold text-[16px]">${shopName}</p>
             ${shopAddress ? `<p class="text-[12px]">${shopAddress}</p>` : ""}
-            ${!provisional && shopGstin ? `<p class="text-[12px]">GSTIN: ${shopGstin}</p>` : ""}
-            ${shopFssai ? `<p class="text-[12px]">FSSAI: ${shopFssai}</p>` : ""}
+            ${!provisional && shopPan ? `<p class="text-[12px]">PAN: ${shopPan}</p>` : ""}
           </div>
           <div class="receipt-rule my-2"></div>
           ${provisional ? `<p class="text-[13px] font-bold uppercase">${strings.provisionalHeading}</p>` : ""}
@@ -48,10 +46,10 @@ export function receiptHtml({
           <div class="receipt-rule my-2"></div>
           ${itemRows}
           <div class="receipt-rule my-2"></div>
-          <div class="flex justify-between text-[13px]"><span>${strings.subtotal}</span><span>${formatInr(billing.taxablePaise)}</span></div>
+          <div class="flex justify-between text-[13px]"><span>${strings.subtotal}</span><span>${formatNpr(billing.basePaisa)}</span></div>
           ${provisional ? "" : taxRows}
           <div class="receipt-rule my-2"></div>
-          <div class="flex justify-between text-[16px] font-bold"><span>${strings.total}</span><span>${formatInr(billing.totalPaise)}</span></div>
+          <div class="flex justify-between text-[16px] font-bold"><span>${strings.total}</span><span>${formatNpr(billing.grossPaisa)}</span></div>
           <div class="receipt-rule my-2"></div>
           ${shopFooter ? `<p class="text-center text-[12px] mt-1">${shopFooter}</p>` : ""}
         </div>

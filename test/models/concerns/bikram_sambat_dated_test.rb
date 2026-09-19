@@ -9,7 +9,7 @@ class BikramSambatDatedTest < ActiveSupport::TestCase
   test "populates bs_year/month/day on create" do
     invoice = table_sessions(:alpha_t1_open).invoices.create!(
       shop: shops(:alpha), number: "INV/2083/84/00001", financial_year: "2083/84", sequence: 1,
-      issued_at: Time.zone.local(2026, 7, 17), taxable_paise: 100, cgst_paise: 0, sgst_paise: 0, total_paise: 100
+      issued_at: Time.zone.local(2026, 7, 17), base_paisa: 100, service_charge_paisa: 0, vat_paisa: 0, gross_paisa: 100
     )
 
     assert_equal [ 2083, 4, 1 ], [ invoice.issued_at_bs_year, invoice.issued_at_bs_month, invoice.issued_at_bs_day ]
@@ -18,7 +18,7 @@ class BikramSambatDatedTest < ActiveSupport::TestCase
   test "recomputes bs columns when the source column changes" do
     invoice = table_sessions(:alpha_t1_open).invoices.create!(
       shop: shops(:alpha), number: "INV/2082/83/00001", financial_year: "2082/83", sequence: 1,
-      issued_at: Time.zone.local(2026, 1, 1), taxable_paise: 100, cgst_paise: 0, sgst_paise: 0, total_paise: 100
+      issued_at: Time.zone.local(2026, 1, 1), base_paisa: 100, service_charge_paisa: 0, vat_paisa: 0, gross_paisa: 100
     )
 
     invoice.update!(issued_at: Time.zone.local(2026, 7, 17))

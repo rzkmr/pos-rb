@@ -27,26 +27,15 @@
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <%= label_tag :state_code, t(".gst_state_code"), class: "text-[15px] font-semibold" %>
-          <%= text_field_tag :state_code, @shop&.state_code, required: true, maxlength: 2,
-                class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[17px]" %>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
           <%= label_tag :address, t(".address"), class: "text-[15px] font-semibold" %>
           <%= text_field_tag :address, @shop&.address,
                 class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 text-[17px]" %>
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <%= label_tag :gstin, t(".gstin_hint"), class: "text-[15px] font-semibold" %>
-          <%= text_field_tag :gstin, @shop&.gstin,
+          <%= label_tag :pan, t(".pan_hint"), class: "text-[15px] font-semibold" %>
+          <%= text_field_tag :pan, @shop&.pan,
                 class: "min-h-[52px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[17px]" %>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <%= check_box_tag :composition_scheme, "1", @shop&.composition_scheme, class: "w-5 h-5" %>
-          <%= label_tag :composition_scheme, t("shared.composition_scheme"), class: "text-[15px] font-semibold" %>
         </div>
       </div>
 

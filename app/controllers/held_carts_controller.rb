@@ -32,7 +32,7 @@ class HeldCartsController < ApplicationController
 
   def held_cart_items_params
     params.require(:items).map do |item|
-      item.permit(:menu_item_id, :name_snapshot, :unit_price_paise, :quantity).to_h
+      item.permit(:menu_item_id, :name_snapshot, :unit_price_paisa, :quantity).to_h
     end
   end
 
@@ -41,7 +41,7 @@ class HeldCartsController < ApplicationController
       id: held_cart.id,
       items: held_cart.items,
       held_at: held_cart.held_at.iso8601,
-      total_paise: held_cart.total_paise,
+      total_paisa: held_cart.total_paisa,
       item_count: held_cart.item_count
     }
   end

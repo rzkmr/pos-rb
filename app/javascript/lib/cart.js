@@ -1,13 +1,13 @@
 // Pure cart operations — a cart is a Map<menuItemId, {menuItemId, name,
-// unitPricePaise, quantity}>. Every function returns a NEW Map; none
+// unitPricePaisa, quantity}>. Every function returns a NEW Map; none
 // mutate the one passed in. Shared between the online takeaway checkout
 // screen and the offline shell so there's exactly one implementation of
 // "what does adding an item actually do," not two that can drift.
-export function addItem(cart, { menuItemId, name, unitPricePaise }) {
+export function addItem(cart, { menuItemId, name, unitPricePaisa }) {
   const existing = cart.get(menuItemId)
   const next = new Map(cart)
   next.set(menuItemId, {
-    menuItemId, name, unitPricePaise,
+    menuItemId, name, unitPricePaisa,
     quantity: (existing?.quantity ?? 0) + 1
   })
   return next
@@ -42,6 +42,6 @@ export function itemCount(cart) {
   return Array.from(cart.values()).reduce((sum, item) => sum + item.quantity, 0)
 }
 
-export function totalPaise(cart) {
-  return Array.from(cart.values()).reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0)
+export function grossPaisa(cart) {
+  return Array.from(cart.values()).reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaisa), 0)
 }

@@ -1,17 +1,17 @@
 alpha:
   name: Alpha Restaurant
-  state_code: "27"
   invoice_prefix: INV
-  invoice_fy: "2025-26"
+  invoice_fy: "2082/83"
   invoice_sequence: 0
-  gst_rate_bp: 500
+  vat_rate_bp: 1300
+  service_charge_rate_bp: 1000
   pairing_pin: "9999"
 
 beta:
   name: Beta Restaurant
-  state_code: "07"
   invoice_prefix: INV
-  invoice_fy: "2025-26"
+  invoice_fy: "2082/83"
   invoice_sequence: 0
-  gst_rate_bp: 500
+  vat_rate_bp: 1300
+  service_charge_rate_bp: 1000
   pairing_pin: "8888"

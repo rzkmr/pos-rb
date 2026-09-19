@@ -11,8 +11,8 @@ class HeldCart < ApplicationRecord
   validates :items, presence: true
   validates :held_at, presence: true
 
-  def total_paise
-    items.sum { |item| item["quantity"].to_i * item["unit_price_paise"].to_i }
+  def total_paisa
+    items.sum { |item| item["quantity"].to_i * item["unit_price_paisa"].to_i }
   end
 
   def item_count

@@ -30,8 +30,7 @@ class EscposReceipt
     lines << ALIGN_CENTER
     lines << BOLD_ON << DOUBLE_HEIGHT_ON << "#{@shop.name}\n" << DOUBLE_HEIGHT_OFF << BOLD_OFF
     lines << "#{@shop.address}\n" if @shop.address.present?
-    lines << "GSTIN: #{@invoice.gstin_snapshot}\n" if @invoice.gstin_snapshot.present?
-    lines << "FSSAI: #{@shop.fssai_licence}\n" if @shop.fssai_licence.present?
+    lines << "PAN: #{@shop.pan}\n" if @shop.pan.present?
     lines << BOLD_ON << "*** DUPLICATE ***\n" << BOLD_OFF if @duplicate
     lines << ALIGN_LEFT
     lines << divider
@@ -41,10 +40,10 @@ class EscposReceipt
     lines << divider
     lines << item_lines
     lines << divider
-    lines << money_line("Subtotal", @invoice.taxable_paise)
-    lines << composition_declaration_or_tax_lines
-    lines << money_line("Round off", @invoice.round_off_paise) unless @invoice.round_off_paise.zero?
-    lines << BOLD_ON << money_line("TOTAL", @invoice.total_paise) << BOLD_OFF
+    lines << money_line("Subtotal", @invoice.base_paisa)
+    lines << money_line("Service Charge", @invoice.service_charge_paisa)
+    lines << money_line("VAT", @invoice.vat_paisa)
+    lines << BOLD_ON << money_line("TOTAL", @invoice.gross_paisa) << BOLD_OFF
     lines << divider
     lines << ALIGN_CENTER << "#{@shop.invoice_footer}\n" if @shop.invoice_footer.present?
     lines << "\n\n\n"
@@ -57,22 +56,16 @@ class EscposReceipt
   def item_lines
     @table_session.tickets.flat_map { |ticket| ticket.ticket_items.active }.map do |item|
       "#{item.quantity} x #{item.name_snapshot}".ljust(LINE_WIDTH - 10) +
-        money(item.quantity * item.unit_price_paise).rjust(10) + "\n"
+        money(item.quantity * item.unit_price_paisa).rjust(10) + "\n"
     end.join
   end
 
-  def composition_declaration_or_tax_lines
-    return "Composition taxable person,\nnot eligible to collect tax on supplies\n" if @shop.composition_scheme
-
-    money_line("CGST", @invoice.cgst_paise) + money_line("SGST", @invoice.sgst_paise)
+  def money_line(label, paisa)
+    label.ljust(LINE_WIDTH - 10) + money(paisa).rjust(10) + "\n"
   end
 
-  def money_line(label, paise)
-    label.ljust(LINE_WIDTH - 10) + money(paise).rjust(10) + "\n"
-  end
-
-  def money(paise)
-    "Rs.#{(paise.to_i.fdiv(100)).round(2)}"
+  def money(paisa)
+    "Rs.#{(paisa.to_i.fdiv(100)).round(2)}"
   end
 
   def divider

@@ -79,7 +79,7 @@ class Api::V1::Sync::BatchControllerTest < ActionDispatch::IntegrationTest
     operation = {
       op_id: SecureRandom.uuid, type: "invoice.issue", acting_user_id: @user.id,
       occurred_at: Time.current.iso8601,
-      payload: { table_session_id: @table_session.id, total_paise: 1 }
+      payload: { table_session_id: @table_session.id, gross_paisa: 1 }
     }
 
     post api_v1_sync_batch_url, params: { device_time: Time.current.iso8601, operations: [ operation ] }, headers: @headers, as: :json

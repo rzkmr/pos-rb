@@ -1,12 +1,19 @@
-# Computes GST on the session subtotal (never per line — CLAUDE.md invariant #7)
-# and issues the gapless per-financial-year invoice (invariant #5).
+# Extracts VAT and service charge backward out of the session's gross
+# total (never adds tax on top — menu prices are gross/tax-inclusive,
+# CLAUDE.md invariant #2) and issues the gapless per-BS-fiscal-year
+# invoice (invariant #9).
+#
+# Extraction order is fixed and computed on the session total, never per
+# line (invariant #3): VAT comes out first because it's the statutory
+# figure; base and service charge are residuals, which is what guarantees
+# base + service_charge + vat == gross exactly, in paisa, every time.
 class Billing
-  Result = Struct.new(:taxable_paise, :cgst_paise, :sgst_paise, :round_off_paise, :total_paise, keyword_init: true)
+  Result = Struct.new(:base_paisa, :service_charge_paisa, :vat_paisa, :gross_paisa, keyword_init: true)
 
   # Raised when a device holds live offline invoice authority for this shop
   # (see InvoiceAuthority) — issuing an invoice from anywhere else while
   # that's true would create two writers for the same number sequence,
-  # exactly what invariant #5 forbids. rescue_from in ApplicationController
+  # exactly what invariant #9 forbids. rescue_from in ApplicationController
   # turns this into a plain, non-technical message for whoever hit it.
   class InvoiceAuthorityHeld < StandardError
     attr_reader :grant
@@ -17,23 +24,23 @@ class Billing
     end
   end
 
-  def self.compute(shop:, taxable_paise:)
-    return Result.new(taxable_paise: taxable_paise, cgst_paise: 0, sgst_paise: 0, round_off_paise: 0, total_paise: taxable_paise) if shop.composition_scheme
+  # gross_paisa is the session subtotal exactly as guests are charged —
+  # menu prices are already tax-inclusive, so this is never multiplied up,
+  # only decomposed. VAT rate and service charge rate come from the shop's
+  # own settings (defaults 13%/10%, CLAUDE.md), not hardcoded, so a rate
+  # change never needs a code deploy.
+  def self.compute(shop:, gross_paisa:)
+    taxable_before_vat = (gross_paisa / (1 + shop.vat_rate_bp / 10_000.0)).round
+    vat_paisa = gross_paisa - taxable_before_vat
 
-    half_rate_bp = shop.gst_rate_bp / 2.0
-    cgst_paise = (taxable_paise * half_rate_bp / 10_000).round
-    sgst_paise = cgst_paise
-
-    pre_round_total = taxable_paise + cgst_paise + sgst_paise
-    total_paise = (pre_round_total / 100.0).round * 100
-    round_off_paise = total_paise - pre_round_total
+    base_paisa = (taxable_before_vat / (1 + shop.service_charge_rate_bp / 10_000.0)).round
+    service_charge_paisa = taxable_before_vat - base_paisa
 
     Result.new(
-      taxable_paise: taxable_paise,
-      cgst_paise: cgst_paise,
-      sgst_paise: sgst_paise,
-      round_off_paise: round_off_paise,
-      total_paise: total_paise
+      base_paisa: base_paisa,
+      service_charge_paisa: service_charge_paisa,
+      vat_paisa: vat_paisa,
+      gross_paisa: gross_paisa
     )
   end
 
@@ -48,8 +55,8 @@ class Billing
     grant = InvoiceAuthority.live_for(shop)
     raise InvoiceAuthorityHeld, grant if grant && !InvoiceAuthority.ingesting?
 
-    result = compute(shop: shop, taxable_paise: table_session.subtotal_paise)
-    financial_year = Shop.financial_year_for(Date.current)
+    result = compute(shop: shop, gross_paisa: table_session.subtotal_paisa)
+    financial_year = BikramSambat.fiscal_year_for(Date.current)
 
     invoice = shop.with_lock do
       sequence = shop.next_invoice_sequence!(financial_year)
@@ -59,12 +66,10 @@ class Billing
         financial_year: financial_year,
         sequence: sequence,
         issued_at: Time.current,
-        taxable_paise: result.taxable_paise,
-        cgst_paise: result.cgst_paise,
-        sgst_paise: result.sgst_paise,
-        round_off_paise: result.round_off_paise,
-        total_paise: result.total_paise,
-        gstin_snapshot: shop.gstin,
+        base_paisa: result.base_paisa,
+        service_charge_paisa: result.service_charge_paisa,
+        vat_paisa: result.vat_paisa,
+        gross_paisa: result.gross_paisa,
         printed_at: already_printed_at,
         print_count: already_printed_at ? 1 : 0
       )
@@ -87,7 +92,7 @@ class Billing
   # whole enclosing transaction, not just this insert.
   #
   # already_printed_at forwards straight to issue_invoice! — see there.
-  def self.record_payment_and_settle!(table_session:, method:, amount_paise:, received_by:, reference: nil, client_token: nil, already_printed_at: nil)
+  def self.record_payment_and_settle!(table_session:, method:, amount_paisa:, received_by:, reference: nil, client_token: nil, already_printed_at: nil)
     shop = table_session.shop
     invoice = nil
 
@@ -95,14 +100,14 @@ class Billing
       table_session.payments.create!(
         shop: shop,
         method: method,
-        amount_paise: amount_paise,
+        amount_paisa: amount_paisa,
         reference: reference,
         received_by: received_by,
         client_token: client_token
       )
 
-      result = compute(shop: shop, taxable_paise: table_session.subtotal_paise)
-      if table_session.paid_paise >= result.total_paise
+      result = compute(shop: shop, gross_paisa: table_session.subtotal_paisa)
+      if table_session.paid_paisa >= result.gross_paisa
         invoice = issue_invoice!(table_session: table_session, already_printed_at: already_printed_at) if table_session.invoices.none?
         table_session.update!(status: "paid", closed_at: Time.current)
       end

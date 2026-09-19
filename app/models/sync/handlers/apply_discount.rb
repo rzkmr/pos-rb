@@ -17,19 +17,19 @@ module Sync
 
       def call
         table_session = @shop.table_sessions.find(@payload.fetch("table_session_id"))
-        amount_paise = @payload.fetch("amount_paise")
+        amount_paisa = @payload.fetch("amount_paisa")
         reason = @payload.fetch("reason")
 
-        table_session.apply_discount!(amount_paise: amount_paise, reason: reason, approved_by: @user)
+        table_session.apply_discount!(amount_paisa: amount_paisa, reason: reason, approved_by: @user)
         AuditEvent.record!(
           action: "apply_discount",
           subject: table_session,
           user: @user,
           device: @device,
-          payload: { amount_paise: amount_paise, reason: reason }
+          payload: { amount_paisa: amount_paisa, reason: reason }
         )
 
-        { table_session_id: table_session.id, discount_paise: table_session.discount_paise }
+        { table_session_id: table_session.id, discount_paisa: table_session.discount_paisa }
       rescue ActiveRecord::RecordNotFound => e
         raise Sync::Handlers::Rejected, e.message
       end

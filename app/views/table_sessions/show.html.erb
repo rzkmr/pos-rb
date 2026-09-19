@@ -84,7 +84,7 @@
                     data-action="order-cart#add"
                     data-order-cart-menu-item-id-param="<%= menu_item.id %>"
                     data-order-cart-menu-item-name-param="<%= menu_item.name %>"
-                    data-order-cart-menu-item-price-param="<%= menu_item.price_paise %>"
+                    data-order-cart-menu-item-price-param="<%= menu_item.gross_price_paisa %>"
                     data-order-cart-target="itemRow"
                     data-order-cart-item-id="<%= menu_item.id %>"
                     class="chit-row-fill group relative min-h-[104px] p-3 rounded-tile bg-card border-2 border-line
@@ -94,7 +94,7 @@
                            text-[14px] font-bold font-mono flex items-center justify-center leading-none
                            opacity-0 scale-75 transition-all duration-150" data-order-cart-target="rowQty"></span>
               <span class="text-[18px] font-semibold leading-[1.3] pr-7"><%= menu_item.name %></span>
-              <span class="text-[15px] font-mono text-ink-2"><%= money_to_inr(menu_item.price_paise) %></span>
+              <span class="text-[15px] font-mono text-ink-2"><%= money(menu_item.gross_price_paisa) %></span>
             </button>
           <% end %>
         </div>

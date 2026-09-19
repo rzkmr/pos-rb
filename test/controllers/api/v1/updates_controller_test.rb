@@ -25,7 +25,7 @@ class Api::V1::UpdatesControllerTest < ActionDispatch::IntegrationTest
 
   test "does not include reference-data changes" do
     starting_cursor = shops(:alpha).reload.api_sync_cursor
-    MenuItem.create!(shop: shops(:alpha), name: "Chai", category: "beverage", price_paise: 2000, hsn_sac: "996331")
+    MenuItem.create!(shop: shops(:alpha), name: "Chai", category: "beverage", gross_price_paisa: 2000)
 
     get api_v1_updates_url, params: { cursor: starting_cursor }, headers: @headers
 

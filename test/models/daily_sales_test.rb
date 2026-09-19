@@ -11,14 +11,14 @@ class DailySalesTest < ActiveSupport::TestCase
       items_attributes: [ { menu_item_id: menu_items(:alpha_dosa).id, quantity: 1 } ]
     )
     invoice = Billing.issue_invoice!(table_session: session)
-    session.payments.create!(method: "cash", amount_paise: 100, received_by: users(:alpha_waiter))
-    session.payments.create!(method: "upi", amount_paise: invoice.total_paise - 100, received_by: users(:alpha_waiter))
+    session.payments.create!(method: "cash", amount_paisa: 100, received_by: users(:alpha_waiter))
+    session.payments.create!(method: "card", amount_paisa: invoice.gross_paisa - 100, received_by: users(:alpha_waiter))
 
     daily_sales = DailySales.new(shop: shop, date: Date.current)
 
-    assert_equal invoice.total_paise, daily_sales.invoice_total_paise
-    assert_equal invoice.total_paise, daily_sales.payment_total_paise
+    assert_equal invoice.gross_paisa, daily_sales.invoice_total_paisa
+    assert_equal invoice.gross_paisa, daily_sales.payment_total_paisa
     cash_row = daily_sales.by_payment_method.find { |row| row.method == "cash" }
-    assert_equal 100, cash_row.total_paise
+    assert_equal 100, cash_row.total_paisa
   end
 end

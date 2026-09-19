@@ -20,15 +20,15 @@ module Sync
         table_session = @shop.table_sessions.find(@payload.fetch("table_session_id"))
         return { invoice_id: table_session.invoices.first.id, number: table_session.invoices.first.number } if table_session.invoices.any?
 
-        computed = Billing.compute(shop: @shop, taxable_paise: table_session.subtotal_paise)
-        reported_total = @payload["total_paise"] || @payload["gross_paisa"]
+        computed = Billing.compute(shop: @shop, gross_paisa: table_session.subtotal_paisa)
+        reported_gross = @payload["gross_paisa"]
 
-        if reported_total && reported_total != computed.total_paise
-          raise Sync::Handlers::Rejected, "tax_mismatch: server computed #{computed.total_paise}, client reported #{reported_total}"
+        if reported_gross && reported_gross != computed.gross_paisa
+          raise Sync::Handlers::Rejected, "tax_mismatch: server computed #{computed.gross_paisa}, client reported #{reported_gross}"
         end
 
         invoice = Billing.issue_invoice!(table_session: table_session)
-        { invoice_id: invoice.id, number: invoice.number, total_paise: invoice.total_paise }
+        { invoice_id: invoice.id, number: invoice.number, gross_paisa: invoice.gross_paisa }
       rescue ActiveRecord::RecordNotFound => e
         raise Sync::Handlers::Rejected, e.message
       rescue Billing::InvoiceAuthorityHeld => e

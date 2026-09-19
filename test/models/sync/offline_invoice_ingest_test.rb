@@ -12,11 +12,14 @@ class Sync::OfflineInvoiceIngestTest < ActiveSupport::TestCase
 
   teardown { Current.reset }
 
-  def build_record(id:, sequence:, session:, total_paise: 12600)
+  # gross_paisa defaults to the dosa's own gross_price_paisa — menu prices
+  # are already gross/tax-inclusive (CLAUDE.md invariant #2), so one dosa's
+  # invoice total is exactly its listed price, no tax added on top.
+  def build_record(id:, sequence:, session:, gross_paisa: @dosa.gross_price_paisa)
     {
       "id" => id, "sequence" => sequence, "table_session_id" => session.id, "method" => "cash",
       "client_token" => id, "items" => [ { "menu_item_id" => @dosa.id, "quantity" => 1 } ],
-      "total_paise" => total_paise, "issued_at" => Time.current.iso8601
+      "gross_paisa" => gross_paisa, "issued_at" => Time.current.iso8601
     }
   end
 
@@ -47,7 +50,7 @@ class Sync::OfflineInvoiceIngestTest < ActiveSupport::TestCase
 
   test "a tax mismatch is rejected, writes an audit_event, and creates nothing" do
     session = @counter.table_sessions.create!(opened_by: users(:alpha_waiter), opened_at: Time.current, status: "open")
-    record = build_record(id: "tax-1", sequence: @grant.granted_sequence + 1, session: session, total_paise: 999_999)
+    record = build_record(id: "tax-1", sequence: @grant.granted_sequence + 1, session: session, gross_paisa: 999_999)
 
     assert_no_difference "Invoice.count" do
       assert_raises(Sync::OfflineInvoiceIngest::TaxMismatch) do

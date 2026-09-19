@@ -23,7 +23,7 @@ export async function reportPending() {
     method: invoice.method,
     client_token: invoice.id,
     items: invoice.items.map((item) => ({ menu_item_id: item.menuItemId, quantity: item.quantity })),
-    total_paise: invoice.totalPaise,
+    gross_paisa: invoice.grossPaisa,
     issued_at: invoice.issuedAt
   }))
 

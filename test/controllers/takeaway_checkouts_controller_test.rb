@@ -20,7 +20,7 @@ class TakeawayCheckoutsControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     @table_session.reload
     assert_equal "paid", @table_session.status
-    assert_equal @table_session.invoices.last.total_paise, @table_session.paid_paise
+    assert_equal @table_session.invoices.last.gross_paisa, @table_session.paid_paisa
   end
 
   test "retrying with the same client_token does not double-charge" do

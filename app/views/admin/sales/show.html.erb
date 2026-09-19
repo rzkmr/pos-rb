@@ -12,7 +12,7 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
       <div class="bg-card rounded-tile border border-line p-4">
         <div class="text-[14px] text-ink-3"><%= t(".invoice_total") %></div>
-        <div class="text-[26px] font-mono font-bold"><%= money_to_inr(@daily_sales.invoice_total_paise) %></div>
+        <div class="text-[26px] font-mono font-bold"><%= money(@daily_sales.invoice_total_paisa) %></div>
       </div>
       <div class="bg-card rounded-tile border border-line p-4">
         <div class="text-[14px] text-ink-3"><%= t(".invoices_issued") %></div>
@@ -30,7 +30,7 @@
 
     <div class="bg-card rounded-tile border border-line p-4">
       <div class="text-[14px] text-ink-3"><%= t(".payments_received") %></div>
-      <div class="text-[26px] font-mono font-bold"><%= money_to_inr(@daily_sales.payment_total_paise) %></div>
+      <div class="text-[26px] font-mono font-bold"><%= money(@daily_sales.payment_total_paisa) %></div>
     </div>
 
     <section>
@@ -47,7 +47,7 @@
             <% @daily_sales.by_payment_method.each do |row| %>
               <tr class="border-t border-line">
                 <td class="px-4 py-3"><%= row.method %></td>
-                <td class="px-4 py-3 font-mono"><%= money_to_inr(row.total_paise) %></td>
+                <td class="px-4 py-3 font-mono"><%= money(row.total_paisa) %></td>
               </tr>
             <% end %>
           </tbody>
@@ -71,7 +71,7 @@
               <tr class="border-t border-line">
                 <td class="px-4 py-3 font-mono"><%= invoice.number %></td>
                 <td class="px-4 py-3 font-mono"><%= invoice.issued_at.strftime("%H:%M") %></td>
-                <td class="px-4 py-3 font-mono"><%= money_to_inr(invoice.total_paise) %></td>
+                <td class="px-4 py-3 font-mono"><%= money(invoice.gross_paisa) %></td>
               </tr>
             <% end %>
           </tbody>

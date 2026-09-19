@@ -19,7 +19,7 @@ class Admin::MenuItemsControllerTest < ActionDispatch::IntegrationTest
     admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
 
     assert_difference "MenuItem.count", 1 do
-      post admin_menu_items_url, params: { menu_item: { name: "Idli", category: "main", price_paise: 5000, hsn_sac: "996331" } }
+      post admin_menu_items_url, params: { menu_item: { name: "Idli", category: "main", gross_price_paisa: 5000 } }
     end
 
     assert_redirected_to admin_menu_items_path

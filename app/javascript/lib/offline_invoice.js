@@ -1,5 +1,6 @@
 import { get, getAll, put, transaction } from "lib/local_store"
 import { computeBilling } from "lib/billing"
+import { fiscalYearFor } from "lib/bikram_sambat"
 
 // Client-side counter + ledger for real, fully-numbered invoices issued
 // while the takeaway counter is offline. Safe ONLY because InvoiceAuthority
@@ -9,13 +10,10 @@ import { computeBilling } from "lib/billing"
 // there's only ever one browser tab issuing from one IndexedDB.
 const COUNTER_KEY = "invoice_counter"
 
-// Mirrors Shop.financial_year_for exactly (app/models/shop.rb) — India's
-// financial year runs 1 April to 31 March.
-export function financialYearFor(date) {
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1 // JS months are 0-indexed
-  return month >= 4 ? `${year}-${(year + 1) % 100}` : `${year - 1}-${year % 100}`
-}
+// Mirrors BikramSambat.fiscal_year_for exactly (app/lib/bikram_sambat.rb)
+// via lib/bikram_sambat.js's own lookup-table port — Nepal's fiscal year
+// runs Shrawan 1 to Ashad end (CLAUDE.md invariant #8), not 1 April.
+export const financialYearFor = fiscalYearFor
 
 export async function seedCounter({ grantId, financialYear, sequence }) {
   await put("ledger", { id: COUNTER_KEY, grantId, financialYear, sequence })
@@ -52,8 +50,8 @@ export async function issueLocal({ shop, tableSession, items, method, actingUser
   const currentFy = financialYearFor(new Date())
   if (currentFy !== counter.financialYear) throw new FyRolledOver(`cached FY ${counter.financialYear}, device clock says ${currentFy}`)
 
-  const taxablePaise = items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0)
-  const billing = computeBilling({ taxablePaise, gstRateBp: shop.gstRateBp, compositionScheme: shop.compositionScheme })
+  const grossPaisa = items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaisa), 0)
+  const billing = computeBilling({ grossPaisa, vatRateBp: shop.vatRateBp, serviceChargeRateBp: shop.serviceChargeRateBp })
 
   const nextSequence = counter.sequence + 1
   const number = `${shop.invoicePrefix}/${counter.financialYear}/${String(nextSequence).padStart(5, "0")}`
@@ -71,11 +69,10 @@ export async function issueLocal({ shop, tableSession, items, method, actingUser
     actingUserId,
     method,
     items,
-    taxablePaise: billing.taxablePaise,
-    cgstPaise: billing.cgstPaise,
-    sgstPaise: billing.sgstPaise,
-    roundOffPaise: billing.roundOffPaise,
-    totalPaise: billing.totalPaise,
+    basePaisa: billing.basePaisa,
+    serviceChargePaisa: billing.serviceChargePaisa,
+    vatPaisa: billing.vatPaisa,
+    grossPaisa: billing.grossPaisa,
     reportedAt: null
   }
 

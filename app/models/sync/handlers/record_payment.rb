@@ -16,7 +16,7 @@ module Sync
         Billing.record_payment_and_settle!(
           table_session: table_session,
           method: @payload.fetch("method"),
-          amount_paise: @payload.fetch("amount_paise"),
+          amount_paisa: @payload.fetch("amount_paisa"),
           reference: @payload["reference"],
           received_by: @user,
           client_token: @payload.fetch("client_token")

@@ -106,54 +106,57 @@ export default class extends Controller {
     const items = this.catalog.menu_items || []
     this.menuTarget.innerHTML = items.map((item) => `
       <button type="button" data-action="offline-shell#addItem"
-              data-menu-item-id="${item.id}" data-menu-item-name="${item.name}" data-menu-item-price="${item.price_paise}"
+              data-menu-item-id="${item.id}" data-menu-item-name="${item.name}" data-menu-item-price="${item.gross_price_paisa}"
               class="p-3.5 rounded-tile border border-line bg-card text-left active:border-go active:bg-go-50">
         <p class="text-[15px] font-semibold truncate">${item.name}</p>
-        <p class="text-[13px] text-ink-3 font-mono mt-0.5">${this.formatInr(item.price_paise)}</p>
+        <p class="text-[13px] text-ink-3 font-mono mt-0.5">${this.formatNpr(item.gross_price_paisa)}</p>
       </button>`).join("")
   }
 
   addItem(event) {
     const { menuItemId, menuItemName, menuItemPrice } = event.currentTarget.dataset
     this.cart = cart.addItem(this.cart, {
-      menuItemId: Number(menuItemId), name: menuItemName, unitPricePaise: Number(menuItemPrice)
+      menuItemId: Number(menuItemId), name: menuItemName, unitPricePaisa: Number(menuItemPrice)
     })
     this.render()
   }
 
   render() {
     const count = cart.itemCount(this.cart)
-    const total = cart.totalPaise(this.cart)
-    this.currentTotalPaise = total
+    const total = cart.grossPaisa(this.cart)
+    this.currentTotalPaisa = total
 
     this.cartFooterTarget.hidden = count === 0
     if (count > 0) {
-      this.payButtonTarget.textContent = `${this.t("pay")}  ${this.formatInr(total)}`
+      this.payButtonTarget.textContent = `${this.t("pay")}  ${this.formatNpr(total)}`
     }
   }
 
-  computeBilling(taxablePaise) {
+  computeBilling(grossPaisa) {
     return computeBillingShared({
-      taxablePaise, gstRateBp: this.catalog.shop.gst_rate_bp, compositionScheme: this.catalog.shop.composition_scheme
+      grossPaisa, vatRateBp: this.catalog.shop.vat_rate_bp, serviceChargeRateBp: this.catalog.shop.service_charge_rate_bp
     })
   }
 
-  formatInr(paise) {
-    const rupees = paise / 100
-    return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  // Devanagari digits are render-only (CLAUDE.md invariant #7) — money is
+  // always Arabic numerals, so numeral formatting is pinned to "latn"
+  // regardless of locale.
+  formatNpr(paisa) {
+    const rupees = paisa / 100
+    return `Rs. ${rupees.toLocaleString("ne-NP-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   // --- payment ---
   openPayment() {
     if (this.cart.size === 0) return
 
-    const billing = this.computeBilling(this.currentTotalPaise)
-    this.payAmountDue = billing.totalPaise
+    const billing = this.computeBilling(this.currentTotalPaisa)
+    this.payAmountDue = billing.grossPaisa
 
     this.payContentTarget.innerHTML = `
       <div class="bg-shell rounded-ctl p-4 mb-4 text-center">
         <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide mb-1">${this.t("amount_due")}</p>
-        <p class="text-[32px] font-mono font-bold text-go">${this.formatInr(billing.totalPaise)}</p>
+        <p class="text-[32px] font-mono font-bold text-go">${this.formatNpr(billing.grossPaisa)}</p>
       </div>
       <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide mb-2">${this.t("select_method")}</p>
       <div class="grid grid-cols-2 gap-2.5 mb-2">
@@ -217,15 +220,15 @@ export default class extends Controller {
 
   typeCashAmount(event) {
     const rupees = parseFloat(event.currentTarget.value) || 0
-    this.cashReceivedPaise = Math.round(rupees * 100)
+    this.cashReceivedPaisa = Math.round(rupees * 100)
     const due = this.payAmountDue
-    const change = this.cashReceivedPaise - due
+    const change = this.cashReceivedPaisa - due
 
     const display = this.payPanelTarget.querySelector("[data-change-display]")
     const confirmBtn = this.payPanelTarget.querySelector("[data-confirm-cash]")
     if (!display || !confirmBtn) return
 
-    if (this.cashReceivedPaise <= 0) {
+    if (this.cashReceivedPaisa <= 0) {
       display.innerHTML = ""
       confirmBtn.disabled = true
     } else if (change < 0) {
@@ -235,14 +238,14 @@ export default class extends Controller {
       display.innerHTML = `
         <div class="flex items-center justify-between px-4 py-3 rounded-ctl bg-go text-surface">
           <span class="text-[15px] font-semibold">${this.t("change_due")}</span>
-          <span class="text-[22px] font-mono font-bold">${this.formatInr(change)}</span>
+          <span class="text-[22px] font-mono font-bold">${this.formatNpr(change)}</span>
         </div>`
       confirmBtn.disabled = false
     }
   }
 
   confirmCash() {
-    if (!this.cashReceivedPaise || this.cashReceivedPaise < this.payAmountDue) return
+    if (!this.cashReceivedPaisa || this.cashReceivedPaisa < this.payAmountDue) return
     this.completeCheckout("cash")
   }
 
@@ -263,7 +266,7 @@ export default class extends Controller {
         method,
         items: items.map((item) => ({
           menu_item_id: item.menuItemId, quantity: item.quantity,
-          name: item.name, unit_price_paise: item.unitPricePaise
+          name: item.name, unit_price_paisa: item.unitPricePaisa
         })),
         client_token: crypto.randomUUID()
       }
@@ -274,11 +277,11 @@ export default class extends Controller {
     this.closePayment()
 
     const shop = {
-      gstRateBp: this.catalog.shop.gst_rate_bp, compositionScheme: this.catalog.shop.composition_scheme,
+      vatRateBp: this.catalog.shop.vat_rate_bp, serviceChargeRateBp: this.catalog.shop.service_charge_rate_bp,
       invoicePrefix: this.catalog.shop.invoice_prefix
     }
     const tableSession = { clientSessionToken }
-    const receiptPayload = { items: items.map((item) => ({ name: item.name, unitPricePaise: item.unitPricePaise, quantity: item.quantity })) }
+    const receiptPayload = { items: items.map((item) => ({ name: item.name, unitPricePaisa: item.unitPricePaisa, quantity: item.quantity })) }
 
     await runCheckoutFlow({
       entryId: entry.id, items, method, shop, tableSession, actingUserId: this.actingUserId,
@@ -302,14 +305,14 @@ export default class extends Controller {
   }
 
   showPendingReceipt(payload) {
-    const billing = this.computeBilling(payload.items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0))
+    const billing = this.computeBilling(payload.items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaisa), 0))
     this.renderReceipt({ items: payload.items, billing, invoiceNumber: null, issuedAt: new Date() })
   }
 
   showIssuedReceipt(invoice) {
     const billing = {
-      taxablePaise: invoice.taxablePaise, cgstPaise: invoice.cgstPaise,
-      sgstPaise: invoice.sgstPaise, totalPaise: invoice.totalPaise
+      basePaisa: invoice.basePaisa, serviceChargePaisa: invoice.serviceChargePaisa,
+      vatPaisa: invoice.vatPaisa, grossPaisa: invoice.grossPaisa
     }
     this.renderReceipt({ items: invoice.items, billing, invoiceNumber: invoice.number, issuedAt: new Date(invoice.issuedAt) })
   }
@@ -319,20 +322,18 @@ export default class extends Controller {
     this.pendingReceiptTarget.innerHTML = receiptHtml({
       tableLabel: this.catalog.takeaway_counter?.label || "",
       shopName: shop.name, shopAddress: shop.address,
-      shopGstin: shop.gstin, shopFssai: shop.fssai_licence, shopFooter: shop.invoice_footer,
+      shopPan: shop.pan, shopFooter: shop.invoice_footer,
       items, billing, invoiceNumber, issuedAt,
-      compositionScheme: shop.composition_scheme,
-      formatInr: (paise) => this.formatInr(paise),
+      formatNpr: (paisa) => this.formatNpr(paisa),
       strings: {
         printReceipt: this.t("print_receipt"),
         newOrder: this.t("new_order"),
         newOrderAction: "offline-shell#startNewOrder",
         invoiceNumber: this.t("invoice_number"),
         subtotal: this.t("subtotal"),
-        cgst: this.t("cgst"),
-        sgst: this.t("sgst"),
-        total: this.t("total"),
-        compositionDeclaration: this.t("composition_declaration")
+        serviceCharge: this.t("service_charge"),
+        vat: this.t("vat"),
+        total: this.t("total")
       }
     })
 
@@ -381,9 +382,8 @@ export default class extends Controller {
       invoice_number: { en: "Invoice", ne: "बीजक" },
       new_order: { en: "Start new order", ne: "नयाँ अर्डर सुरु गर्नुहोस्" },
       subtotal: { en: "Subtotal", ne: "मूल्य" },
-      cgst: { en: "CGST", ne: "मू.अ.कर (CGST)" },
-      sgst: { en: "SGST", ne: "मू.अ.कर (SGST)" },
-      composition_declaration: { en: "Composition taxable person, not eligible to collect tax on supplies", ne: "Composition taxable person, not eligible to collect tax on supplies" },
+      service_charge: { en: "Service Charge", ne: "सेवा शुल्क" },
+      vat: { en: "VAT", ne: "मू.अ.कर" },
       total: { en: "Total", ne: "जम्मा" }
     }
     return strings[key][locale] || strings[key].en

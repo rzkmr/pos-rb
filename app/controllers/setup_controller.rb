@@ -25,8 +25,7 @@ class SetupController < ApplicationController
 
     @shop = Shop.new(shop_params)
     @shop.invoice_prefix = "INV" if @shop.invoice_prefix.blank?
-    @shop.invoice_fy = Shop.financial_year_for(Date.current)
-    @shop.gst_rate_bp = 500 if @shop.gst_rate_bp.blank?
+    @shop.invoice_fy = BikramSambat.fiscal_year_for(Date.current)
     @shop.pairing_pin = params[:admin_pin]
 
     ActiveRecord::Base.transaction do
@@ -54,7 +53,7 @@ class SetupController < ApplicationController
   end
 
   def shop_params
-    params.permit(:name, :gstin, :address, :state_code, :fssai_licence, :invoice_prefix, :gst_rate_bp, :composition_scheme)
+    params.permit(:name, :pan, :address, :invoice_prefix, :vat_rate_bp, :service_charge_rate_bp)
   end
 
   def valid_pairing_pin?(pin)

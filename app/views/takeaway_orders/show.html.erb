@@ -7,12 +7,11 @@
        data-takeaway-checkout-checkout-url-value="<%= takeaway_checkouts_path %>"
        data-takeaway-checkout-dining-table-id-value="<%= @dining_table.id %>"
        data-takeaway-checkout-held-carts-url-value="<%= dining_table_held_carts_path(@dining_table) %>"
-       data-takeaway-checkout-gst-rate-bp-value="<%= Current.shop.gst_rate_bp %>"
-       data-takeaway-checkout-composition-scheme-value="<%= Current.shop.composition_scheme %>"
+       data-takeaway-checkout-vat-rate-bp-value="<%= Current.shop.vat_rate_bp %>"
+       data-takeaway-checkout-service-charge-rate-bp-value="<%= Current.shop.service_charge_rate_bp %>"
        data-takeaway-checkout-shop-name-value="<%= Current.shop.name %>"
        data-takeaway-checkout-shop-address-value="<%= Current.shop.address %>"
-       data-takeaway-checkout-shop-gstin-value="<%= Current.shop.gstin %>"
-       data-takeaway-checkout-shop-fssai-value="<%= Current.shop.fssai_licence %>"
+       data-takeaway-checkout-shop-pan-value="<%= Current.shop.pan %>"
        data-takeaway-checkout-shop-footer-value="<%= Current.shop.invoice_footer %>"
        data-takeaway-checkout-shop-invoice-prefix-value="<%= Current.shop.invoice_prefix %>"
        data-takeaway-checkout-table-label-value="<%= @dining_table.label %>">
@@ -103,7 +102,7 @@
                           data-action="takeaway-checkout#add"
                           data-takeaway-checkout-menu-item-id-param="<%= menu_item.id %>"
                           data-takeaway-checkout-menu-item-name-param="<%= menu_item.name %>"
-                          data-takeaway-checkout-menu-item-price-param="<%= menu_item.price_paise %>"
+                          data-takeaway-checkout-menu-item-price-param="<%= menu_item.gross_price_paisa %>"
                           data-takeaway-checkout-target="itemRow"
                           data-takeaway-checkout-item-id="<%= menu_item.id %>"
                           class="pcard-fill relative min-h-[124px] p-3 rounded-tile bg-card border border-line overflow-hidden
@@ -114,7 +113,7 @@
                                  text-[12px] font-bold font-mono flex items-center justify-center leading-none
                                  opacity-0 scale-0 transition-all duration-200" data-takeaway-checkout-target="rowQty"></span>
                     <span class="text-[17px] font-semibold leading-[1.3] pr-6"><%= menu_item.name %></span>
-                    <span class="text-[15px] font-mono text-ink-2"><%= money_to_inr(menu_item.price_paise) %></span>
+                    <span class="text-[15px] font-mono text-ink-2"><%= money(menu_item.gross_price_paisa) %></span>
                   </button>
                 <% end %>
               </div>
@@ -253,11 +252,8 @@
             <% if Current.shop.address.present? %>
               <p class="text-[12px]"><%= Current.shop.address %></p>
             <% end %>
-            <% if @invoice&.gstin_snapshot.present? %>
-              <p class="text-[12px]">GSTIN: <%= @invoice.gstin_snapshot %></p>
-            <% end %>
-            <% if Current.shop.fssai_licence.present? %>
-              <p class="text-[12px]">FSSAI: <%= Current.shop.fssai_licence %></p>
+            <% if Current.shop.pan.present? %>
+              <p class="text-[12px]">PAN: <%= Current.shop.pan %></p>
             <% end %>
           </div>
 
@@ -275,27 +271,20 @@
             <% ticket.ticket_items.active.each do |item| %>
               <div class="flex justify-between gap-3 text-[13px] py-0.5">
                 <span class="flex-1"><%= item.quantity %> x <%= item.name_snapshot %></span>
-                <span><%= money_to_inr(item.quantity * item.unit_price_paise) %></span>
+                <span><%= money(item.quantity * item.unit_price_paisa) %></span>
               </div>
             <% end %>
           <% end %>
 
           <div class="receipt-rule my-2"></div>
 
-          <div class="flex justify-between text-[13px]"><span><%= t(".subtotal") %></span><span><%= money_to_inr(@billing.taxable_paise) %></span></div>
-          <% if Current.shop.composition_scheme %>
-            <p class="text-[12px] mt-1"><%= t(".composition_declaration") %></p>
-          <% else %>
-            <div class="flex justify-between text-[13px]"><span><%= t(".cgst") %></span><span><%= money_to_inr(@billing.cgst_paise) %></span></div>
-            <div class="flex justify-between text-[13px]"><span><%= t(".sgst") %></span><span><%= money_to_inr(@billing.sgst_paise) %></span></div>
-          <% end %>
-          <% if @billing.round_off_paise.to_i != 0 %>
-            <div class="flex justify-between text-[13px]"><span><%= t(".round_off") %></span><span><%= money_to_inr(@billing.round_off_paise) %></span></div>
-          <% end %>
+          <div class="flex justify-between text-[13px]"><span><%= t(".subtotal") %></span><span><%= money(@billing.base_paisa) %></span></div>
+          <div class="flex justify-between text-[13px]"><span><%= t(".service_charge") %></span><span><%= money(@billing.service_charge_paisa) %></span></div>
+          <div class="flex justify-between text-[13px]"><span><%= t(".vat") %></span><span><%= money(@billing.vat_paisa) %></span></div>
 
           <div class="receipt-rule my-2"></div>
 
-          <div class="flex justify-between text-[16px] font-bold"><span><%= t(".total_with_tax") %></span><span><%= money_to_inr(@billing.total_paise) %></span></div>
+          <div class="flex justify-between text-[16px] font-bold"><span><%= t(".total_with_tax") %></span><span><%= money(@billing.gross_paisa) %></span></div>
 
           <div class="receipt-rule my-2"></div>
 

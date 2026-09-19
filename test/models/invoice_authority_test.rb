@@ -45,7 +45,7 @@ class InvoiceAuthorityTest < ActiveSupport::TestCase
       assert_raises(Billing::InvoiceAuthorityHeld) do
         Billing.record_payment_and_settle!(
           table_session: session, method: "cash",
-          amount_paise: Billing.compute(shop: shops(:alpha), taxable_paise: session.reload.subtotal_paise).total_paise,
+          amount_paisa: Billing.compute(shop: shops(:alpha), gross_paisa: session.reload.subtotal_paisa).gross_paisa,
           received_by: users(:alpha_waiter)
         )
       end
@@ -61,7 +61,7 @@ class InvoiceAuthorityTest < ActiveSupport::TestCase
     assert_difference "Invoice.count", 1 do
       Billing.record_payment_and_settle!(
         table_session: session, method: "cash",
-        amount_paise: Billing.compute(shop: shops(:alpha), taxable_paise: session.reload.subtotal_paise).total_paise,
+        amount_paisa: Billing.compute(shop: shops(:alpha), gross_paisa: session.reload.subtotal_paisa).gross_paisa,
         received_by: users(:alpha_waiter)
       )
     end

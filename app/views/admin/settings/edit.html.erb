@@ -27,23 +27,18 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <%= f.label :gstin, class: "text-[15px] font-semibold" %>
-        <%= f.text_field :gstin, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+        <%= f.label :pan, t(".pan"), class: "text-[15px] font-semibold" %>
+        <%= f.text_field :pan, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <%= f.label :state_code, t(".gst_state_code"), class: "text-[15px] font-semibold" %>
-        <%= f.text_field :state_code, maxlength: 2, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+        <%= f.label :vat_rate_bp, t(".vat_rate"), class: "text-[15px] font-semibold" %>
+        <%= f.number_field :vat_rate_bp, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <%= f.label :fssai_licence, t(".fssai_licence"), class: "text-[15px] font-semibold" %>
-        <%= f.text_field :fssai_licence, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <%= f.check_box :composition_scheme, class: "w-5 h-5" %>
-        <%= f.label :composition_scheme, t("shared.composition_scheme"), class: "text-[15px] font-semibold" %>
+        <%= f.label :service_charge_rate_bp, t(".service_charge_rate"), class: "text-[15px] font-semibold" %>
+        <%= f.number_field :service_charge_rate_bp, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
       </div>
 
       <div class="flex flex-col gap-1.5">

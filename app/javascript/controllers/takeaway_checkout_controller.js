@@ -35,8 +35,8 @@ export default class extends Controller {
   ]
   static values = {
     tableSessionId: Number, checkoutUrl: String, diningTableId: Number, heldCartsUrl: String,
-    gstRateBp: Number, compositionScheme: Boolean,
-    shopName: String, shopAddress: String, shopGstin: String, shopFssai: String, shopFooter: String,
+    vatRateBp: Number, serviceChargeRateBp: Number,
+    shopName: String, shopAddress: String, shopPan: String, shopFooter: String,
     shopInvoicePrefix: String,
     tableLabel: String
   }
@@ -63,7 +63,7 @@ export default class extends Controller {
 
   updateClock() {
     if (!this.hasClockTarget) return
-    const locale = document.documentElement.lang === "ne" ? "ne-NP" : "en-IN"
+    const locale = document.documentElement.lang === "ne" ? "ne-NP" : "en-US"
     const now = new Date()
     this.clockTarget.textContent = now.toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" }) +
       "  " + now.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
@@ -72,7 +72,7 @@ export default class extends Controller {
   // --- cart ---
   add(event) {
     const { menuItemId, menuItemName, menuItemPrice } = event.params
-    this.cart = cart.addItem(this.cart, { menuItemId, name: menuItemName, unitPricePaise: menuItemPrice })
+    this.cart = cart.addItem(this.cart, { menuItemId, name: menuItemName, unitPricePaisa: menuItemPrice })
     this.flashRow(menuItemId)
     this.render()
   }
@@ -150,13 +150,13 @@ export default class extends Controller {
   render() {
     const items = Array.from(this.cart.values())
     const count = items.reduce((sum, item) => sum + item.quantity, 0)
-    const totalPaise = items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0)
-    this.currentTotalPaise = totalPaise
+    const grossPaisa = items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaisa), 0)
+    this.currentTotalPaisa = grossPaisa
 
     this.renderRowQuantities()
     this.renderCartLists(items)
-    this.renderFooters(count, totalPaise)
-    this.renderMobileChrome(count, totalPaise)
+    this.renderFooters(count, grossPaisa)
+    this.renderMobileChrome(count, grossPaisa)
 
     if (count === 0) this.closeCart()
   }
@@ -192,12 +192,12 @@ export default class extends Controller {
   }
 
   cartRowHtml(item) {
-    const lineTotal = item.quantity * Number(item.unitPricePaise)
+    const lineTotal = item.quantity * Number(item.unitPricePaisa)
     return `
       <div class="flex items-center gap-3 py-2">
         <div class="flex-1 min-w-0">
           <p class="text-[15px] font-semibold truncate">${item.name}</p>
-          <p class="text-[13px] text-ink-3 font-mono">${this.formatInr(item.unitPricePaise)} ${this.t("each")}</p>
+          <p class="text-[13px] text-ink-3 font-mono">${this.formatNpr(item.unitPricePaisa)} ${this.t("each")}</p>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
           <button type="button" data-action="takeaway-checkout#updateQty"
@@ -208,58 +208,60 @@ export default class extends Controller {
                   data-takeaway-checkout-menu-item-id-param="${item.menuItemId}" data-takeaway-checkout-delta-param="1"
                   class="w-8 h-8 rounded-key border border-line-2 bg-card text-[16px] font-bold flex items-center justify-center active:bg-key">+</button>
         </div>
-        <div class="w-[76px] text-right text-[15px] font-mono font-bold">${this.formatInr(lineTotal)}</div>
+        <div class="w-[76px] text-right text-[15px] font-mono font-bold">${this.formatNpr(lineTotal)}</div>
       </div>`
   }
 
-  renderFooters(count, totalPaise) {
-    const html = this.footerHtml(count, totalPaise)
+  renderFooters(count, grossPaisa) {
+    const html = this.footerHtml(count, grossPaisa)
     this.cartFooterDesktopTarget.innerHTML = html
     this.cartFooterMobileTarget.innerHTML = html
   }
 
-  footerHtml(count, totalPaise) {
-    const billing = this.computeBilling(totalPaise)
+  footerHtml(count, grossPaisa) {
+    const billing = this.computeBilling(grossPaisa)
     const disabled = count === 0
-    const taxRows = this.compositionSchemeValue
-      ? `<div class="text-[12px] italic">${this.t("composition_declaration")}</div>`
-      : `<div class="flex justify-between"><span>${this.t("cgst")}</span><span class="font-mono">${this.formatInr(billing.cgstPaise)}</span></div>
-         <div class="flex justify-between"><span>${this.t("sgst")}</span><span class="font-mono">${this.formatInr(billing.sgstPaise)}</span></div>`
+    const taxRows = `
+      <div class="flex justify-between"><span>${this.t("service_charge")}</span><span class="font-mono">${this.formatNpr(billing.serviceChargePaisa)}</span></div>
+      <div class="flex justify-between"><span>${this.t("vat")}</span><span class="font-mono">${this.formatNpr(billing.vatPaisa)}</span></div>`
 
     return `
       <div class="flex flex-col gap-1 mb-3 text-[14px] text-ink-3">
-        <div class="flex justify-between"><span>${this.t("subtotal")}</span><span class="font-mono">${this.formatInr(billing.taxablePaise)}</span></div>
+        <div class="flex justify-between"><span>${this.t("subtotal")}</span><span class="font-mono">${this.formatNpr(billing.basePaisa)}</span></div>
         ${taxRows}
-        <div class="flex justify-between text-[17px] font-bold text-ink pt-1.5 border-t border-line"><span>${this.t("total")}</span><span class="font-mono">${this.formatInr(billing.totalPaise)}</span></div>
+        <div class="flex justify-between text-[17px] font-bold text-ink pt-1.5 border-t border-line"><span>${this.t("total")}</span><span class="font-mono">${this.formatNpr(billing.grossPaisa)}</span></div>
       </div>
       <button type="button" data-action="takeaway-checkout#openPayment" ${disabled ? "disabled" : ""}
               class="w-full min-h-[56px] rounded-tile text-[16px] font-bold transition-colors
                      ${disabled ? "bg-key-2 text-ink-4" : "bg-go text-surface active:bg-go-700"}">
-        ${disabled ? this.t("add_items_to_pay") : `${this.t("pay")}  ${this.formatInr(billing.totalPaise)}`}
+        ${disabled ? this.t("add_items_to_pay") : `${this.t("pay")}  ${this.formatNpr(billing.grossPaisa)}`}
       </button>`
   }
 
-  renderMobileChrome(count, totalPaise) {
-    const billing = this.computeBilling(totalPaise)
+  renderMobileChrome(count, grossPaisa) {
+    const billing = this.computeBilling(grossPaisa)
 
     this.mobileBarTarget.hidden = count === 0
     this.cartFabTarget.hidden = count === 0
     if (count > 0) {
-      this.mobileTotalTarget.textContent = this.formatInr(billing.totalPaise)
+      this.mobileTotalTarget.textContent = this.formatNpr(billing.grossPaisa)
       this.mobileCartLabelTarget.textContent = `${this.t("view_cart")} (${count})`
       this.fabBadgeTarget.hidden = false
       this.fabBadgeTarget.textContent = count
     }
   }
 
-  formatInr(paise) {
-    const rupees = paise / 100
-    return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  // Devanagari digits are render-only (CLAUDE.md invariant #7) — money is
+  // always Arabic numerals, so this stays "ne" for currency/date words but
+  // pins numeral formatting to "latn" regardless of locale.
+  formatNpr(paisa) {
+    const rupees = paisa / 100
+    return `Rs. ${rupees.toLocaleString("ne-NP-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  computeBilling(taxablePaise) {
+  computeBilling(grossPaisa) {
     return computeBillingShared({
-      taxablePaise, gstRateBp: this.gstRateBpValue, compositionScheme: this.compositionSchemeValue
+      grossPaisa, vatRateBp: this.vatRateBpValue, serviceChargeRateBp: this.serviceChargeRateBpValue
     })
   }
 
@@ -289,13 +291,13 @@ export default class extends Controller {
     if (this.cart.size === 0) return
     this.closeCart()
 
-    const billing = this.computeBilling(this.currentTotalPaise)
-    this.payAmountDue = billing.totalPaise
+    const billing = this.computeBilling(this.currentTotalPaisa)
+    this.payAmountDue = billing.grossPaisa
 
     this.payContentTarget.innerHTML = `
       <div class="bg-shell rounded-ctl p-4 mb-4 text-center">
         <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide mb-1">${this.t("amount_due")}</p>
-        <p class="text-[32px] font-mono font-bold text-go">${this.formatInr(billing.totalPaise)}</p>
+        <p class="text-[32px] font-mono font-bold text-go">${this.formatNpr(billing.grossPaisa)}</p>
       </div>
       <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide mb-2">${this.t("select_method")}</p>
       <div class="grid grid-cols-2 gap-2.5 mb-2">
@@ -380,7 +382,7 @@ export default class extends Controller {
         <p class="text-[12px] text-ink-3 font-semibold uppercase tracking-wide mb-2">${this.t("cash_received")}</p>
         <div class="grid grid-cols-4 gap-2 mb-3">
           ${amounts.map((a) => `<button type="button" data-action="takeaway-checkout#setCashAmount" data-takeaway-checkout-amount-param="${a}"
-              class="cash-amt-btn min-h-[48px] rounded-key border-2 border-line-2 font-mono font-bold text-[14px]">${this.formatInr(a)}</button>`).join("")}
+              class="cash-amt-btn min-h-[48px] rounded-key border-2 border-line-2 font-mono font-bold text-[14px]">${this.formatNpr(a)}</button>`).join("")}
         </div>
         <input type="text" inputmode="numeric" placeholder="${this.t("other_amount")}" data-action="input->takeaway-checkout#typeCashAmount"
                class="w-full min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px] mb-3">
@@ -392,9 +394,9 @@ export default class extends Controller {
       </div>`
   }
 
-  cashQuickAmounts(duePaise) {
-    const exact = Math.ceil(duePaise / 100) * 100
-    const notes = [50000, 100000, 200000, 500000] // ₹500 / ₹1000 / ₹2000 / ₹5000 in paise
+  cashQuickAmounts(duePaisa) {
+    const exact = Math.ceil(duePaisa / 100) * 100
+    const notes = [50000, 100000, 200000, 500000] // Rs.500 / Rs.1000 / Rs.2000 / Rs.5000 in paisa
     const amounts = [exact]
     for (const note of notes) {
       if (note >= exact && !amounts.includes(note)) amounts.push(note)
@@ -412,20 +414,20 @@ export default class extends Controller {
     this.applyCashAmount(Math.round(rupees * 100))
   }
 
-  applyCashAmount(receivedPaise) {
-    this.cashReceivedPaise = receivedPaise
+  applyCashAmount(receivedPaisa) {
+    this.cashReceivedPaisa = receivedPaisa
     const due = this.payAmountDue
-    const change = receivedPaise - due
+    const change = receivedPaisa - due
 
     this.payPanelTarget.querySelectorAll(".cash-amt-btn").forEach((btn) => {
-      btn.classList.toggle("border-go", Number(btn.dataset.takeawayCheckoutAmountParam) === receivedPaise)
+      btn.classList.toggle("border-go", Number(btn.dataset.takeawayCheckoutAmountParam) === receivedPaisa)
     })
 
     const display = this.payPanelTarget.querySelector("[data-change-display]")
     const confirmBtn = this.payPanelTarget.querySelector("[data-confirm-cash]")
     if (!display || !confirmBtn) return
 
-    if (receivedPaise <= 0) {
+    if (receivedPaisa <= 0) {
       display.innerHTML = ""
       confirmBtn.disabled = true
     } else if (change < 0) {
@@ -435,14 +437,14 @@ export default class extends Controller {
       display.innerHTML = `
         <div class="flex items-center justify-between px-4 py-3 rounded-ctl bg-go text-surface">
           <span class="text-[15px] font-semibold">${this.t("change_due")}</span>
-          <span class="text-[22px] font-mono font-bold">${this.formatInr(change)}</span>
+          <span class="text-[22px] font-mono font-bold">${this.formatNpr(change)}</span>
         </div>`
       confirmBtn.disabled = false
     }
   }
 
   confirmCash(event) {
-    if (!this.cashReceivedPaise || this.cashReceivedPaise < this.payAmountDue) return
+    if (!this.cashReceivedPaisa || this.cashReceivedPaisa < this.payAmountDue) return
     this.completeCheckout("cash", event.currentTarget)
   }
 
@@ -460,7 +462,7 @@ export default class extends Controller {
       payload: {
         table_session_id: this.tableSessionIdValue,
         method,
-        // name/unit_price_paise ride along for the offline receipt only
+        // name/unit_price_paisa ride along for the offline receipt only
         // (see receiptPayloadFrom below) — Sync::Handlers::TakeawayCheckout
         // only reads menu_item_id/quantity/notes and ignores the rest, but
         // this is the one place the display info survives a page reload,
@@ -468,7 +470,7 @@ export default class extends Controller {
         // is the only thing that persists across it.
         items: items.map((item) => ({
           menu_item_id: item.menuItemId, quantity: item.quantity,
-          name: item.name, unit_price_paise: item.unitPricePaise
+          name: item.name, unit_price_paisa: item.unitPricePaisa
         })),
         client_token: crypto.randomUUID()
       }
@@ -483,7 +485,7 @@ export default class extends Controller {
   receiptPayloadFrom(payload) {
     return {
       items: payload.items.map((item) => ({
-        name: item.name, unitPricePaise: item.unit_price_paise, quantity: item.quantity
+        name: item.name, unitPricePaisa: item.unit_price_paisa, quantity: item.quantity
       }))
     }
   }
@@ -508,7 +510,7 @@ export default class extends Controller {
     const receiptPayload = this.receiptPayloadFrom(pendingEntry.payload)
     this.showPendingReceipt(receiptPayload)
     const items = pendingEntry.payload.items.map((item) => ({
-      menuItemId: item.menu_item_id, quantity: item.quantity, name: item.name, unitPricePaise: item.unit_price_paise
+      menuItemId: item.menu_item_id, quantity: item.quantity, name: item.name, unitPricePaisa: item.unit_price_paisa
     }))
     this.runCheckout(pendingEntry.id, receiptPayload, items, pendingEntry.payload.method, true)
   }
@@ -519,7 +521,7 @@ export default class extends Controller {
   // and renders whichever callback fires.
   async runCheckout(entryId, receiptPayload, items, method, isRetry = false) {
     const shop = {
-      gstRateBp: this.gstRateBpValue, compositionScheme: this.compositionSchemeValue,
+      vatRateBp: this.vatRateBpValue, serviceChargeRateBp: this.serviceChargeRateBpValue,
       invoicePrefix: this.shopInvoicePrefixValue
     }
     const tableSession = { id: this.tableSessionIdValue }
@@ -555,7 +557,7 @@ export default class extends Controller {
   // customers, EXCEPT for the invoice number line, which this genuinely
   // doesn't have yet — see showIssuedReceipt for the version that does.
   showPendingReceipt(payload) {
-    const billing = this.computeBilling(payload.items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0))
+    const billing = this.computeBilling(payload.items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaisa), 0))
     this.renderReceipt({ items: payload.items, billing, invoiceNumber: null, issuedAt: new Date() })
   }
 
@@ -567,8 +569,8 @@ export default class extends Controller {
   // recorded and numbered the moment this renders, not merely queued.
   showIssuedReceipt(invoice) {
     const billing = {
-      taxablePaise: invoice.taxablePaise, cgstPaise: invoice.cgstPaise,
-      sgstPaise: invoice.sgstPaise, totalPaise: invoice.totalPaise
+      basePaisa: invoice.basePaisa, serviceChargePaisa: invoice.serviceChargePaisa,
+      vatPaisa: invoice.vatPaisa, grossPaisa: invoice.grossPaisa
     }
     this.renderReceipt({
       items: invoice.items, billing, invoiceNumber: invoice.number, issuedAt: new Date(invoice.issuedAt)
@@ -579,20 +581,18 @@ export default class extends Controller {
     this.pendingReceiptTarget.innerHTML = receiptHtml({
       tableLabel: this.tableLabelValue,
       shopName: this.shopNameValue, shopAddress: this.shopAddressValue,
-      shopGstin: this.shopGstinValue, shopFssai: this.shopFssaiValue, shopFooter: this.shopFooterValue,
+      shopPan: this.shopPanValue, shopFooter: this.shopFooterValue,
       items, billing, invoiceNumber, issuedAt,
-      compositionScheme: this.compositionSchemeValue,
-      formatInr: (paise) => this.formatInr(paise),
+      formatNpr: (paisa) => this.formatNpr(paisa),
       newOrderHref: "/takeaway",
       strings: {
         printReceipt: this.t("print_receipt"),
         newOrder: this.t("new_order"),
         invoiceNumber: this.t("invoice_number"),
         subtotal: this.t("subtotal"),
-        cgst: this.t("cgst"),
-        sgst: this.t("sgst"),
-        total: this.t("total"),
-        compositionDeclaration: this.t("composition_declaration")
+        serviceCharge: this.t("service_charge"),
+        vat: this.t("vat"),
+        total: this.t("total")
       }
     })
 
@@ -622,7 +622,7 @@ export default class extends Controller {
           items: items.map((item) => ({
             menu_item_id: item.menuItemId,
             name_snapshot: item.name,
-            unit_price_paise: item.unitPricePaise,
+            unit_price_paisa: item.unitPricePaisa,
             quantity: item.quantity
           }))
         })
@@ -685,14 +685,14 @@ export default class extends Controller {
     }
 
     this.heldListTarget.innerHTML = carts.map((heldCart) => {
-      const time = new Date(heldCart.held_at).toLocaleTimeString(document.documentElement.lang === "ne" ? "ne-NP" : "en-IN", { hour: "2-digit", minute: "2-digit" })
+      const time = new Date(heldCart.held_at).toLocaleTimeString(document.documentElement.lang === "ne" ? "ne-NP" : "en-US", { hour: "2-digit", minute: "2-digit" })
       return `
         <div class="flex items-center gap-3 p-3.5 rounded-tile bg-card border-l-[6px] border-warn border-y border-r border-line">
           <div class="flex-1 min-w-0">
             <div class="text-[16px] font-semibold">${this.pluralizeCount(heldCart.item_count)}</div>
             <div class="text-[13px] text-ink-3">${this.t("held_at").replace("%{time}", time)}</div>
           </div>
-          <div class="font-mono font-bold text-[17px]">${this.formatInr(heldCart.total_paise)}</div>
+          <div class="font-mono font-bold text-[17px]">${this.formatNpr(heldCart.gross_paisa)}</div>
           <button type="button" data-action="takeaway-checkout#restoreHeld" data-held-cart-id="${heldCart.id}"
                   class="shrink-0 min-h-[44px] px-4 rounded-key bg-go text-surface text-[15px] font-bold active:bg-go-700">
             ${this.t("restore")}
@@ -714,7 +714,7 @@ export default class extends Controller {
     // directly rather than replaying additions.
     this.cart = new Map(heldCart.items.map((item) => [
       item.menu_item_id,
-      { menuItemId: item.menu_item_id, name: item.name_snapshot, unitPricePaise: item.unit_price_paise, quantity: item.quantity }
+      { menuItemId: item.menu_item_id, name: item.name_snapshot, unitPricePaisa: item.unit_price_paisa, quantity: item.quantity }
     ]))
 
     await this.deleteHeldCart(heldCart.id)
@@ -798,9 +798,8 @@ export default class extends Controller {
       card_prompt: { en: "Tap or insert card...", ne: "कार्ड ट्याप वा इन्सर्ट गर्नुहोस्..." },
       card_approved: { en: "Payment approved", ne: "भुक्तानी स्वीकृत भयो" },
       subtotal: { en: "Subtotal", ne: "मूल्य" },
-      cgst: { en: "CGST", ne: "मू.अ.कर (CGST)" },
-      sgst: { en: "SGST", ne: "मू.अ.कर (SGST)" },
-      composition_declaration: { en: "Composition taxable person, not eligible to collect tax on supplies", ne: "Composition taxable person, not eligible to collect tax on supplies" },
+      service_charge: { en: "Service Charge", ne: "सेवा शुल्क" },
+      vat: { en: "VAT", ne: "मू.अ.कर" },
       total: { en: "Total", ne: "जम्मा" },
       each: { en: "each", ne: "प्रति" }
     }

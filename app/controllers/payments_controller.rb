@@ -5,7 +5,7 @@ class PaymentsController < ApplicationController
     Billing.record_payment_and_settle!(
       table_session: table_session,
       method: payment_params[:method],
-      amount_paise: payment_params[:amount_paise],
+      amount_paisa: payment_params[:amount_paisa],
       reference: payment_params[:reference],
       received_by: Current.user
     )
@@ -16,6 +16,6 @@ class PaymentsController < ApplicationController
   private
 
   def payment_params
-    params.require(:payment).permit(:method, :amount_paise, :reference)
+    params.require(:payment).permit(:method, :amount_paisa, :reference)
   end
 end

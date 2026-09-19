@@ -1,6 +1,6 @@
 # Fast counter checkout: build a cart, submit it, take payment, print — all
 # on one screen. Backed by an ordinary TableSession against a DiningTable
-# flagged takeaway: true, so all existing GST/invoice/payment/print/audit
+# flagged takeaway: true, so all existing tax/invoice/payment/print/audit
 # code applies unchanged (see ARCHITECTURE.md — takeaway is a UI shape, not
 # a new domain concept).
 class TakeawayOrdersController < ApplicationController
@@ -22,7 +22,7 @@ class TakeawayOrdersController < ApplicationController
     @dining_table = @table_session.dining_table
     @menu_items = Current.shop.menu_items.active.ordered
     @tickets = @table_session.tickets.order(:number).includes(:ticket_items)
-    @billing = Billing.compute(shop: Current.shop, taxable_paise: @table_session.subtotal_paise)
+    @billing = Billing.compute(shop: Current.shop, gross_paisa: @table_session.subtotal_paisa)
     @invoice = @table_session.invoices.order(:sequence).last
   end
 end

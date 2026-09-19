@@ -19,11 +19,11 @@ class TakeawayCheckoutsController < ApplicationController
       )
 
       if table_session.reload.status == "open"
-        billing = Billing.compute(shop: Current.shop, taxable_paise: table_session.subtotal_paise)
+        billing = Billing.compute(shop: Current.shop, gross_paisa: table_session.subtotal_paisa)
         Billing.record_payment_and_settle!(
           table_session: table_session,
           method: params.require(:method),
-          amount_paise: billing.total_paise,
+          amount_paisa: billing.gross_paisa,
           received_by: Current.user
         )
       end

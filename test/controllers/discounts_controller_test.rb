@@ -11,14 +11,14 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
       placed_by: users(:alpha_waiter),
       items_attributes: [ { menu_item_id: menu_items(:alpha_dosa).id, quantity: 1 } ]
     )
-    subtotal_before = session.subtotal_paise
+    subtotal_before = session.subtotal_paisa
 
     assert_difference "AuditEvent.count", 1 do
-      post table_session_discount_url(session), params: { amount_paise: 1000, reason: "Loyal customer" }
+      post table_session_discount_url(session), params: { amount_paisa: 1000, reason: "Loyal customer" }
     end
 
     session.reload
-    assert_equal 1000, session.discount_paise
-    assert_equal subtotal_before - 1000, session.subtotal_paise
+    assert_equal 1000, session.discount_paisa
+    assert_equal subtotal_before - 1000, session.subtotal_paisa
   end
 end

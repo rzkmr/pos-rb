@@ -8,8 +8,9 @@ class MenuItem < ApplicationRecord
 
   validates :name, presence: true
   validates :category, inclusion: { in: CATEGORIES }
-  validates :price_paise, numericality: { greater_than_or_equal_to: 0 }
-  validates :hsn_sac, presence: true
+  # Gross, tax-inclusive — what the guest pays. Never store net and
+  # multiply up (CLAUDE.md invariant #2).
+  validates :gross_price_paisa, numericality: { greater_than_or_equal_to: 0 }
 
   scope :active, -> { where(active: true) }
   scope :ordered, -> { order(:position) }
@@ -17,7 +18,7 @@ class MenuItem < ApplicationRecord
   private
 
   def api_sync_record
-    { id: id, name: name, category: category, price_paise: price_paise, hsn_sac: hsn_sac,
+    { id: id, name: name, category: category, gross_price_paisa: gross_price_paisa,
       variants: variants, active: active, position: position }
   end
 end

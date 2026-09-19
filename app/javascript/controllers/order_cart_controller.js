@@ -35,7 +35,7 @@ export default class extends Controller {
     this.cart.set(menuItemId, {
       menuItemId,
       name: menuItemName,
-      unitPricePaise: menuItemPrice,
+      unitPricePaisa: menuItemPrice,
       quantity: (existing?.quantity ?? 0) + 1
     })
 
@@ -163,11 +163,11 @@ export default class extends Controller {
   render() {
     const items = Array.from(this.cart.values())
     const count = items.reduce((sum, item) => sum + item.quantity, 0)
-    const totalPaise = items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaise), 0)
+    const grossPaisa = items.reduce((sum, item) => sum + item.quantity * Number(item.unitPricePaisa), 0)
 
     this.submitTarget.disabled = items.length === 0
     this.renderRowQuantities()
-    this.renderChit(count, totalPaise)
+    this.renderChit(count, grossPaisa)
     this.listTarget.replaceChildren(...items.map((item) => this.buildLineItem(item)))
 
     if (items.length === 0) this.closeSheet()
@@ -194,14 +194,14 @@ export default class extends Controller {
     })
   }
 
-  renderChit(count, totalPaise) {
+  renderChit(count, grossPaisa) {
     const hasItems = count > 0
     this.chitBarTarget.hidden = !hasItems
     this.emptyFooterTarget.hidden = hasItems
     if (!hasItems) return
 
     this.chitSummaryTarget.textContent = this.pluralize(count)
-    const formatted = this.formatInr(totalPaise)
+    const formatted = this.formatNpr(grossPaisa)
     this.chitTotalTarget.textContent = formatted
     this.sheetTotalTarget.textContent = formatted
   }
@@ -217,9 +217,12 @@ export default class extends Controller {
     return String(n).replace(/\d/g, (d) => map[d])
   }
 
-  formatInr(paise) {
-    const rupees = paise / 100
-    return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  // Devanagari digits are render-only (CLAUDE.md invariant #7) — money is
+  // always Arabic numerals, so numeral formatting is pinned to "latn"
+  // regardless of locale.
+  formatNpr(paisa) {
+    const rupees = paisa / 100
+    return `Rs. ${rupees.toLocaleString("ne-NP-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   buildLineItem(item) {

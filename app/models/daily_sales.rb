@@ -1,7 +1,7 @@
 # Aggregates a shop's invoices and payments for one calendar day, for the
 # admin reconciliation screen — total sales vs. till by payment method.
 class DailySales
-  ByMethod = Struct.new(:method, :total_paise, keyword_init: true)
+  ByMethod = Struct.new(:method, :total_paisa, keyword_init: true)
 
   attr_reader :shop, :date
 
@@ -22,17 +22,17 @@ class DailySales
     @payments ||= shop.payments.where(created_at: range)
   end
 
-  def invoice_total_paise
-    invoices.sum(:total_paise)
+  def invoice_total_paisa
+    invoices.sum(:gross_paisa)
   end
 
-  def payment_total_paise
-    payments.sum(:amount_paise)
+  def payment_total_paisa
+    payments.sum(:amount_paisa)
   end
 
   def by_payment_method
-    totals = payments.group(:method).sum(:amount_paise)
-    Payment::METHODS.map { |method| ByMethod.new(method: method, total_paise: totals.fetch(method, 0)) }
+    totals = payments.group(:method).sum(:amount_paisa)
+    Payment::METHODS.map { |method| ByMethod.new(method: method, total_paisa: totals.fetch(method, 0)) }
   end
 
   def void_count

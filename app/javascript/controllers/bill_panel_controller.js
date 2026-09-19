@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // controls: method/reason chips fill a hidden field instead of free text,
 // and cash entry shows quick amount buttons plus a live change display.
 // Submission is still a normal Rails form POST — no client-side state,
-// no risk of drifting from the server's paise math.
+// no risk of drifting from the server's paisa math.
 export default class extends Controller {
   static targets = [
     "methodChip", "methodField", "payAmount", "payMoreFields", "paySubmit",
@@ -12,7 +12,7 @@ export default class extends Controller {
     "voidReasonChip", "voidReasonField", "voidReasonOther", "voidSubmit",
     "discountChip", "discountAmountField", "discountReasonField", "discountCustom"
   ]
-  static values = { remainingPaise: Number }
+  static values = { remainingPaisa: Number }
 
   connect() {
     if (this.hasMethodChipTarget) this.selectMethod(this.methodChipTargets[0])
@@ -37,7 +37,7 @@ export default class extends Controller {
     const isCash = method === "cash"
     this.payMoreFieldsTargets.forEach((el) => { el.hidden = !isCash })
     if (!isCash) {
-      this.payAmountTarget.value = this.remainingPaiseValue
+      this.payAmountTarget.value = this.remainingPaisaValue
       this.changeDisplayTarget.innerHTML = ""
       this.paySubmitTarget.disabled = false
     } else {
@@ -59,7 +59,7 @@ export default class extends Controller {
   updateChange() {
     if (!this.hasChangeDisplayTarget) return
     const received = parseInt(this.payAmountTarget.value, 10) || 0
-    const change = received - this.remainingPaiseValue
+    const change = received - this.remainingPaisaValue
 
     this.cashChipTargets.forEach((chip) => {
       chip.classList.toggle("border-go", parseInt(chip.dataset.billPanelAmountParam, 10) === received)
@@ -78,7 +78,7 @@ export default class extends Controller {
       this.changeDisplayTarget.innerHTML = `
         <div class="flex items-center justify-between px-4 py-3 rounded-ctl bg-go text-surface">
           <span class="text-[17px] font-semibold">${this.t("change_due")}</span>
-          <span class="text-[24px] font-mono font-bold">${this.formatInr(change)}</span>
+          <span class="text-[24px] font-mono font-bold">${this.formatNpr(change)}</span>
         </div>`
       this.paySubmitTarget.disabled = false
     }
@@ -122,9 +122,12 @@ export default class extends Controller {
   }
 
   // --- helpers ---
-  formatInr(paise) {
-    const rupees = paise / 100
-    return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  // Devanagari digits are render-only (CLAUDE.md invariant #7) — money is
+  // always Arabic numerals, so numeral formatting is pinned to "latn"
+  // regardless of locale.
+  formatNpr(paisa) {
+    const rupees = paisa / 100
+    return `Rs. ${rupees.toLocaleString("ne-NP-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   t(key) {

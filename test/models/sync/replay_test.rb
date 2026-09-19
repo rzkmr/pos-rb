@@ -13,11 +13,11 @@ class Sync::ReplayTest < ActiveSupport::TestCase
     dosa = menu_items(:alpha_dosa)
     Ticket.submit!(table_session: session, client_token: SecureRandom.uuid, placed_by: users(:alpha_waiter),
                     items_attributes: [ { menu_item_id: dosa.id, quantity: 1 } ])
-    billing = Billing.compute(shop: shops(:alpha), taxable_paise: session.reload.subtotal_paise)
+    billing = Billing.compute(shop: shops(:alpha), gross_paisa: session.reload.subtotal_paisa)
 
     payload = {
       "table_session_id" => session.id, "method" => "cash",
-      "amount_paise" => billing.total_paise, "client_token" => "pay-token-1"
+      "amount_paisa" => billing.gross_paisa, "client_token" => "pay-token-1"
     }
 
     assert_difference "Payment.count", 1 do
@@ -71,7 +71,7 @@ class Sync::ReplayTest < ActiveSupport::TestCase
     result = Sync::Replay.call(shop: shops(:alpha), device: nil, user: users(:alpha_waiter),
                                 client_action_id: "missing-1", kind: "record_payment",
                                 payload: { "table_session_id" => 999_999, "method" => "cash",
-                                           "amount_paise" => 100, "client_token" => "x" })
+                                           "amount_paisa" => 100, "client_token" => "x" })
 
     assert_equal "rejected", result[:status]
   end

@@ -15,7 +15,6 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
         assert_no_difference "Device.unscoped.count" do
           post setup_url, params: {
             name: "Bootstrap Shop",
-            state_code: "36",
             address: "1 Test Road",
             admin_pin: "9999",
             admin_username: "owner",
@@ -34,7 +33,6 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
       assert_no_difference "Shop.count" do
         post setup_url, params: {
           name: "Bootstrap Shop",
-          state_code: "36",
           admin_pin: "99",
           admin_username: "owner",
           admin_password: "supersecret1"

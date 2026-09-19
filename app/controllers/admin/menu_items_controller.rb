@@ -44,6 +44,6 @@ class Admin::MenuItemsController < Admin::BaseController
   end
 
   def menu_item_params
-    params.require(:menu_item).permit(:name, :category, :price_paise, :hsn_sac, :active, :position)
+    params.require(:menu_item).permit(:name, :category, :gross_price_paisa, :active, :position)
   end
 end

@@ -14,7 +14,6 @@
             <th class="px-4 py-3 font-bold"><%= t("shared.name") %></th>
             <th class="px-4 py-3 font-bold"><%= t(".category") %></th>
             <th class="px-4 py-3 font-bold"><%= t(".price") %></th>
-            <th class="px-4 py-3 font-bold">HSN/SAC</th>
             <th class="px-4 py-3 font-bold"><%= t("shared.active") %></th>
             <th class="px-4 py-3"></th>
           </tr>
@@ -24,8 +23,7 @@
             <tr class="border-t border-line">
               <td class="px-4 py-3"><%= menu_item.name %></td>
               <td class="px-4 py-3"><%= menu_item.category %></td>
-              <td class="px-4 py-3 font-mono"><%= money_to_inr(menu_item.price_paise) %></td>
-              <td class="px-4 py-3 font-mono"><%= menu_item.hsn_sac %></td>
+              <td class="px-4 py-3 font-mono"><%= money(menu_item.gross_price_paisa) %></td>
               <td class="px-4 py-3"><%= menu_item.active? ? t("shared.yes") : t("shared.no") %></td>
               <td class="px-4 py-3 text-right whitespace-nowrap">
                 <%= link_to t("shared.edit"), edit_admin_menu_item_path(menu_item), class: "text-go font-semibold mr-3" %>

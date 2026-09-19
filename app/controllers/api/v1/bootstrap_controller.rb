@@ -25,12 +25,9 @@ class Api::V1::BootstrapController < Api::V1::BaseController
       id: shop.id,
       name: shop.name,
       address: shop.address,
-      gstin: shop.gstin,
-      fssai_licence: shop.fssai_licence,
-      state_code: shop.state_code,
-      gst_rate_bp: shop.gst_rate_bp,
-      composition_scheme: shop.composition_scheme,
-      prices_include_tax: shop.prices_include_tax,
+      pan: shop.pan,
+      vat_rate_bp: shop.vat_rate_bp,
+      service_charge_rate_bp: shop.service_charge_rate_bp,
       invoice_fy: shop.invoice_fy,
       invoice_prefix: shop.invoice_prefix,
       invoice_footer: shop.invoice_footer
@@ -54,7 +51,7 @@ class Api::V1::BootstrapController < Api::V1::BaseController
   def menu_item_payload(item)
     {
       id: item.id, name: item.name, category: item.category,
-      price_paise: item.price_paise, hsn_sac: item.hsn_sac,
+      gross_price_paisa: item.gross_price_paisa,
       variants: item.variants, active: item.active, position: item.position
     }
   end

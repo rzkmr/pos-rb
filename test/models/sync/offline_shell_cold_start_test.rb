@@ -30,13 +30,13 @@ class Sync::OfflineShellColdStartTest < ActiveSupport::TestCase
     Current.user = nil # nobody is signed in when the sync actually runs
 
     token = SecureRandom.uuid
-    computed = Billing.compute(shop: @shop, taxable_paise: @dosa.price_paise * 3)
+    computed = Billing.compute(shop: @shop, gross_paisa: @dosa.gross_price_paisa * 3)
     record = {
       "id" => "shell-1", "sequence" => grant.granted_sequence + 1,
       "client_session_token" => token, "acting_user_id" => users(:alpha_waiter).id,
       "method" => "cash", "client_token" => "shell-1",
       "items" => [ { "menu_item_id" => @dosa.id, "quantity" => 3 } ],
-      "total_paise" => computed.total_paise, "issued_at" => Time.current.iso8601
+      "gross_paisa" => computed.gross_paisa, "issued_at" => Time.current.iso8601
     }
 
     results = Sync::OfflineInvoiceIngest.call(shop: @shop, device: @device, grant: grant, records: [ record ], current_user: nil)

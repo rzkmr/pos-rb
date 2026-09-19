@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -134,12 +134,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
   end
 
   create_table "invoices", force: :cascade do |t|
-    t.integer "cgst_paise", null: false
+    t.integer "base_paisa", null: false
     t.datetime "created_at", null: false
-    t.string "customer_gstin"
     t.string "customer_name"
     t.string "financial_year", null: false
-    t.string "gstin_snapshot"
+    t.integer "gross_paisa", null: false
     t.datetime "issued_at", null: false
     t.integer "issued_at_bs_day"
     t.integer "issued_at_bs_month"
@@ -147,14 +146,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
     t.string "number", null: false
     t.integer "print_count", default: 0, null: false
     t.datetime "printed_at"
-    t.integer "round_off_paise", default: 0, null: false
+    t.integer "round_off_paisa", default: 0, null: false
     t.integer "sequence", null: false
-    t.integer "sgst_paise", null: false
+    t.integer "service_charge_paisa", null: false
     t.integer "shop_id", null: false
     t.integer "table_session_id", null: false
-    t.integer "taxable_paise", null: false
-    t.integer "total_paise", null: false
     t.datetime "updated_at", null: false
+    t.integer "vat_paisa", null: false
     t.index ["issued_at_bs_year", "issued_at_bs_month", "issued_at_bs_day"], name: "index_invoices_on_issued_at_bs_date"
     t.index ["number"], name: "index_invoices_on_number", unique: true
     t.index ["shop_id", "financial_year", "sequence"], name: "index_invoices_on_shop_id_and_financial_year_and_sequence", unique: true
@@ -166,10 +164,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
     t.boolean "active", default: true, null: false
     t.string "category", null: false
     t.datetime "created_at", null: false
-    t.string "hsn_sac", default: "996331", null: false
+    t.integer "gross_price_paisa", null: false
     t.string "name", null: false
     t.integer "position", default: 0, null: false
-    t.integer "price_paise", null: false
     t.integer "shop_id", null: false
     t.datetime "updated_at", null: false
     t.json "variants", default: [], null: false
@@ -200,7 +197,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
   end
 
   create_table "payments", force: :cascade do |t|
-    t.integer "amount_paise", null: false
+    t.integer "amount_paisa", null: false
     t.string "client_token"
     t.datetime "created_at", null: false
     t.integer "created_at_bs_day"
@@ -249,22 +246,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
 
   create_table "shops", force: :cascade do |t|
     t.string "address"
-    t.boolean "composition_scheme", default: false, null: false
     t.datetime "created_at", null: false
-    t.string "fssai_licence"
-    t.integer "gst_rate_bp", default: 500, null: false
-    t.string "gstin"
     t.text "invoice_footer"
     t.string "invoice_fy", null: false
     t.string "invoice_prefix", default: "INV", null: false
     t.integer "invoice_sequence", default: 0, null: false
     t.string "name", null: false
     t.string "pairing_pin"
-    t.boolean "prices_include_tax", default: false, null: false
+    t.string "pan"
     t.string "printer_host"
     t.integer "printer_port", default: 9100, null: false
-    t.string "state_code", null: false
+    t.integer "service_charge_rate_bp", default: 1000, null: false
     t.datetime "updated_at", null: false
+    t.integer "vat_rate_bp", default: 1300, null: false
   end
 
   create_table "table_sessions", force: :cascade do |t|
@@ -276,7 +270,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
     t.datetime "created_at", null: false
     t.integer "dining_table_id", null: false
     t.integer "discount_approved_by_id"
-    t.integer "discount_paise", default: 0, null: false
+    t.integer "discount_paisa", default: 0, null: false
     t.string "discount_reason"
     t.datetime "opened_at", null: false
     t.integer "opened_at_bs_day"
@@ -298,13 +292,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_090000) do
 
   create_table "ticket_items", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "hsn_sac_snapshot", null: false
     t.integer "menu_item_id", null: false
     t.string "name_snapshot", null: false
     t.text "notes"
     t.integer "quantity", default: 1, null: false
     t.integer "ticket_id", null: false
-    t.integer "unit_price_paise", null: false
+    t.integer "unit_price_paisa", null: false
     t.datetime "updated_at", null: false
     t.string "variant_name"
     t.string "void_reason"

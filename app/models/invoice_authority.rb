@@ -20,7 +20,7 @@ class InvoiceAuthority
     shop.with_lock do
       raise AlreadyGranted if InvoiceAuthorityGrant.live.exists?(shop: shop)
 
-      financial_year = Shop.financial_year_for(Date.current)
+      financial_year = BikramSambat.fiscal_year_for(Date.current)
       grant = InvoiceAuthorityGrant.create!(
         shop: shop, device: device, financial_year: financial_year,
         granted_sequence: shop.invoice_sequence,

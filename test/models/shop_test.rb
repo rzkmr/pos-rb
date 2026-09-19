@@ -11,8 +11,8 @@ class ShopTest < ActiveSupport::TestCase
   test "next_invoice_sequence! increments gaplessly within a financial year" do
     shop = shops(:alpha)
 
-    first = shop.next_invoice_sequence!("2025-26")
-    second = shop.next_invoice_sequence!("2025-26")
+    first = shop.next_invoice_sequence!("2082/83")
+    second = shop.next_invoice_sequence!("2082/83")
 
     assert_equal 1, first
     assert_equal 2, second
@@ -20,15 +20,15 @@ class ShopTest < ActiveSupport::TestCase
 
   test "next_invoice_sequence! resets the counter on financial year rollover" do
     shop = shops(:alpha)
-    shop.next_invoice_sequence!("2025-26")
+    shop.next_invoice_sequence!("2082/83")
 
-    reset = shop.next_invoice_sequence!("2026-27")
+    reset = shop.next_invoice_sequence!("2083/84")
 
     assert_equal 1, reset
   end
 
   test "refuses to create a second shop when one already exists" do
-    shop = Shop.new(name: "Second Shop", state_code: "07", invoice_prefix: "INV", invoice_fy: "2025-26")
+    shop = Shop.new(name: "Second Shop", invoice_prefix: "INV", invoice_fy: "2082/83")
 
     assert_not shop.save
     assert_includes shop.errors[:base], "a shop already exists — this deployment is single-shop only"

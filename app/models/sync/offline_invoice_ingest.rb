@@ -76,16 +76,18 @@ module Sync
       acting_user = Sync::ActingUser.resolve!(shop: @shop, current_user: @current_user, payload: record)
       table_session = resolve_table_session(record, acting_user)
 
-      taxable_paise = record.fetch("items").sum { |item| menu_item_price(item) * item.fetch("quantity") }
-      computed = Billing.compute(shop: @shop, taxable_paise: taxable_paise)
-      reported_total = record.fetch("total_paise")
+      # Menu prices are gross/tax-inclusive (CLAUDE.md invariant #2) — this
+      # sum is already the gross subtotal, not a base to add tax onto.
+      gross_paisa = record.fetch("items").sum { |item| menu_item_price(item) * item.fetch("quantity") }
+      computed = Billing.compute(shop: @shop, gross_paisa: gross_paisa)
+      reported_gross = record.fetch("gross_paisa")
 
-      if computed.total_paise != reported_total
+      if computed.gross_paisa != reported_gross
         AuditEvent.record!(
           action: "offline_invoice_tax_mismatch", subject: @grant, device: @device, user: acting_user,
-          payload: { computed_total_paise: computed.total_paise, reported_total_paise: reported_total }
+          payload: { computed_gross_paisa: computed.gross_paisa, reported_gross_paisa: reported_gross }
         )
-        raise TaxMismatch, "computed #{computed.total_paise}, device reported #{reported_total}"
+        raise TaxMismatch, "computed #{computed.gross_paisa}, device reported #{reported_gross}"
       end
 
       { record: record, table_session: table_session, acting_user: acting_user, sequence: reported_sequence, computed: computed }
@@ -107,7 +109,7 @@ module Sync
     end
 
     def menu_item_price(item)
-      MenuItem.find(item.fetch("menu_item_id")).price_paise
+      MenuItem.find(item.fetch("menu_item_id")).gross_price_paisa
     end
 
     def write_one(entry)
@@ -128,7 +130,7 @@ module Sync
       invoice = Billing.record_payment_and_settle!(
         table_session: table_session,
         method: record.fetch("method"),
-        amount_paise: entry.fetch(:computed).total_paise,
+        amount_paisa: entry.fetch(:computed).gross_paisa,
         received_by: acting_user,
         client_token: client_token,
         already_printed_at: record.fetch("issued_at", Time.current.iso8601)

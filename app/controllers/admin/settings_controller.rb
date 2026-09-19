@@ -29,9 +29,8 @@ class Admin::SettingsController < Admin::BaseController
 
   def shop_params
     params.require(:shop).permit(
-      :name, :address, :gstin, :state_code, :fssai_licence,
-      :prices_include_tax, :composition_scheme, :invoice_footer,
-      :printer_host, :printer_port
+      :name, :address, :pan, :vat_rate_bp, :service_charge_rate_bp,
+      :invoice_footer, :printer_host, :printer_port
     )
   end
 

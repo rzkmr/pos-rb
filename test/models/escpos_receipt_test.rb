@@ -18,15 +18,13 @@ class EscposReceiptTest < ActiveSupport::TestCase
     assert_includes bytes, "DUPLICATE"
   end
 
-  test "build shows the composition declaration and no tax lines for a composition shop" do
-    shop = shops(:alpha)
-    shop.update!(composition_scheme: true)
+  test "build shows service charge and VAT lines" do
     invoice = build_invoice
 
     bytes = EscposReceipt.build(invoice: invoice)
 
-    assert_includes bytes, "Composition taxable person"
-    assert_not_includes bytes, "CGST"
+    assert_includes bytes, "Service Charge"
+    assert_includes bytes, "VAT"
   end
 
   private

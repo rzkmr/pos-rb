@@ -17,8 +17,8 @@ module Sync
         table_session = @shop.table_sessions.find(@payload.fetch("table_session_id"))
         return { table_session_id: table_session.id, status: table_session.status } if table_session.status == "closed"
 
-        billing = Billing.compute(shop: @shop, taxable_paise: table_session.subtotal_paise)
-        if table_session.paid_paise < billing.total_paise
+        billing = Billing.compute(shop: @shop, gross_paisa: table_session.subtotal_paisa)
+        if table_session.paid_paisa < billing.gross_paisa
           raise Sync::Handlers::Rejected, "table_session #{table_session.id} is not fully paid"
         end
 

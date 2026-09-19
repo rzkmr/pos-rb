@@ -12,7 +12,7 @@ class TicketItemsControllerTest < ActionDispatch::IntegrationTest
       items_attributes: [ { menu_item_id: menu_items(:alpha_dosa).id, quantity: 2 } ]
     )
     item = ticket.ticket_items.first
-    subtotal_before = session.subtotal_paise
+    subtotal_before = session.subtotal_paisa
 
     assert_difference "AuditEvent.count", 1 do
       patch void_ticket_item_url(item), params: { reason: "Wrong order" }
@@ -21,6 +21,6 @@ class TicketItemsControllerTest < ActionDispatch::IntegrationTest
     item.reload
     assert item.voided_at.present?
     assert_equal "Wrong order", item.void_reason
-    assert session.subtotal_paise < subtotal_before
+    assert session.subtotal_paisa < subtotal_before
   end
 end

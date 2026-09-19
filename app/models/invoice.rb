@@ -12,7 +12,7 @@ class Invoice < ApplicationRecord
   validates :financial_year, presence: true
   validates :sequence, presence: true, uniqueness: { scope: [ :shop_id, :financial_year ] }
   validates :issued_at, presence: true
-  validates :taxable_paise, :cgst_paise, :sgst_paise, :total_paise,
+  validates :base_paisa, :service_charge_paisa, :vat_paisa, :gross_paisa,
             numericality: { greater_than_or_equal_to: 0 }
   validates :print_count, numericality: { greater_than_or_equal_to: 0 }
 end

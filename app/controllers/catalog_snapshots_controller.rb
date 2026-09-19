@@ -16,13 +16,11 @@ class CatalogSnapshotsController < ApplicationController
       shop: {
         name: shop.name,
         address: shop.address,
-        gstin: shop.gstin,
-        fssai_licence: shop.fssai_licence,
+        pan: shop.pan,
         invoice_footer: shop.invoice_footer,
         invoice_prefix: shop.invoice_prefix,
-        gst_rate_bp: shop.gst_rate_bp,
-        composition_scheme: shop.composition_scheme,
-        state_code: shop.state_code
+        vat_rate_bp: shop.vat_rate_bp,
+        service_charge_rate_bp: shop.service_charge_rate_bp
       },
       menu_items: menu_items.map { |item| serialize_menu_item(item) },
       # id/name/role ONLY — never pin. The offline shell shows this list so
@@ -41,8 +39,7 @@ class CatalogSnapshotsController < ApplicationController
       id: item.id,
       name: item.name,
       category: item.category,
-      price_paise: item.price_paise,
-      hsn_sac: item.hsn_sac
+      gross_price_paisa: item.gross_price_paisa
     }
   end
 end

@@ -10,9 +10,8 @@ class TicketItem < ApplicationRecord
   before_validation :snapshot_from_menu_item, on: :create
 
   validates :name_snapshot, presence: true
-  validates :hsn_sac_snapshot, presence: true
   validates :quantity, numericality: { greater_than: 0 }
-  validates :unit_price_paise, numericality: { greater_than_or_equal_to: 0 }
+  validates :unit_price_paisa, numericality: { greater_than_or_equal_to: 0 }
   validates :void_reason, presence: true, if: -> { voided_at.present? }
 
   scope :active, -> { where(voided_at: nil) }
@@ -23,12 +22,12 @@ class TicketItem < ApplicationRecord
 
   private
 
-  # Snapshots, not joins — a later menu edit must never alter a past bill.
+  # Snapshots, not joins — a later menu edit must never alter a past bill
+  # (CLAUDE.md invariant #11).
   def snapshot_from_menu_item
     return unless menu_item
 
     self.name_snapshot ||= menu_item.name
-    self.hsn_sac_snapshot ||= menu_item.hsn_sac
-    self.unit_price_paise ||= menu_item.price_paise
+    self.unit_price_paisa ||= menu_item.gross_price_paisa
   end
 end

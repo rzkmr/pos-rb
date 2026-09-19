@@ -18,21 +18,21 @@ class TableSession < ApplicationRecord
 
   validates :status, inclusion: { in: STATUSES }
   validates :opened_at, presence: true
-  validates :discount_paise, numericality: { greater_than_or_equal_to: 0 }
-  validates :discount_reason, presence: true, if: -> { discount_paise.to_i > 0 }
+  validates :discount_paisa, numericality: { greater_than_or_equal_to: 0 }
+  validates :discount_reason, presence: true, if: -> { discount_paisa.to_i > 0 }
 
   scope :open, -> { where(status: "open") }
 
-  def subtotal_paise
-    TicketItem.active.where(ticket: tickets).sum("quantity * unit_price_paise") - discount_paise.to_i
+  def subtotal_paisa
+    TicketItem.active.where(ticket: tickets).sum("quantity * unit_price_paisa") - discount_paisa.to_i
   end
 
-  def paid_paise
-    payments.sum(:amount_paise)
+  def paid_paisa
+    payments.sum(:amount_paisa)
   end
 
-  def apply_discount!(amount_paise:, reason:, approved_by:)
-    update!(discount_paise: amount_paise, discount_reason: reason, discount_approved_by: approved_by)
+  def apply_discount!(amount_paisa:, reason:, approved_by:)
+    update!(discount_paisa: amount_paisa, discount_reason: reason, discount_approved_by: approved_by)
   end
 
   # A cold-started offline sale (the offline shell) has no real session id
