@@ -39,7 +39,8 @@ class CatalogSnapshotsController < ApplicationController
       id: item.id,
       name: item.name,
       category: item.category,
-      gross_price_paisa: item.gross_price_paisa
+      gross_price_paisa: item.gross_price_paisa,
+      gross_price_rupees: item.gross_price_rupees
     }
   end
 end

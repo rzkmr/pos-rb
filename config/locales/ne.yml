@@ -271,7 +271,7 @@ ne:
         takeaway: "टेकअवे"
     menu_items:
       form:
-        gross_price_paisa: "मूल्य (paisa, करसहित)"
+        gross_price_rupees: "मूल्य (रु., करसहित)"
       edit:
         title: "मेनु वस्तु सम्पादन"
       new:

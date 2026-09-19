@@ -15,14 +15,15 @@ class Admin::MenuItemsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_admin_session_path
   end
 
-  test "admin can create a menu item" do
+  test "admin can create a menu item, entering the price in rupees" do
     admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
 
     assert_difference "MenuItem.count", 1 do
-      post admin_menu_items_url, params: { menu_item: { name: "Idli", category: "main", gross_price_paisa: 5000 } }
+      post admin_menu_items_url, params: { menu_item: { name: "Idli", category: "main", gross_price_rupees: "50.50" } }
     end
 
     assert_redirected_to admin_menu_items_path
+    assert_equal 5050, MenuItem.last.gross_price_paisa
   end
 
   test "admin destroy deactivates instead of deleting, and writes an audit_event" do

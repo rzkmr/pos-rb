@@ -43,7 +43,14 @@ class Admin::MenuItemsController < Admin::BaseController
     @menu_item = Current.shop.menu_items.find(params[:id])
   end
 
+  # The form takes the price in rupees (gross_price_rupees) — staff enter
+  # "120" or "120.50", not raw paisa. Converted here, once, at the trust
+  # boundary; gross_price_paisa is the only value that ever reaches the
+  # model or gets stored (CLAUDE.md invariant #1 — integer paisa, always).
   def menu_item_params
-    params.require(:menu_item).permit(:name, :category, :gross_price_paisa, :active, :position)
+    permitted = params.require(:menu_item).permit(:name, :category, :gross_price_rupees, :active, :position)
+    rupees = permitted.delete(:gross_price_rupees)
+    permitted[:gross_price_paisa] = (rupees.to_f * 100).round if rupees.present?
+    permitted
   end
 end

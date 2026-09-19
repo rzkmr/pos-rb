@@ -312,7 +312,7 @@ en:
         takeaway: "Takeaway"
     menu_items:
       form:
-        gross_price_paisa: "Price (paisa, incl. tax)"
+        gross_price_rupees: "Price (Rs., incl. tax)"
       edit:
         title: "Edit menu item"
       new:

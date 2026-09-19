@@ -20,8 +20,9 @@
   </div>
 
   <div class="flex flex-col gap-1.5">
-    <%= f.label :gross_price_paisa, t(".gross_price_paisa"), class: "text-[15px] font-semibold" %>
-    <%= f.number_field :gross_price_paisa, class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
+    <%= f.label :gross_price_rupees, t(".gross_price_rupees"), class: "text-[15px] font-semibold" %>
+    <%= f.number_field :gross_price_rupees, value: (menu_item.gross_price_paisa.present? ? menu_item.gross_price_rupees : nil),
+          step: "0.01", min: "0", class: "min-h-[48px] px-3 rounded-ctl border-2 border-line-2 font-mono text-[16px]" %>
   </div>
 
   <div class="flex items-center gap-2">
