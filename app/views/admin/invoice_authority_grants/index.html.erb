@@ -22,7 +22,7 @@
           <% end %>
         </div>
         <%= form_with url: force_release_admin_invoice_authority_grant_path(@live_grant), method: :post,
-              data: { turbo_confirm: t(".force_release_confirm") }, class: "flex items-center gap-2" %>
+              data: { turbo_confirm: t(".force_release_confirm") }, class: "flex items-center gap-2" do %>
           <%= text_field_tag :reason, nil, placeholder: t(".force_release_reason_placeholder"), required: true,
                 class: "flex-1 min-h-[44px] px-3 rounded-ctl border-2 border-line-2 text-[14px]" %>
           <%= submit_tag t(".force_release"), class: "min-h-[44px] px-4 rounded-ctl border-2 border-stop text-stop text-[14px] font-bold bg-surface" %>
