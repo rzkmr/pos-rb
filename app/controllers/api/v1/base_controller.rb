@@ -8,7 +8,6 @@
 # resolved per-call via Sync::ActingUser, the same resolver the offline
 # PWA cold-start path already uses.
 class Api::V1::BaseController < ActionController::API
-  before_action :set_current_shop
   before_action :authenticate_device!
   around_action :with_locale
 
@@ -20,19 +19,26 @@ class Api::V1::BaseController < ActionController::API
     I18n.with_locale(I18n.default_locale, &block)
   end
 
-  def set_current_shop
-    Current.shop = Shop.order(:id).first
-  end
-
+  # The device token is the only tenant identity the API trusts — there is
+  # no shop_id in the request to spoof, and none is needed: a device
+  # belongs to exactly one shop (ShopScoped), so authenticating the device
+  # IS resolving the shop. Iterates every device rather than scoping the
+  # query to a shop first, because which shop it's in is exactly what
+  # authenticating this token tells us — see ARCHITECTURE.md §11 for the
+  # multi-shop routing this keeps correct ahead of time.
+  #
+  # ponytail: O(n) bcrypt compares across all devices in the deployment.
+  # Fine at single-shop scale (a handful of devices); if this becomes a
+  # multi-shop routing hot path, index by a public device_uid looked up
+  # first, then bcrypt-verify only that one row.
   def authenticate_device!
-    return render_unauthorized("no shop configured") unless Current.shop
-
     token = bearer_token
     return render_unauthorized("missing bearer token") unless token
 
-    device = Current.shop.devices.find { |d| d.authenticate_token(token) }
+    device = Device.unscoped.find { |d| d.authenticate_token(token) }
     return render_unauthorized("invalid or revoked device token") unless device
 
+    Current.shop = device.shop
     Current.device = device
     device.touch_last_seen!
   end
