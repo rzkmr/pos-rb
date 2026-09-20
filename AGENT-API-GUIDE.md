@@ -36,10 +36,12 @@ That's the only auth header this API reads today. `X-Device-Id` / `X-App-Version
 Rate-limited 5/15min per IP, plus a shop-wide lockout via `PairingAttempt` on repeated failures (`429 { "error": "pairing_locked" }`). The returned `token` is shown once — store it, it's not retrievable again (only `token_digest` is persisted server-side).
 
 ```
-404 no_shop_configured   — server has no shop row yet (fresh install)
+422 no_shop_configured   — server has no shop row yet (fresh install)
 401 invalid_pairing_pin
 429 too_many_attempts | pairing_locked
 ```
+
+Pairing has no device token yet, so the server can't derive the shop from a request the way every other endpoint below does — it still falls back to `Shop.order(:id).first` (there is only ever one shop row today). Same for owner login just below. Every *token*-authenticated endpoint (bootstrap, delta, updates, sync/batch) instead resolves the shop from the device token itself — see "Every other request."
 
 ### Owner login (mints a long-lived owner_session_token, independent of device pairing)
 
@@ -77,6 +79,8 @@ Authorization: Bearer <owner_session_token>
 Authorization: Bearer <device_token>
 ```
 
+The shop is derived entirely from the device token — `Api::V1::BaseController` looks the token up across every device in the deployment and sets the request's shop from whatever shop that device belongs to. There is no `shop_id` in the request and none is needed; a device token already proves which shop it's for, so nothing about tenancy is client-supplied or spoofable.
+
 ```
 401 — token missing, unknown, or revoked. Wipe stored token, re-pair.
 403 — not currently returned by BaseController (spec reserves it for "device disabled"
@@ -106,15 +110,22 @@ Authorization: Bearer <device_token>
 {
   "server_time": "2026-09-16T09:00:00+05:45",
   "cursor": 4821,
-  "shop": { "id": "...", "name": "...", "address": "...", "invoice_fy": "...", "invoice_prefix": "...", "invoice_footer": "..." },
+  "shop": {
+    "id": "...", "name": "...", "address": "...", "pan": "...",
+    "vat_rate_bp": 1300, "service_charge_rate_bp": 1000,
+    "invoice_fy": "...", "invoice_prefix": "...", "invoice_footer": "..."
+  },
   "device": { "id": "...", "label": "Counter 1", "kind": "counter", "last_seen_at": "..." },
   "users": [ { "id": "...", "name": "...", "role": "..." } ],
   "dining_tables": [ { "id": "...", "label": "...", "seats": 4, "position": 1, "takeaway": false } ],
-  "menu_items": [ { "id": "...", "name": "...", "category": "...", "price_paise": 15000, "hsn_sac": "...", "variants": [], "active": true, "position": 1 } ]
+  "menu_items": [
+    { "id": "...", "name": "...", "category": "...", "gross_price_paisa": 15000, "gross_price_rupees": 150.0,
+      "variants": [], "active": true, "position": 1 }
+  ]
 }
 ```
 
-`users[]` is id/role/name only — PIN never leaves the server. `cursor` is the starting point for step 3's `/delta?cursor=`.
+`users[]` is id/role/name only — PIN never leaves the server. `cursor` is the starting point for step 3's `/delta?cursor=`. `vat_rate_bp`/`service_charge_rate_bp` are basis points (1300 = 13%), not hardcoded — `ARCHITECTURE.md` §6 has the extraction formula. `gross_price_paisa` is the field to do arithmetic on; `gross_price_rupees` is a display-only convenience (float, rounded to 2dp) — never compute with it, it exists so a consumer that just wants to show a price doesn't have to divide by 100 itself. Same pair on every menu item in `/delta` records for that entity.
 
 ### `GET /delta?cursor=N`
 
@@ -171,9 +182,10 @@ Same ledger as `/delta`, filtered to `entity: "ticket"` — no `has_more`/`curso
 - **Never send per-line tax.** Tax is computed server-side on the session total. The server recomputes and rejects (`tax_mismatch`) on any mismatch — it never trusts or auto-corrects client arithmetic.
 - **Cursors are integers, not timestamps.** `/delta` and `/updates` both use `cursor`, a monotonic server-side `seq`. Don't build anything around `updated_at`.
 - **Deletes are tombstones inside the delta stream**, not a separate endpoint — `action: "delete"` on a `menu_item`/`dining_table`/etc. entity in `/delta`'s `changes[]`.
-- **Money is always integer paisa.** Never float, never a decimal string.
+- **Money is always integer paisa on the wire for anything you compute with.** Never float, never a decimal string, for `gross_price_paisa` or any other `_paisa` field. A handful of read-only responses (menu item price today) also carry a `_rupees` sibling field purely for display — treat it as a formatted string would be, never as input to tax or total math.
 - **A batch endpoint is always `200`**, even when individual operations inside it fail. Don't treat a non-200 from `/sync/batch` as "some ops failed" — that's a transport-level problem, not a business one.
 - **Invoice numbering is still server/shop-wide today**, not per-device, despite what `API-SPEC.md` §6 describes as the target. Per-device series (`devices.invoice_series`) is explicitly deferred — see `ARCHITECTURE.md` §12 Phase E — until a native Android client exists. Don't build client-side invoice-sequence allocation against this API yet.
+- **There is no `shop_id` on any token-authenticated request, and you don't need one.** The device token itself resolves the shop server-side. Pairing and owner login are the only two endpoints that can't do this (no token exists yet at that point) and fall back to "the one shop that exists" — everything else derives tenancy from the token you're already sending.
 
 ---
 
