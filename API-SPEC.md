@@ -153,14 +153,14 @@ First run, and after any `409 bootstrap_required`. Returns everything the device
   "menu_items": [
     {
       "id": "...", "name_ne": "मःम", "name_en": "Momo",
-      "category": "main", "gross_price_paisa": 18000, "gross_price_rupees": 180.0,
+      "category": "main", "gross_price_rupees": 180.0, "gross_price_paisa": 18000,
       "variants": [], "active": true, "position": 1
     }
   ]
 }
 ```
 
-**`gross_price_paisa` is the all-inclusive price the guest pays.** VAT and service charge are extracted backwards. See `ARCHITECTURE.md` §6. **`gross_price_rupees` is a display-only convenience** (float, 2dp) computed from `gross_price_paisa` — never do tax or total arithmetic with it; it exists purely so a consumer that just wants to show a price doesn't have to divide by 100 itself.
+**`gross_price_rupees` (float, 2dp) is the all-inclusive price the guest pays, and the field a client builds cart/tax/total math on.** VAT and service charge are extracted backwards from it — see `ARCHITECTURE.md` §6. `gross_price_paisa` (integer) rides along on the same object for a client that wants exact integer arithmetic instead; both represent the same price, pick one and don't mix them within a calculation. This is a wire-format choice for `/api/v1` consumers only — the server's own storage and its own tax computation (`Billing.compute`) remain integer paisa throughout, per `CLAUDE.md` invariant #1, regardless of which field a client reads. Line-item snapshots a client *submits* (§4 below) stay paisa-only — see there.
 
 PIN verification is **online-preferred, offline-capable**: the device caches an Argon2/bcrypt digest per user so staff can log in during an outage. `pin_digest_version` bumps on any PIN change so the device knows its cache is stale.
 
@@ -177,7 +177,7 @@ Incremental changes to reference data — menu, tables, users, shop settings.
   "server_time": "2026-08-19T09:20:11Z",
   "changes": [
     { "seq": 184931, "entity": "menu_item", "action": "upsert",
-      "record": { "id": "...", "name_ne": "चाउमिन", "gross_price_paisa": 22000, "gross_price_rupees": 220.0, "active": true } },
+      "record": { "id": "...", "name_ne": "चाउमिन", "gross_price_rupees": 220.0, "gross_price_paisa": 22000, "active": true } },
     { "seq": 184933, "entity": "menu_item", "action": "delete", "record": { "id": "..." } },
     { "seq": 184935, "entity": "shop", "action": "upsert",
       "record": { "service_charge_enabled": false } }

@@ -121,13 +121,13 @@ The shop is derived entirely from the device token — `Api::V1::BaseController`
   "users": [ { "id": "...", "name": "...", "role": "..." } ],
   "dining_tables": [ { "id": "...", "label": "...", "seats": 4, "position": 1, "takeaway": false } ],
   "menu_items": [
-    { "id": "...", "name": "...", "category": "...", "gross_price_paisa": 15000, "gross_price_rupees": 150.0,
+    { "id": "...", "name": "...", "category": "...", "gross_price_rupees": 150.0, "gross_price_paisa": 15000,
       "variants": [], "active": true, "position": 1 }
   ]
 }
 ```
 
-`users[]` is id/role/name only — PIN never leaves the server. `cursor` is the starting point for step 3's `/delta?cursor=`. `vat_rate_bp`/`service_charge_rate_bp` are basis points (1300 = 13%), not hardcoded — `ARCHITECTURE.md` §6 has the extraction formula. `gross_price_paisa` is the field to do arithmetic on; `gross_price_rupees` is a display-only convenience (float, rounded to 2dp) — never compute with it, it exists so a consumer that just wants to show a price doesn't have to divide by 100 itself. Same pair on every menu item in `/delta` records for that entity.
+`users[]` is id/role/name only — PIN never leaves the server. `cursor` is the starting point for step 3's `/delta?cursor=`. `vat_rate_bp`/`service_charge_rate_bp` are basis points (1300 = 13%), not hardcoded — `ARCHITECTURE.md` §6 has the extraction formula. **`gross_price_rupees` (float, 2dp) is the field to build a client-side cart/tax/total on** — build your own arithmetic against it. `gross_price_paisa` (integer) still rides along on every menu item, for a client that wants exact integer math instead; either is a legitimate choice for a *client*, pick one and don't mix them within the same calculation. This is a wire-format decision only — the server's own storage and its own tax computation (`Billing.compute`) are still integer paisa throughout, per `CLAUDE.md` invariant #1; that invariant governs the server's internals, not what a client builds against. Same pair, same ordering, on every menu item in `/delta` records for that entity.
 
 ### `GET /delta?cursor=N`
 
@@ -186,7 +186,7 @@ Same ledger as `/delta`, filtered to `entity: "ticket"` — no `has_more`/`curso
 - **Never send per-line tax.** Tax is computed server-side on the session total. The server recomputes and rejects (`tax_mismatch`) on any mismatch — it never trusts or auto-corrects client arithmetic.
 - **Cursors are integers, not timestamps.** `/delta` and `/updates` both use `cursor`, a monotonic server-side `seq`. Don't build anything around `updated_at`.
 - **Deletes are tombstones inside the delta stream**, not a separate endpoint — `action: "delete"` on a `menu_item`/`dining_table`/etc. entity in `/delta`'s `changes[]`.
-- **Money is always integer paisa on the wire for anything you compute with.** Never float, never a decimal string, for `gross_price_paisa` or any other `_paisa` field. A handful of read-only responses (menu item price today) also carry a `_rupees` sibling field purely for display — treat it as a formatted string would be, never as input to tax or total math.
+- **Menu item price ships as both `gross_price_rupees` (float, build your own cart/tax math on this) and `gross_price_paisa` (integer, for a client that wants exact integer math instead)** — pick one and don't mix them mid-calculation. This is a wire-format choice, not a server-internals one: the server's own storage and its own tax computation (`Billing.compute`) are integer paisa throughout regardless of which field a client used, `CLAUDE.md` invariant #1 governs that and hasn't changed. Elsewhere on the wire — `payment.record`'s `amount_paisa`, an offline invoice's `gross_paisa` — there is no rupee sibling; those stay integer paisa, no exception. When in doubt about a given field, check the controller — this guide documents what exists today, not a blanket rule to extrapolate from.
 - **A batch endpoint is always `200`**, even when individual operations inside it fail. Don't treat a non-200 from `/sync/batch` as "some ops failed" — that's a transport-level problem, not a business one.
 - **Invoice numbering is still server/shop-wide today**, not per-device, despite what `API-SPEC.md` §6 describes as the target. Per-device series (`devices.invoice_series`) is explicitly deferred — see `ARCHITECTURE.md` §12 Phase E — until a native Android client exists. Don't build client-side invoice-sequence allocation against this API yet.
 - **There is no `shop_id` on any token-authenticated request, and you don't need one.** The device token itself resolves the shop server-side. Pairing and owner login are the only two endpoints that can't do this (no token exists yet at that point) and fall back to "the one shop that exists" — everything else derives tenancy from the token you're already sending. See "Getting a device token" above for why that fallback won't stay safe once this deployment goes multi-shop.

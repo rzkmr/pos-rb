@@ -51,7 +51,7 @@ class Api::V1::BootstrapController < Api::V1::BaseController
   def menu_item_payload(item)
     {
       id: item.id, name: item.name, category: item.category,
-      gross_price_paisa: item.gross_price_paisa, gross_price_rupees: item.gross_price_rupees,
+      gross_price_rupees: item.gross_price_rupees, gross_price_paisa: item.gross_price_paisa,
       variants: item.variants, active: item.active, position: item.position
     }
   end
