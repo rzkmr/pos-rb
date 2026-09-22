@@ -1,7 +1,11 @@
 require "test_helper"
 
 class PaymentsControllerTest < ActionDispatch::IntegrationTest
-  setup { sign_in_as(users(:alpha_waiter), pin: "2222") }
+  setup do
+    Current.shop = shops(:alpha)
+    sign_in_as(users(:alpha_waiter), pin: "2222")
+  end
+  teardown { Current.reset }
 
   test "split payment across cash and Fonepay settles the session and issues one invoice" do
     session = table_sessions(:alpha_t1_open)

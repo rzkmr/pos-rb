@@ -1,6 +1,7 @@
 require "test_helper"
 
 class DeviceTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
   teardown { Current.reset }
 
   test "pair! returns a device and a plaintext token that authenticates" do

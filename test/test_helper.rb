@@ -14,10 +14,31 @@ module ActiveSupport
   end
 end
 
+module SignsAsDevice
+  # Integration tests' `cookies` is a Rack::Test::CookieJar (see
+  # ActionDispatch::Integration::Session#cookies) — it has no `signed`
+  # accessor at all, unlike a real controller's ActionDispatch::Cookies
+  # jar. Authentication#set_current_device reads cookies.signed, so a
+  # plain `cookies[:device_token] = token` is never authenticated — it
+  # just always 401s, silently, because signed returns nil for a value
+  # it can't verify. This builds a real ActionDispatch cookie jar against
+  # nothing but this process's own secret_key_base (the same key the app
+  # itself signs with) purely to get the wire-format signed string, then
+  # sets that as a plain string cookie — which is exactly what a real
+  # signed cookie looks like on the wire to whoever reads it.
+  def signed_device_cookie(token)
+    jar = ActionDispatch::Cookies::CookieJar.build(ActionDispatch::TestRequest.create, {})
+    jar.signed[:device_token] = token
+    jar[:device_token]
+  end
+end
+
 module SignsInAsUser
+  include SignsAsDevice
+
   def sign_in_as(user, pin:, shop: user.shop)
     device, token = Device.pair!(shop: shop, label: "Test Device")
-    cookies[:device_token] = token
+    cookies[:device_token] = signed_device_cookie(token)
     post session_url, params: { user_id: user.id, pin: pin }
     device
   end
@@ -28,6 +49,7 @@ module SignsInAsUser
   end
 end
 
+ActionDispatch::IntegrationTest.include SignsAsDevice
 ActionDispatch::IntegrationTest.include SignsInAsUser
 
 module ApiAuthentication

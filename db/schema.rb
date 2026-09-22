@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_20_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,8 +22,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.bigint "shop_id", null: false
     t.datetime "updated_at", null: false
     t.string "username", null: false
-    t.index ["shop_id", "username"], name: "index_admin_users_on_shop_id_and_username", unique: true
-    t.index ["shop_id"], name: "index_admin_users_on_shop_id"
+    t.index [ "shop_id", "username" ], name: "index_admin_users_on_shop_id_and_username", unique: true
+    t.index [ "shop_id" ], name: "index_admin_users_on_shop_id"
   end
 
   create_table "api_sync_events", force: :cascade do |t|
@@ -35,8 +35,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.bigint "seq", null: false
     t.bigint "shop_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["shop_id", "seq"], name: "index_api_sync_events_on_shop_id_and_seq", unique: true
-    t.index ["shop_id"], name: "index_api_sync_events_on_shop_id"
+    t.index [ "shop_id", "seq" ], name: "index_api_sync_events_on_shop_id_and_seq", unique: true
+    t.index [ "shop_id" ], name: "index_api_sync_events_on_shop_id"
   end
 
   create_table "audit_events", force: :cascade do |t|
@@ -52,12 +52,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "subject_id", null: false
     t.string "subject_type", null: false
     t.integer "user_id"
-    t.index ["admin_user_id"], name: "index_audit_events_on_admin_user_id"
-    t.index ["created_at_bs_year", "created_at_bs_month", "created_at_bs_day"], name: "index_audit_events_on_created_at_bs_date"
-    t.index ["device_id"], name: "index_audit_events_on_device_id"
-    t.index ["shop_id", "subject_type", "subject_id"], name: "index_audit_events_on_shop_id_and_subject_type_and_subject_id"
-    t.index ["shop_id"], name: "index_audit_events_on_shop_id"
-    t.index ["user_id"], name: "index_audit_events_on_user_id"
+    t.index [ "admin_user_id" ], name: "index_audit_events_on_admin_user_id"
+    t.index [ "created_at_bs_year", "created_at_bs_month", "created_at_bs_day" ], name: "index_audit_events_on_created_at_bs_date"
+    t.index [ "device_id" ], name: "index_audit_events_on_device_id"
+    t.index [ "shop_id", "subject_type", "subject_id" ], name: "index_audit_events_on_shop_id_and_subject_type_and_subject_id"
+    t.index [ "shop_id" ], name: "index_audit_events_on_shop_id"
+    t.index [ "user_id" ], name: "index_audit_events_on_user_id"
   end
 
   create_table "client_actions", force: :cascade do |t|
@@ -71,10 +71,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.bigint "shop_id", null: false
     t.string "status", default: "applied", null: false
     t.datetime "updated_at", null: false
-    t.index ["device_id"], name: "index_client_actions_on_device_id"
-    t.index ["shop_id", "client_action_id"], name: "index_client_actions_on_shop_id_and_client_action_id", unique: true
-    t.index ["shop_id", "status"], name: "index_client_actions_on_shop_id_and_status"
-    t.index ["shop_id"], name: "index_client_actions_on_shop_id"
+    t.index [ "device_id" ], name: "index_client_actions_on_device_id"
+    t.index [ "shop_id", "client_action_id" ], name: "index_client_actions_on_shop_id_and_client_action_id", unique: true
+    t.index [ "shop_id", "status" ], name: "index_client_actions_on_shop_id_and_status"
+    t.index [ "shop_id" ], name: "index_client_actions_on_shop_id"
   end
 
   create_table "devices", force: :cascade do |t|
@@ -85,8 +85,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "shop_id", null: false
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
-    t.index ["shop_id"], name: "index_devices_on_shop_id"
-    t.index ["token_digest"], name: "index_devices_on_token_digest", unique: true
+    t.index [ "shop_id" ], name: "index_devices_on_shop_id"
+    t.index [ "token_digest" ], name: "index_devices_on_token_digest", unique: true
   end
 
   create_table "dining_tables", force: :cascade do |t|
@@ -97,8 +97,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "shop_id", null: false
     t.boolean "takeaway", default: false, null: false
     t.datetime "updated_at", null: false
-    t.index ["shop_id", "label"], name: "index_dining_tables_on_shop_id_and_label", unique: true
-    t.index ["shop_id"], name: "index_dining_tables_on_shop_id"
+    t.index [ "shop_id", "label" ], name: "index_dining_tables_on_shop_id_and_label", unique: true
+    t.index [ "shop_id" ], name: "index_dining_tables_on_shop_id"
   end
 
   create_table "held_carts", force: :cascade do |t|
@@ -109,10 +109,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.json "items", default: [], null: false
     t.bigint "shop_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["dining_table_id"], name: "index_held_carts_on_dining_table_id"
-    t.index ["held_by_id"], name: "index_held_carts_on_held_by_id"
-    t.index ["shop_id", "dining_table_id"], name: "index_held_carts_on_shop_id_and_dining_table_id"
-    t.index ["shop_id"], name: "index_held_carts_on_shop_id"
+    t.index [ "dining_table_id" ], name: "index_held_carts_on_dining_table_id"
+    t.index [ "held_by_id" ], name: "index_held_carts_on_held_by_id"
+    t.index [ "shop_id", "dining_table_id" ], name: "index_held_carts_on_shop_id_and_dining_table_id"
+    t.index [ "shop_id" ], name: "index_held_carts_on_shop_id"
   end
 
   create_table "invoice_authority_grants", force: :cascade do |t|
@@ -127,10 +127,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.datetime "released_at"
     t.bigint "shop_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["device_id"], name: "index_invoice_authority_grants_on_device_id"
-    t.index ["shop_id", "device_id"], name: "index_invoice_authority_grants_on_shop_id_and_device_id"
-    t.index ["shop_id"], name: "idx_one_live_grant_per_shop", unique: true, where: "(released_at IS NULL)"
-    t.index ["shop_id"], name: "index_invoice_authority_grants_on_shop_id"
+    t.index [ "device_id" ], name: "index_invoice_authority_grants_on_device_id"
+    t.index [ "shop_id", "device_id" ], name: "index_invoice_authority_grants_on_shop_id_and_device_id"
+    t.index [ "shop_id" ], name: "idx_one_live_grant_per_shop", unique: true, where: "(released_at IS NULL)"
+    t.index [ "shop_id" ], name: "index_invoice_authority_grants_on_shop_id"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -153,11 +153,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "table_session_id", null: false
     t.datetime "updated_at", null: false
     t.integer "vat_paisa", null: false
-    t.index ["issued_at_bs_year", "issued_at_bs_month", "issued_at_bs_day"], name: "index_invoices_on_issued_at_bs_date"
-    t.index ["number"], name: "index_invoices_on_number", unique: true
-    t.index ["shop_id", "financial_year", "sequence"], name: "index_invoices_on_shop_id_and_financial_year_and_sequence", unique: true
-    t.index ["shop_id"], name: "index_invoices_on_shop_id"
-    t.index ["table_session_id"], name: "index_invoices_on_table_session_id"
+    t.index [ "issued_at_bs_year", "issued_at_bs_month", "issued_at_bs_day" ], name: "index_invoices_on_issued_at_bs_date"
+    t.index [ "number" ], name: "index_invoices_on_number", unique: true
+    t.index [ "shop_id", "financial_year", "sequence" ], name: "index_invoices_on_shop_id_and_financial_year_and_sequence", unique: true
+    t.index [ "shop_id" ], name: "index_invoices_on_shop_id"
+    t.index [ "table_session_id" ], name: "index_invoices_on_table_session_id"
   end
 
   create_table "menu_items", force: :cascade do |t|
@@ -170,8 +170,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "shop_id", null: false
     t.datetime "updated_at", null: false
     t.json "variants", default: [], null: false
-    t.index ["shop_id", "active"], name: "index_menu_items_on_shop_id_and_active"
-    t.index ["shop_id"], name: "index_menu_items_on_shop_id"
+    t.index [ "shop_id", "active" ], name: "index_menu_items_on_shop_id_and_active"
+    t.index [ "shop_id" ], name: "index_menu_items_on_shop_id"
   end
 
   create_table "owner_sessions", force: :cascade do |t|
@@ -181,9 +181,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.bigint "shop_id", null: false
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
-    t.index ["admin_user_id"], name: "index_owner_sessions_on_admin_user_id"
-    t.index ["shop_id"], name: "index_owner_sessions_on_shop_id"
-    t.index ["token_digest"], name: "index_owner_sessions_on_token_digest", unique: true
+    t.index [ "admin_user_id" ], name: "index_owner_sessions_on_admin_user_id"
+    t.index [ "shop_id" ], name: "index_owner_sessions_on_shop_id"
+    t.index [ "token_digest" ], name: "index_owner_sessions_on_token_digest", unique: true
   end
 
   create_table "pairing_attempts", force: :cascade do |t|
@@ -192,8 +192,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.bigint "shop_id", null: false
     t.boolean "success", null: false
     t.datetime "updated_at", null: false
-    t.index ["shop_id", "success", "created_at"], name: "index_pairing_attempts_on_shop_id_and_success_and_created_at"
-    t.index ["shop_id"], name: "index_pairing_attempts_on_shop_id"
+    t.index [ "shop_id", "success", "created_at" ], name: "index_pairing_attempts_on_shop_id_and_success_and_created_at"
+    t.index [ "shop_id" ], name: "index_pairing_attempts_on_shop_id"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -209,12 +209,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "shop_id", null: false
     t.integer "table_session_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["client_token"], name: "index_payments_on_client_token", unique: true, where: "(client_token IS NOT NULL)"
-    t.index ["created_at_bs_year", "created_at_bs_month", "created_at_bs_day"], name: "index_payments_on_created_at_bs_date"
-    t.index ["received_by_id"], name: "index_payments_on_received_by_id"
-    t.index ["shop_id", "table_session_id"], name: "index_payments_on_shop_id_and_table_session_id"
-    t.index ["shop_id"], name: "index_payments_on_shop_id"
-    t.index ["table_session_id"], name: "index_payments_on_table_session_id"
+    t.index [ "client_token" ], name: "index_payments_on_client_token", unique: true, where: "(client_token IS NOT NULL)"
+    t.index [ "created_at_bs_year", "created_at_bs_month", "created_at_bs_day" ], name: "index_payments_on_created_at_bs_date"
+    t.index [ "received_by_id" ], name: "index_payments_on_received_by_id"
+    t.index [ "shop_id", "table_session_id" ], name: "index_payments_on_shop_id_and_table_session_id"
+    t.index [ "shop_id" ], name: "index_payments_on_shop_id"
+    t.index [ "table_session_id" ], name: "index_payments_on_table_session_id"
   end
 
   create_table "print_jobs", force: :cascade do |t|
@@ -230,10 +230,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "shop_id", null: false
     t.string "status", default: "queued", null: false
     t.datetime "updated_at", null: false
-    t.index ["created_at_bs_year", "created_at_bs_month", "created_at_bs_day"], name: "index_print_jobs_on_created_at_bs_date"
-    t.index ["invoice_id"], name: "index_print_jobs_on_invoice_id"
-    t.index ["shop_id", "status"], name: "index_print_jobs_on_shop_id_and_status"
-    t.index ["shop_id"], name: "index_print_jobs_on_shop_id"
+    t.index [ "created_at_bs_year", "created_at_bs_month", "created_at_bs_day" ], name: "index_print_jobs_on_created_at_bs_date"
+    t.index [ "invoice_id" ], name: "index_print_jobs_on_invoice_id"
+    t.index [ "shop_id", "status" ], name: "index_print_jobs_on_shop_id_and_status"
+    t.index [ "shop_id" ], name: "index_print_jobs_on_shop_id"
   end
 
   create_table "shop_sync_cursors", force: :cascade do |t|
@@ -241,7 +241,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.bigint "shop_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "value", default: 0, null: false
-    t.index ["shop_id"], name: "index_shop_sync_cursors_on_shop_id", unique: true
+    t.index [ "shop_id" ], name: "index_shop_sync_cursors_on_shop_id", unique: true
   end
 
   create_table "shops", force: :cascade do |t|
@@ -280,14 +280,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "shop_id", null: false
     t.string "status", default: "open", null: false
     t.datetime "updated_at", null: false
-    t.index ["closed_at_bs_year", "closed_at_bs_month", "closed_at_bs_day"], name: "index_table_sessions_on_closed_at_bs_date"
-    t.index ["dining_table_id"], name: "index_table_sessions_on_dining_table_id"
-    t.index ["discount_approved_by_id"], name: "index_table_sessions_on_discount_approved_by_id"
-    t.index ["opened_at_bs_year", "opened_at_bs_month", "opened_at_bs_day"], name: "index_table_sessions_on_opened_at_bs_date"
-    t.index ["opened_by_id"], name: "index_table_sessions_on_opened_by_id"
-    t.index ["shop_id", "client_session_token"], name: "idx_table_sessions_on_shop_and_client_token", unique: true, where: "(client_session_token IS NOT NULL)"
-    t.index ["shop_id", "status"], name: "index_table_sessions_on_shop_id_and_status"
-    t.index ["shop_id"], name: "index_table_sessions_on_shop_id"
+    t.index [ "closed_at_bs_year", "closed_at_bs_month", "closed_at_bs_day" ], name: "index_table_sessions_on_closed_at_bs_date"
+    t.index [ "dining_table_id" ], name: "index_table_sessions_on_dining_table_id"
+    t.index [ "discount_approved_by_id" ], name: "index_table_sessions_on_discount_approved_by_id"
+    t.index [ "opened_at_bs_year", "opened_at_bs_month", "opened_at_bs_day" ], name: "index_table_sessions_on_opened_at_bs_date"
+    t.index [ "opened_by_id" ], name: "index_table_sessions_on_opened_by_id"
+    t.index [ "shop_id", "client_session_token" ], name: "idx_table_sessions_on_shop_and_client_token", unique: true, where: "(client_session_token IS NOT NULL)"
+    t.index [ "shop_id", "status" ], name: "index_table_sessions_on_shop_id_and_status"
+    t.index [ "shop_id" ], name: "index_table_sessions_on_shop_id"
   end
 
   create_table "ticket_items", force: :cascade do |t|
@@ -306,10 +306,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.integer "voided_at_bs_month"
     t.integer "voided_at_bs_year"
     t.integer "voided_by_id"
-    t.index ["menu_item_id"], name: "index_ticket_items_on_menu_item_id"
-    t.index ["ticket_id"], name: "index_ticket_items_on_ticket_id"
-    t.index ["voided_at_bs_year", "voided_at_bs_month", "voided_at_bs_day"], name: "index_ticket_items_on_voided_at_bs_date"
-    t.index ["voided_by_id"], name: "index_ticket_items_on_voided_by_id"
+    t.index [ "menu_item_id" ], name: "index_ticket_items_on_menu_item_id"
+    t.index [ "ticket_id" ], name: "index_ticket_items_on_ticket_id"
+    t.index [ "voided_at_bs_year", "voided_at_bs_month", "voided_at_bs_day" ], name: "index_ticket_items_on_voided_at_bs_date"
+    t.index [ "voided_by_id" ], name: "index_ticket_items_on_voided_by_id"
   end
 
   create_table "tickets", force: :cascade do |t|
@@ -325,13 +325,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.string "status", default: "pending", null: false
     t.integer "table_session_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["client_token"], name: "index_tickets_on_client_token", unique: true
-    t.index ["placed_at_bs_year", "placed_at_bs_month", "placed_at_bs_day"], name: "index_tickets_on_placed_at_bs_date"
-    t.index ["placed_by_id"], name: "index_tickets_on_placed_by_id"
-    t.index ["shop_id", "status"], name: "index_tickets_on_shop_id_and_status"
-    t.index ["shop_id"], name: "index_tickets_on_shop_id"
-    t.index ["table_session_id", "number"], name: "index_tickets_on_table_session_id_and_number", unique: true
-    t.index ["table_session_id"], name: "index_tickets_on_table_session_id"
+    t.index [ "client_token" ], name: "index_tickets_on_client_token", unique: true
+    t.index [ "placed_at_bs_year", "placed_at_bs_month", "placed_at_bs_day" ], name: "index_tickets_on_placed_at_bs_date"
+    t.index [ "placed_by_id" ], name: "index_tickets_on_placed_by_id"
+    t.index [ "shop_id", "status" ], name: "index_tickets_on_shop_id_and_status"
+    t.index [ "shop_id" ], name: "index_tickets_on_shop_id"
+    t.index [ "table_session_id", "number" ], name: "index_tickets_on_table_session_id_and_number", unique: true
+    t.index [ "table_session_id" ], name: "index_tickets_on_table_session_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -343,46 +343,46 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_100000) do
     t.string "role", null: false
     t.integer "shop_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["shop_id", "role"], name: "index_users_on_shop_id_and_role"
-    t.index ["shop_id"], name: "index_users_on_shop_id"
+    t.index [ "shop_id", "role" ], name: "index_users_on_shop_id_and_role"
+    t.index [ "shop_id" ], name: "index_users_on_shop_id"
   end
 
-  add_foreign_key "admin_users", "shops"
-  add_foreign_key "api_sync_events", "shops"
-  add_foreign_key "audit_events", "admin_users"
-  add_foreign_key "audit_events", "devices"
-  add_foreign_key "audit_events", "shops"
-  add_foreign_key "audit_events", "users"
-  add_foreign_key "client_actions", "devices"
-  add_foreign_key "client_actions", "shops"
-  add_foreign_key "devices", "shops"
-  add_foreign_key "dining_tables", "shops"
-  add_foreign_key "held_carts", "dining_tables"
-  add_foreign_key "held_carts", "shops"
-  add_foreign_key "held_carts", "users", column: "held_by_id"
-  add_foreign_key "invoice_authority_grants", "devices"
-  add_foreign_key "invoice_authority_grants", "shops"
-  add_foreign_key "invoices", "shops"
-  add_foreign_key "invoices", "table_sessions"
-  add_foreign_key "menu_items", "shops"
-  add_foreign_key "owner_sessions", "admin_users"
-  add_foreign_key "owner_sessions", "shops"
-  add_foreign_key "pairing_attempts", "shops"
-  add_foreign_key "payments", "shops"
-  add_foreign_key "payments", "table_sessions"
-  add_foreign_key "payments", "users", column: "received_by_id"
-  add_foreign_key "print_jobs", "invoices"
-  add_foreign_key "print_jobs", "shops"
-  add_foreign_key "shop_sync_cursors", "shops"
-  add_foreign_key "table_sessions", "dining_tables"
-  add_foreign_key "table_sessions", "shops"
-  add_foreign_key "table_sessions", "users", column: "discount_approved_by_id"
-  add_foreign_key "table_sessions", "users", column: "opened_by_id"
-  add_foreign_key "ticket_items", "menu_items"
-  add_foreign_key "ticket_items", "tickets"
-  add_foreign_key "ticket_items", "users", column: "voided_by_id"
-  add_foreign_key "tickets", "shops"
-  add_foreign_key "tickets", "table_sessions"
-  add_foreign_key "tickets", "users", column: "placed_by_id"
-  add_foreign_key "users", "shops"
+  add_foreign_key "admin_users", "shops", deferrable: :deferred
+  add_foreign_key "api_sync_events", "shops", deferrable: :deferred
+  add_foreign_key "audit_events", "admin_users", deferrable: :deferred
+  add_foreign_key "audit_events", "devices", deferrable: :deferred
+  add_foreign_key "audit_events", "shops", deferrable: :deferred
+  add_foreign_key "audit_events", "users", deferrable: :deferred
+  add_foreign_key "client_actions", "devices", deferrable: :deferred
+  add_foreign_key "client_actions", "shops", deferrable: :deferred
+  add_foreign_key "devices", "shops", deferrable: :deferred
+  add_foreign_key "dining_tables", "shops", deferrable: :deferred
+  add_foreign_key "held_carts", "dining_tables", deferrable: :deferred
+  add_foreign_key "held_carts", "shops", deferrable: :deferred
+  add_foreign_key "held_carts", "users", column: "held_by_id", deferrable: :deferred
+  add_foreign_key "invoice_authority_grants", "devices", deferrable: :deferred
+  add_foreign_key "invoice_authority_grants", "shops", deferrable: :deferred
+  add_foreign_key "invoices", "shops", deferrable: :deferred
+  add_foreign_key "invoices", "table_sessions", deferrable: :deferred
+  add_foreign_key "menu_items", "shops", deferrable: :deferred
+  add_foreign_key "owner_sessions", "admin_users", deferrable: :deferred
+  add_foreign_key "owner_sessions", "shops", deferrable: :deferred
+  add_foreign_key "pairing_attempts", "shops", deferrable: :deferred
+  add_foreign_key "payments", "shops", deferrable: :deferred
+  add_foreign_key "payments", "table_sessions", deferrable: :deferred
+  add_foreign_key "payments", "users", column: "received_by_id", deferrable: :deferred
+  add_foreign_key "print_jobs", "invoices", deferrable: :deferred
+  add_foreign_key "print_jobs", "shops", deferrable: :deferred
+  add_foreign_key "shop_sync_cursors", "shops", deferrable: :deferred
+  add_foreign_key "table_sessions", "dining_tables", deferrable: :deferred
+  add_foreign_key "table_sessions", "shops", deferrable: :deferred
+  add_foreign_key "table_sessions", "users", column: "discount_approved_by_id", deferrable: :deferred
+  add_foreign_key "table_sessions", "users", column: "opened_by_id", deferrable: :deferred
+  add_foreign_key "ticket_items", "menu_items", deferrable: :deferred
+  add_foreign_key "ticket_items", "tickets", deferrable: :deferred
+  add_foreign_key "ticket_items", "users", column: "voided_by_id", deferrable: :deferred
+  add_foreign_key "tickets", "shops", deferrable: :deferred
+  add_foreign_key "tickets", "table_sessions", deferrable: :deferred
+  add_foreign_key "tickets", "users", column: "placed_by_id", deferrable: :deferred
+  add_foreign_key "users", "shops", deferrable: :deferred
 end

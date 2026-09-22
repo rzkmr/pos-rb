@@ -1,6 +1,9 @@
 require "test_helper"
 
 class EscposReceiptTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "build includes invoice number, totals, and no DUPLICATE marker by default" do
     invoice = build_invoice
 

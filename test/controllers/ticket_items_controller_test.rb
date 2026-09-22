@@ -1,7 +1,11 @@
 require "test_helper"
 
 class TicketItemsControllerTest < ActionDispatch::IntegrationTest
-  setup { sign_in_as(users(:alpha_waiter), pin: "2222") }
+  setup do
+    Current.shop = shops(:alpha)
+    sign_in_as(users(:alpha_waiter), pin: "2222")
+  end
+  teardown { Current.reset }
 
   test "void requires a reason and writes an audit_event, dropping the total" do
     session = table_sessions(:alpha_t1_open)

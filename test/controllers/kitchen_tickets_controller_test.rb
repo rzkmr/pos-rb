@@ -1,7 +1,11 @@
 require "test_helper"
 
 class KitchenTicketsControllerTest < ActionDispatch::IntegrationTest
-  setup { sign_in_as(users(:alpha_waiter), pin: "2222") }
+  setup do
+    Current.shop = shops(:alpha)
+    sign_in_as(users(:alpha_waiter), pin: "2222")
+  end
+  teardown { Current.reset }
 
   test "index lists tickets that are not yet served" do
     session = table_sessions(:alpha_t1_open)

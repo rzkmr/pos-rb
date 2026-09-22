@@ -1,6 +1,7 @@
 require "test_helper"
 
 class ShopTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
   teardown { Current.reset }
 
   test "authenticates the device pairing pin" do

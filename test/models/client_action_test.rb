@@ -1,6 +1,7 @@
 require "test_helper"
 
 class ClientActionTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
   teardown { Current.reset }
 
   test "client_action_id is unique per shop" do

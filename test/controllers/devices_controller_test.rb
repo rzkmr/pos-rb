@@ -1,6 +1,19 @@
 require "test_helper"
 
 class DevicesControllerTest < ActionDispatch::IntegrationTest
+  # Pairing has no device cookie yet, by definition, so
+  # Authentication#set_current_shop can only fall back to
+  # Shop.order(:id).first — with both fixture shops present that's
+  # whichever way Rails' fixture-label hashing happens to order them
+  # (currently shops(:beta), not shops(:alpha) — not something to rely
+  # on either way). Every test below expects a pairing against
+  # shops(:alpha) specifically (its pairing_pin, "9999"), so remove
+  # shops(:beta) for the duration to make the fallback deterministic.
+  setup do
+    admin_users(:beta_admin).delete
+    shops(:beta).delete
+  end
+
   test "pair page is reachable without a paired device" do
     get pair_devices_url
     assert_response :success

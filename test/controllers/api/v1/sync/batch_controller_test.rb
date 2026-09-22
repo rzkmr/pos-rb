@@ -3,10 +3,12 @@ require "test_helper"
 class Api::V1::Sync::BatchControllerTest < ActionDispatch::IntegrationTest
   setup do
     @shop = shops(:alpha)
+    Current.shop = @shop
     @headers = api_headers_for(shop: @shop)
     @user = users(:alpha_waiter)
     @table_session = table_sessions(:alpha_t1_open)
   end
+  teardown { Current.reset }
 
   test "ticket.create is accepted and idempotent on retry with the same op_id" do
     op_id = SecureRandom.uuid

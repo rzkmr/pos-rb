@@ -1,6 +1,9 @@
 require "test_helper"
 
 class PairingAttemptTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "not locked out below the failure threshold" do
     (PairingAttempt::LOCKOUT_THRESHOLD - 1).times do
       shops(:alpha).pairing_attempts.create!(success: false, ip_address: "10.0.0.1")

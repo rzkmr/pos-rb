@@ -1,7 +1,11 @@
 require "test_helper"
 
 class Api::V1::UpdatesControllerTest < ActionDispatch::IntegrationTest
-  setup { @headers = api_headers_for(shop: shops(:alpha)) }
+  setup do
+    Current.shop = shops(:alpha)
+    @headers = api_headers_for(shop: shops(:alpha))
+  end
+  teardown { Current.reset }
 
   test "reports a ticket status change since cursor" do
     starting_cursor = shops(:alpha).reload.api_sync_cursor

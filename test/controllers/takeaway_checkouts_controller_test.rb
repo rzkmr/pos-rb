@@ -2,10 +2,12 @@ require "test_helper"
 
 class TakeawayCheckoutsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    Current.shop = shops(:alpha)
     sign_in_as(users(:alpha_waiter), pin: "2222")
     @counter = shops(:alpha).dining_tables.create!(label: "Takeaway", seats: 1, takeaway: true)
     @table_session = @counter.table_sessions.create!(opened_by: users(:alpha_waiter), opened_at: Time.current, status: "open")
   end
+  teardown { Current.reset }
 
   test "submits the ticket, pays the exact total, issues the invoice, and settles the session" do
     assert_difference [ "Ticket.count", "Payment.count", "Invoice.count" ], 1 do

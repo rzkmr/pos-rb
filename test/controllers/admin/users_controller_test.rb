@@ -1,6 +1,16 @@
 require "test_helper"
 
 class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
+  # admin_sign_in_as has no device cookie, so Authentication#set_current_shop
+  # falls back to Shop.order(:id).first — with both fixture shops present
+  # that's whichever way Rails' fixture-label hashing happens to order them
+  # (not necessarily shops(:alpha)). Every test below expects admin_admin
+  # to land on shops(:alpha), so remove shops(:beta) for the duration.
+  setup do
+    admin_users(:beta_admin).delete
+    shops(:beta).delete
+  end
+
   test "a signed-in shop-floor user cannot access" do
     sign_in_as(users(:alpha_waiter), pin: "2222")
 

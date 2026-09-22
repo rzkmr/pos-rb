@@ -1,6 +1,9 @@
 require "test_helper"
 
 class PrintingTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "enqueue_invoice! creates a queued invoice print job" do
     invoice = build_invoice
 

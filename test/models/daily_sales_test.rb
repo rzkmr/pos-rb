@@ -1,6 +1,9 @@
 require "test_helper"
 
 class DailySalesTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "aggregates invoice and payment totals for the given day, split by method" do
     shop = shops(:alpha)
     session = table_sessions(:alpha_t1_open)

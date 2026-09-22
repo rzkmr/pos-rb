@@ -43,6 +43,8 @@ Rate-limited 5/15min per IP, plus a shop-wide lockout via `PairingAttempt` on re
 
 Pairing has no device token yet, so the server can't derive the shop from a request the way every other endpoint below does — it still falls back to `Shop.order(:id).first` (there is only ever one shop row today). Same for owner login just below. Every *token*-authenticated endpoint (bootstrap, delta, updates, sync/batch) instead resolves the shop from the device token itself — see "Every other request."
 
+**This fallback is a known landmine, not a settled design.** `ARCHITECTURE.md` §14 has this deployment moving cloud-first and multi-shop, and its Phase A explicitly drops the `only_one_shop_may_exist` constraint that currently makes "the one shop row" a safe assumption. Once that ships, `Shop.order(:id).first` silently resolves to *some* shop, not necessarily the one the caller meant — pairing and owner login will need a real shop identifier in the request (not designed yet; don't invent a `shop_id`/`shop_uid` param speculatively, wait for `API-SPEC.md` to spec it). If you're building a client today, don't hardcode any assumption that pairing always lands you on "the shop" — that stops being true the moment a second shop exists in the same database.
+
 ### Owner login (mints a long-lived owner_session_token, independent of device pairing)
 
 `POST /api/v1/owner/login` — **as implemented**, not as spec'd:
@@ -163,6 +165,8 @@ A tombstone is `action: "delete"` with the record's id. On `409` re-bootstrap (s
 
 Per-operation `results[]` entries: `{ "op_id", "status": "accepted" }`, `{ "op_id", "status": "duplicate" }`, `{ "op_id", "status": "rejected", "retryable": false, "code": "validation_failed", "message": "..." }`, or `{ "op_id", "status": "deferred", "retryable": true, "code": "server_busy", "message": "..." }`. `type` → payload mapping (`table_session.open`, `ticket.create`, `ticket.status`, `ticket_item.void`, `table_session.discount`, `invoice.issue`, `payment.record`, `table_session.close`) is in `Api::V1::Sync::BatchController::TYPE_TO_KIND` — an unknown `type` comes back `rejected`/`validation_failed`, not a 4xx.
 
+`payment.record`'s `method` field is one of `Payment::METHODS`: `cash`, `fonepay`, `esewa`, `khalti`, `imepay`, `card`, `credit`, `other` — Nepali payment rails, not UPI (this is a Nepal deployment, not India, despite `ARCHITECTURE.md`'s still-stale India-market header — see `CLAUDE.md` for the current market).
+
 ### `GET /updates?cursor=N`
 
 ```json
@@ -185,7 +189,7 @@ Same ledger as `/delta`, filtered to `entity: "ticket"` — no `has_more`/`curso
 - **Money is always integer paisa on the wire for anything you compute with.** Never float, never a decimal string, for `gross_price_paisa` or any other `_paisa` field. A handful of read-only responses (menu item price today) also carry a `_rupees` sibling field purely for display — treat it as a formatted string would be, never as input to tax or total math.
 - **A batch endpoint is always `200`**, even when individual operations inside it fail. Don't treat a non-200 from `/sync/batch` as "some ops failed" — that's a transport-level problem, not a business one.
 - **Invoice numbering is still server/shop-wide today**, not per-device, despite what `API-SPEC.md` §6 describes as the target. Per-device series (`devices.invoice_series`) is explicitly deferred — see `ARCHITECTURE.md` §12 Phase E — until a native Android client exists. Don't build client-side invoice-sequence allocation against this API yet.
-- **There is no `shop_id` on any token-authenticated request, and you don't need one.** The device token itself resolves the shop server-side. Pairing and owner login are the only two endpoints that can't do this (no token exists yet at that point) and fall back to "the one shop that exists" — everything else derives tenancy from the token you're already sending.
+- **There is no `shop_id` on any token-authenticated request, and you don't need one.** The device token itself resolves the shop server-side. Pairing and owner login are the only two endpoints that can't do this (no token exists yet at that point) and fall back to "the one shop that exists" — everything else derives tenancy from the token you're already sending. See "Getting a device token" above for why that fallback won't stay safe once this deployment goes multi-shop.
 
 ---
 

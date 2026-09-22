@@ -13,6 +13,12 @@ class SessionsController < ApplicationController
 
     if user&.authenticate_pin(params[:pin])
       session[:user_id] = user.id
+      # Binds the session to the device it was created on — see
+      # Authentication#set_current_user, which refuses to honor
+      # session[:user_id] if the paired device on the current request
+      # doesn't match. A shared-tablet PIN session is scoped to one
+      # device, one at a time, even though many staff share that device.
+      session[:device_id] = Current.device.id
       redirect_to root_path
     else
       flash.now[:alert] = "Incorrect PIN"
@@ -22,6 +28,7 @@ class SessionsController < ApplicationController
 
   def destroy
     session.delete(:user_id)
+    session.delete(:device_id)
     redirect_to new_session_path
   end
 end

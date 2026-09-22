@@ -2,9 +2,11 @@ require "test_helper"
 
 class HeldCartsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    Current.shop = shops(:alpha)
     sign_in_as(users(:alpha_waiter), pin: "2222")
     @counter = shops(:alpha).dining_tables.create!(label: "Takeaway", seats: 1, takeaway: true)
   end
+  teardown { Current.reset }
 
   test "holding a cart creates a HeldCart without touching tickets or payments" do
     assert_no_difference [ "Ticket.count", "Payment.count" ] do

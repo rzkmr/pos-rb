@@ -1,6 +1,9 @@
 require "test_helper"
 
 class TableSessionTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "resolve_for_takeaway! creates a session against the shop's takeaway counter" do
     shop = shops(:alpha)
     counter = shop.dining_tables.create!(label: "Takeaway", seats: 1, takeaway: true)

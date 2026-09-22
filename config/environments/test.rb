@@ -50,4 +50,18 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Rails 8.1's default fixture loader disables FK-check triggers for the
+  # bulk insert, then re-validates every FK afterward
+  # (ActiveRecord.verify_foreign_keys_for_fixtures, true by default since
+  # 8.1) — both the disable step AND this re-validation step need
+  # Postgres superuser, which the local/CI test role does not have (and
+  # should not need, for a role scoped to one app's own tables). Fixture
+  # data integrity is still enforced: every FK on this schema is
+  # DEFERRABLE INITIALLY DEFERRED (see
+  # db/migrate/*_make_foreign_keys_deferrable.rb), so Postgres itself
+  # checks every constraint at transaction commit regardless of fixture
+  # insertion order — this flag's manual re-check is redundant given
+  # that, not skipped.
+  config.active_record.verify_foreign_keys_for_fixtures = false
 end

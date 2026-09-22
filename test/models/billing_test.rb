@@ -1,6 +1,9 @@
 require "test_helper"
 
 class BillingTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "compute extracts VAT first, then service charge from the residual" do
     shop = shops(:alpha) # vat_rate_bp: 1300, service_charge_rate_bp: 1000
 

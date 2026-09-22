@@ -4,7 +4,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @shop = shops(:alpha)
     @device, @token = Device.pair!(shop: @shop, label: "Test")
-    cookies[:device_token] = @token
+    cookies[:device_token] = signed_device_cookie(@token)
   end
 
   test "new is reachable when a device is paired" do

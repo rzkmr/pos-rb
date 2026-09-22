@@ -1,6 +1,9 @@
 require "test_helper"
 
 class Sync::ActingUserTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "prefers current_user when present, ignoring any acting_user_id" do
     resolved = Sync::ActingUser.resolve!(shop: shops(:alpha), current_user: users(:alpha_waiter), payload: { "acting_user_id" => 999_999 })
 

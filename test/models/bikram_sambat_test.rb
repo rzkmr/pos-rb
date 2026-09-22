@@ -1,6 +1,9 @@
 require "test_helper"
 
 class BikramSambatTest < ActiveSupport::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "converts a Gregorian date to BS" do
     bs = BikramSambat.from_gregorian(Date.new(2025, 4, 14))
 

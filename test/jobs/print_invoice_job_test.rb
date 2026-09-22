@@ -1,6 +1,9 @@
 require "test_helper"
 
 class PrintInvoiceJobTest < ActiveJob::TestCase
+  setup { Current.shop = shops(:alpha) }
+  teardown { Current.reset }
+
   test "perform writes ESC/POS bytes to the printer socket and marks the job sent" do
     invoice = build_invoice
     invoice.shop.update!(printer_host: "127.0.0.1", printer_port: 9100)

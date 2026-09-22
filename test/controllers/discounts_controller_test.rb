@@ -1,7 +1,11 @@
 require "test_helper"
 
 class DiscountsControllerTest < ActionDispatch::IntegrationTest
-  setup { sign_in_as(users(:alpha_waiter), pin: "2222") }
+  setup do
+    Current.shop = shops(:alpha)
+    sign_in_as(users(:alpha_waiter), pin: "2222")
+  end
+  teardown { Current.reset }
 
   test "applying a discount writes an audit_event and reduces the subtotal" do
     session = table_sessions(:alpha_t1_open)
