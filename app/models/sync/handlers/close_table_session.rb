@@ -14,7 +14,7 @@ module Sync
       end
 
       def call
-        table_session = @shop.table_sessions.find(@payload.fetch("table_session_id"))
+        table_session = TableSession.resolve!(shop: @shop, table_session_id: @payload.fetch("table_session_id"))
         return { table_session_id: table_session.id, status: table_session.status } if table_session.status == "closed"
 
         billing = Billing.compute(shop: @shop, gross_paisa: table_session.subtotal_paisa)

@@ -11,7 +11,7 @@ module Sync
       end
 
       def call
-        table_session = @shop.table_sessions.find(@payload.fetch("table_session_id"))
+        table_session = TableSession.resolve!(shop: @shop, table_session_id: @payload.fetch("table_session_id"))
 
         Billing.record_payment_and_settle!(
           table_session: table_session,

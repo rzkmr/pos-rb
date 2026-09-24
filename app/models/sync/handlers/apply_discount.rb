@@ -16,7 +16,7 @@ module Sync
       end
 
       def call
-        table_session = @shop.table_sessions.find(@payload.fetch("table_session_id"))
+        table_session = TableSession.resolve!(shop: @shop, table_session_id: @payload.fetch("table_session_id"))
         amount_paisa = @payload.fetch("amount_paisa")
         reason = @payload.fetch("reason")
 

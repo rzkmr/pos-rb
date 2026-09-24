@@ -8,6 +8,18 @@ module Sync
     # table) need the session_exists rejection path; find-or-create here
     # already prevents that at the DB level rather than detecting it after
     # the fact.
+    #
+    # `table_sessions.id` is a server-assigned integer; the client's own
+    # payload `id` is never adopted as the row's id (it can't be — wrong
+    # type, and a client can't be trusted to hand out unique server keys
+    # anyway). Instead the payload's `client_token` is the idempotency key
+    # (TableSession.resolve_or_open!, the same client_token/id split
+    # ticket.create already uses via Ticket.submit!) and this handler's
+    # `result` hands back the real `table_session_id` the client must use
+    # for every dependent op in the same order (invoice.issue,
+    # payment.record, ticket.create, ...). A client that used its own
+    # payload id instead would get "Couldn't find TableSession" on every
+    # single one of those — not a race, a guaranteed mismatch every time.
     class OpenTableSession
       def initialize(shop:, device:, user:, payload:)
         @shop = shop
@@ -17,10 +29,11 @@ module Sync
 
       def call
         dining_table = @shop.dining_tables.find(@payload.fetch("dining_table_id"))
-        table_session = dining_table.open_session || dining_table.table_sessions.create!(
-          opened_by: @user,
-          opened_at: Time.current,
-          status: "open"
+        table_session = TableSession.resolve_or_open!(
+          shop: @shop,
+          dining_table: dining_table,
+          client_session_token: @payload.fetch("client_token"),
+          opened_by: @user
         )
 
         { table_session_id: table_session.id, status: table_session.status }

@@ -36,6 +36,25 @@ class Admin::MenuItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 5050, MenuItem.last.gross_price_paisa
   end
 
+  test "admin can update a menu item's price, entering rupees" do
+    admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
+    menu_item = menu_items(:alpha_dosa)
+
+    patch admin_menu_item_url(menu_item), params: { menu_item: { gross_price_rupees: "180" } }
+
+    assert_redirected_to admin_menu_items_path
+    assert_equal 18000, menu_item.reload.gross_price_paisa
+  end
+
+  test "edit prefills the price field in rupees, not paisa" do
+    admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
+    menu_item = menu_items(:alpha_dosa) # gross_price_paisa: 12000
+
+    get edit_admin_menu_item_url(menu_item)
+
+    assert_select "input#menu_item_gross_price_rupees[value=?]", "120.0"
+  end
+
   test "admin destroy deactivates instead of deleting, and writes an audit_event" do
     admin_sign_in_as(admin_users(:alpha_admin), password: "supersecret1")
     menu_item = menu_items(:alpha_dosa)

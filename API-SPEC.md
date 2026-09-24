@@ -281,7 +281,7 @@ Operations apply in array order within a batch. If one is `deferred`, later oper
 
 | `type` | Payload core | Notes |
 |---|---|---|
-| `table_session.open` | `id`, `dining_table_id`, `guest_count` | Conflict rules §7 |
+| `table_session.open` | `id`, `client_token`, `dining_table_id`, `guest_count` | Conflict rules §7 |
 | `ticket.create` | `id`, `table_session_id`, `items[]` | Snapshots prices |
 | `ticket.status` | `id`, `status` | Usually from web kitchen, but Android may mark `served` |
 | `ticket_item.void` | `id`, `void_reason_ne` | Reason mandatory; server rejects without it |
@@ -289,6 +289,9 @@ Operations apply in array order within a batch. If one is `deferred`, later oper
 | `invoice.issue` | §6 | Server re-computes every figure |
 | `payment.record` | `id`, `table_session_id`, `method`, `amount_paisa`, `reference` | `cash`\|`fonepay`\|`esewa`\|`khalti`\|`imepay`\|`card`\|`credit`\|`other` |
 | `table_session.close` | `id`, `closed_at` | |
+| `invoice.print` | `invoice_id` | Records that a device printed locally (e.g. Bluetooth ESC/POS) — bumps `print_count` for audit/history. Never enqueues a server-side print job; that path (`reprint_invoice`, a network-attached printer) is the web admin's own, unrelated to this. |
+
+**`table_session_id` in every dependent op is a lookup key with two valid shapes, not always the same type.** `table_session.open`'s own `id` is never adopted as the row's real id — a device has no way to know the server's next integer in advance, and letting a client hand out primary keys isn't safe regardless. Instead, `table_session.open` carries a device-minted `client_token` (a UUID, generated once when the table is tapped); the server resolves or creates a session against it and returns the *real* integer id in the operation's result. From there, a device may use either that real id or its own `client_token` as `table_session_id` in every dependent op (`ticket.create`, `payment.record`, `invoice.issue`, `table_session.close`, `table_session.discount`) — the server tells the two apart by shape (all-digit → real id; anything else → `client_token` lookup). Using the client_token throughout is simplest for an offline-first client that may never see the server's response to `table_session.open` (a dropped reply after a successful write) — every later op in the same order still resolves correctly without waiting on that response.
 
 **Nothing is ever deleted.** There is no `delete` operation type. Voids set a flag; corrections are credit notes.
 
@@ -327,7 +330,7 @@ Rules:
 
 | Situation | Rule |
 |---|---|
-| Two devices open the same table | First to reach the server wins. Loser gets `rejected`, `code: session_exists`, with the winning `table_session_id`. It adopts that session and re-parents its queued tickets. |
+| Two devices open the same table | **Not a conflict.** Find-or-create on `dining_table_id`: the second `table_session.open` silently joins the session the first one created (or one already open on that table from any earlier source) and gets `accepted` with the same real `table_session_id` back — never `rejected`. This is a deliberate choice, not an oversight: two waiters reaching the same table is the normal case (see the row below), and an explicit `session_exists` rejection was considered and rejected as unnecessary friction for that case. |
 | Multiple devices add tickets to one session | **Allowed.** Two waiters on one table is normal. Only `open` is exclusive. |
 | Session closed on device A, ticket arrives from device B | Ticket is `accepted` and the session reopens with an `audit_event`. Never drop an order that was actually made. |
 | Menu price changed while device was offline | Irrelevant. Line items carry `gross_price_paisa` snapshots. |
@@ -401,7 +404,6 @@ CREATE INDEX idx_sync_pending ON sync_queue (status, id);
 |---|---|---|
 | `validation_failed` | no | Malformed payload. Bug — log and surface. |
 | `tax_mismatch` | no | Client arithmetic disagrees with server. §6 |
-| `session_exists` | no | Table already open elsewhere. Adopt the returned session. |
 | `invoice_duplicate` | no | `(fy, series, sequence)` already used. Serious — admin alert. |
 | `void_reason_required` | no | Void without a reason. |
 | `unknown_menu_item` | no | Device cache stale; trigger `/delta`. |

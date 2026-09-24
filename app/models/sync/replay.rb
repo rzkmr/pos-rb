@@ -15,7 +15,8 @@ module Sync
       "update_ticket_status" => Sync::Handlers::UpdateTicketStatus,
       "open_table_session" => Sync::Handlers::OpenTableSession,
       "close_table_session" => Sync::Handlers::CloseTableSession,
-      "issue_invoice" => Sync::Handlers::IssueInvoice
+      "issue_invoice" => Sync::Handlers::IssueInvoice,
+      "record_device_print" => Sync::Handlers::RecordDevicePrint
     }.freeze
 
     def self.call(shop:, device:, user:, client_action_id:, kind:, payload:)

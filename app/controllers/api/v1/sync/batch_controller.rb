@@ -19,7 +19,8 @@ class Api::V1::Sync::BatchController < Api::V1::BaseController
     "table_session.discount" => "apply_discount",
     "invoice.issue" => "issue_invoice",
     "payment.record" => "record_payment",
-    "table_session.close" => "close_table_session"
+    "table_session.close" => "close_table_session",
+    "invoice.print" => "record_device_print"
   }.freeze
 
   def create
@@ -70,12 +71,18 @@ class Api::V1::Sync::BatchController < Api::V1::BaseController
     Sync::ActingUser.resolve!(shop: Current.shop, current_user: nil, payload: payload.merge("acting_user_id" => operation[:acting_user_id]))
   end
 
+  # `outcome[:result]` is whatever hash the handler returned (e.g.
+  # OpenTableSession's { table_session_id:, status: }) — forwarded to the
+  # client as `server_values` so it can learn server-assigned ids a
+  # client-generated payload id can never carry (see OpenTableSession's
+  # KDoc). Every handler's result is a plain, already-JSON-safe hash, so
+  # this is a direct passthrough, not a per-kind mapping.
   def translate(op_id, outcome)
     case outcome[:status]
     when "applied"
-      { op_id: op_id, status: "accepted" }
+      { op_id: op_id, status: "accepted", server_values: outcome[:result] }
     when "duplicate"
-      { op_id: op_id, status: "duplicate" }
+      { op_id: op_id, status: "duplicate", server_values: outcome[:result] }
     when "rejected"
       { op_id: op_id, status: "rejected", retryable: false, code: "validation_failed", message: outcome[:error] }
     else

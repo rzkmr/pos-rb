@@ -12,7 +12,7 @@ module Sync
       end
 
       def call
-        table_session = @shop.table_sessions.find(@payload.fetch("table_session_id"))
+        table_session = TableSession.resolve!(shop: @shop, table_session_id: @payload.fetch("table_session_id"))
         items_attributes = @payload.fetch("items").map do |item|
           { menu_item_id: item.fetch("menu_item_id"), quantity: item.fetch("quantity"), notes: item["notes"] }
         end

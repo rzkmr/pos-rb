@@ -17,7 +17,7 @@ module Sync
       end
 
       def call
-        table_session = @shop.table_sessions.find(@payload.fetch("table_session_id"))
+        table_session = TableSession.resolve!(shop: @shop, table_session_id: @payload.fetch("table_session_id"))
         return { invoice_id: table_session.invoices.first.id, number: table_session.invoices.first.number } if table_session.invoices.any?
 
         computed = Billing.compute(shop: @shop, gross_paisa: table_session.subtotal_paisa)
