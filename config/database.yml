@@ -88,12 +88,18 @@ production:
     host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
     port: <%= ENV.fetch("POSTGRES_PORT", "5432") %>
     sslmode: <%= ENV.fetch("POSTGRES_SSLMODE", "require") %>
+    schema_search_path: <%= ENV.fetch("POSTGRES_SCHEMA_SEARCH_PATH", "pos-rb") %>
+
   cache:
     <<: *primary_production
     migrations_paths: db/cache_migrate
+    schema_search_path: <%= ENV.fetch("POSTGRES_SCHEMA_SEARCH_PATH", "pos-rb") %>
+
   queue:
     <<: *primary_production
     migrations_paths: db/queue_migrate
+    schema_search_path: <%= ENV.fetch("POSTGRES_SCHEMA_SEARCH_PATH", "pos-rb") %>
   cable:
     <<: *primary_production
     migrations_paths: db/cable_migrate
+    schema_search_path: <%= ENV.fetch("POSTGRES_SCHEMA_SEARCH_PATH", "pos-rb") %>
